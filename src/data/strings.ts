@@ -7,6 +7,7 @@ import type { Dimensions, Orbit } from './types'
 
 const NUM = String.raw`\d[\d,]*(?:\.\d+)?`
 const METERS_PER_AU = 149_597_870_700
+const AU_PER_PC = 206_264.806
 
 export function parseNumber(s: string | undefined): number | undefined {
   if (s === undefined) return undefined
@@ -70,18 +71,18 @@ export function parseAtmosphere(s: string | undefined): { type: string; densityP
 
 /** "Orbiting X at 0.5au 108°", "Orbiting X at 83,400m 257°", "Primary". */
 export function parseOrbit(raw: string): Orbit {
-  const m = new RegExp(`^Orbiting (.+) at (${NUM})(au|m) (\\d+(?:\\.\\d+)?)\\S*$`).exec(raw.trim())
+  const m = new RegExp(`^Orbiting (.+) at (${NUM})(au|pc|m) (\\d+(?:\\.\\d+)?)\\S*$`).exec(raw.trim())
   if (!m) return { raw }
   const distance = parseNumber(m[2])
   const deg = parseNumber(m[4])
   if (distance === undefined || deg === undefined) return { raw }
-  const unit = m[3] as 'au' | 'm'
+  const unit = m[3] as 'au' | 'pc' | 'm'
   return {
     raw,
     orbitingName: m[1],
     distance,
     unit,
-    au: unit === 'au' ? distance : distance / METERS_PER_AU,
+    au: unit === 'au' ? distance : unit === 'pc' ? distance * AU_PER_PC : distance / METERS_PER_AU,
     deg,
   }
 }

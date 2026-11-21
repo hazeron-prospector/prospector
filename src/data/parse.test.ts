@@ -195,6 +195,14 @@ describe('errors', () => {
     const xml = `<starmap empireId="1" empire="e" createDate="d"><galaxy name="g"><sector sectorId="S" name="n" x="1" y="1" z="1"><system name="x" eod="Surveyed"/></sector></galaxy></starmap>`
     expect(() => parseStarMap(xml)).toThrow(/systemId/)
   })
+  it('keeps a system with an unknown eod as Unexplored, preserving the raw value', () => {
+    const xml = MINI_XML.replace('eod="Explored"', 'eod="Mapped"')
+    const map = parseStarMap(xml)
+    const s = map.systems.find((x) => x.systemId === 'SYSB')!
+    expect(s.eod).toBe('Unexplored')
+    expect(s.eodRaw).toBe('Mapped')
+    expect(map.systems.find((x) => x.systemId === 'SYSA')!.eodRaw).toBeUndefined()
+  })
   it('throws on a non-numeric quality', () => {
     const xml = MINI_XML.replace('qualityZone1="180"', 'qualityZone1="lots"')
     expect(() => parseStarMap(xml)).toThrow(StarMapParseError)

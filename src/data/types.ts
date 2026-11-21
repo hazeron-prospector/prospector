@@ -41,7 +41,7 @@ export interface Orbit {
   orbitingName?: string
   /** Distance as written, in `unit`. */
   distance?: number
-  unit?: 'au' | 'm'
+  unit?: 'au' | 'pc' | 'm'
   /** Distance converted to au (equals `distance` when unit is au). */
   au?: number
   deg?: number
@@ -163,6 +163,8 @@ export interface System {
   y?: number
   z?: number
   eod: Eod
+  /** Original eod text, present only when it was not a known status (eod is then 'Unexplored'). */
+  eodRaw?: string
   stars: Star[]
   planets: Planet[]
   wormholes: Wormhole[]

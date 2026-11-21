@@ -100,6 +100,11 @@ describe('parseOrbit', () => {
       deg: 108,
     })
   })
+  it('parses parsec orbits and converts to au', () => {
+    const o = parseOrbit('Orbiting Sol at 2pc 10°')
+    expect(o).toMatchObject({ unit: 'pc', distance: 2, deg: 10 })
+    expect(o.au).toBeCloseTo(2 * 206264.806, 3)
+  })
   it('parses meter orbits and converts to au', () => {
     const o = parseOrbit("Orbiting MQL'HC'CF'e II at 83,400m 257°")
     expect(o.orbitingName).toBe("MQL'HC'CF'e II")

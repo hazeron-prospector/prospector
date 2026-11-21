@@ -145,8 +145,9 @@ export function parseStarMap(xml: string, onProgress?: (fraction: number) => voi
         break
       case 'system': {
         if (!sector) throw new StarMapParseError('<system> outside of a <sector>')
-        const eod = req(a, 'eod', 'system') as Eod
-        if (!EODS.includes(eod)) throw new StarMapParseError(`<system> has unknown eod "${eod}"`)
+        const eodRawValue = req(a, 'eod', 'system')
+        const known = EODS.includes(eodRawValue as Eod)
+        const eod: Eod = known ? (eodRawValue as Eod) : 'Unexplored'
         system = {
           systemId: req(a, 'systemId', 'system'),
           sectorId: sector.sectorId,
@@ -157,6 +158,7 @@ export function parseStarMap(xml: string, onProgress?: (fraction: number) => voi
           wormholes: [],
           cities: [],
         }
+        if (!known) system.eodRaw = eodRawValue
         pick(system, 'catalog', a.catalog)
         pick(system, 'x', optNum(a, 'x'))
         pick(system, 'y', optNum(a, 'y'))
