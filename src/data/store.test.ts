@@ -36,6 +36,17 @@ describe('store', () => {
     await saveMap(map)
     expect(await loadMap()).toEqual(map)
   })
+  it.each([
+    ['sectors not an array', { sectors: 'x' }],
+    ['sectors missing', { sectors: undefined }],
+    ['empire not a string', { empire: 5 }],
+    ['createDate missing', { createDate: undefined }],
+  ])('discards entries with invalid top-level fields: %s', async (_n, patch) => {
+    await saveMap({ ...map, ...patch } as never)
+    expect(await loadMap()).toBeUndefined()
+    await saveMap(map)
+    expect(await loadMap()).toEqual(map)
+  })
   it('discards malformed cache entries', async () => {
     await new Promise<void>((resolve, reject) => {
       const open = indexedDB.open(DB_NAME, 1)

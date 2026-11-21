@@ -18,7 +18,7 @@ function open(): Promise<IDBDatabase> {
     }
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error ?? new Error('Could not open IndexedDB'))
-    req.onblocked = () => reject(new Error('IndexedDB open was blocked'))
+    // onblocked is transient: the request stays pending and onsuccess/onerror still fires.
   })
 }
 
@@ -45,17 +45,22 @@ export async function saveMap(map: StarMap): Promise<void> {
   await withStore('readwrite', (s) => s.put(map, KEY))
 }
 
+function isStarMap(v: unknown): v is StarMap {
+  if (typeof v !== 'object' || v === null) return false
+  const m = v as Record<string, unknown>
+  return (
+    m.schemaVersion === SCHEMA_VERSION &&
+    Array.isArray(m.systems) &&
+    Array.isArray(m.sectors) &&
+    typeof m.empire === 'string' &&
+    typeof m.createDate === 'string'
+  )
+}
+
 /** Returns the cached map, or undefined when empty, malformed or from another schema version. */
 export async function loadMap(): Promise<StarMap | undefined> {
   const value: unknown = await withStore('readonly', (s) => s.get(KEY))
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    (value as { schemaVersion?: unknown }).schemaVersion === SCHEMA_VERSION &&
-    Array.isArray((value as { systems?: unknown }).systems)
-  ) {
-    return value as StarMap
-  }
+  if (isStarMap(value)) return value
   if (value !== undefined) await clearMap()
   return undefined
 }
