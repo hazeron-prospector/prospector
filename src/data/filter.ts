@@ -33,6 +33,7 @@ export interface BodyFilter {
   gravity: Range
   atmosphereTypes: string[]
   liquidPct: Range
+  liquidTypes: string[]
   flora: TriState
   fauna: TriState
   resourceZones: number[]
@@ -60,6 +61,7 @@ export const DEFAULT_BODY_FILTER: BodyFilter = {
   gravity: {},
   atmosphereTypes: [],
   liquidPct: {},
+  liquidTypes: [],
   flora: 'any',
   fauna: 'any',
   resourceZones: [],
@@ -86,7 +88,8 @@ function inhabitedOk(mode: InhabitedMode, inhabited: boolean): boolean {
 
 function triOk(t: TriState, v: boolean | undefined): boolean {
   if (t === 'any') return true
-  return v === (t === 'yes')
+  // The exporter writes <biosphere> only when life exists, so undefined means "no known life".
+  return t === 'yes' ? v === true : v !== true
 }
 
 export function filterResourceRows(rows: readonly ResourceRow[], f: ResourceFilter): ResourceRow[] {
@@ -111,6 +114,7 @@ export function filterBodyRows(rows: readonly BodyRow[], f: BodyFilter): BodyRow
       inRange(f.gravity, r.gravity) &&
       inList(f.atmosphereTypes, r.atmosphereType) &&
       inRange(f.liquidPct, r.liquidPct) &&
+      inList(f.liquidTypes, r.liquidType) &&
       triOk(f.flora, r.flora) &&
       triOk(f.fauna, r.fauna) &&
       inList(f.resourceZones, r.resourceZones) &&

@@ -108,9 +108,22 @@ describe('filterBodyRows', () => {
   })
   it('flora / fauna tri-state', () => {
     expect(f({ flora: 'yes' })).toEqual(['a'])
-    expect(f({ flora: 'no' })).toEqual(['b'])
     expect(f({ fauna: 'yes' })).toEqual([])
+    // no biosphere exported means no known life: 'no' matches it too
+    expect(f({ fauna: 'no' })).toEqual(['a', 'b', 'c'])
+    expect(f({ flora: 'no' })).toEqual(['b', 'c'])
     expect(f({ fauna: 'any' })).toHaveLength(3)
+  })
+  it('liquid type', () => {
+    const withLiquid = [
+      br({ id: 'w', liquidType: 'Water', liquidPct: 77 }),
+      br({ id: 'l', liquidType: 'Lava', liquidPct: 40 }),
+      br({ id: 'n' }),
+    ]
+    const g = (liquidTypes: string[]) => ids(filterBodyRows(withLiquid, { ...DEFAULT_BODY_FILTER, liquidTypes }))
+    expect(g([])).toEqual(['w', 'l', 'n'])
+    expect(g(['Lava'])).toEqual(['l'])
+    expect(g(['Lava', 'Water'])).toEqual(['w', 'l'])
   })
   it('resource zones', () => {
     expect(f({ resourceZones: [1] })).toEqual(['b', 'c'])
