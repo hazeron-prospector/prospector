@@ -24,13 +24,16 @@ const COLUMNS: Column<SystemRow>[] = [
   {
     id: 'cities',
     header: 'Cities',
-    width: 120,
+    width: 180,
     sortKey: 'cityCount',
     firstDir: 'desc',
     cell: (r) =>
       r.cityCount > 0 ? (
-        <span className="text-accent-foreground">
-          {r.cityCount} ({r.inhabitingEmpires.join(', ')})
+        <span
+          className="block truncate text-accent-foreground"
+          title={`${r.cityCount} (${r.inhabitingEmpires.join(', ') || 'unknown empire'})`}
+        >
+          {r.cityCount} ({r.inhabitingEmpires.join(', ') || 'unknown empire'})
         </span>
       ) : (
         ''

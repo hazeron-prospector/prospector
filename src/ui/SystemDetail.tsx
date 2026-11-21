@@ -101,7 +101,7 @@ function BodyBlock({ planet }: { planet: Planet }) {
     ['Geosphere', [g?.diameterRaw, g?.gravityRaw, g && `${g.resourceZones} resource zone${g.resourceZones === 1 ? '' : 's'}`].filter(Boolean).join(' · ')],
     ['Hydrosphere', [h?.surfaceLiquidRaw, h?.diameterRaw, h?.gravityRaw].filter(Boolean).join(' · ')],
     ['Atmosphere', a?.compositionRaw],
-    ['Biosphere', b && [b.flora !== undefined && `Flora: ${b.flora ? 'yes' : 'no'}`, b.fauna !== undefined && `Fauna: ${b.fauna ? 'yes' : 'no'}`].filter(Boolean).join(' · ')],
+    ['Biosphere', !b ? 'No known life' : [b.flora !== undefined && `Flora: ${b.flora ? 'yes' : 'no'}`, b.fauna !== undefined && `Fauna: ${b.fauna ? 'yes' : 'no'}`].filter(Boolean).join(' · ')],
   ]
   return (
     <div className="mb-3 rounded-md border bg-card/40 p-2">
@@ -178,8 +178,8 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
           <Field label="Coordinates">
             <span className="tabular-nums">{coords}</span>
           </Field>
-          <Field label="Status">{system.eod}</Field>
-          <Field label="Inhabited by">{empires.length ? empires.join(', ') : 'nobody'}</Field>
+          <Field label="Status">{system.eodRaw ? `${system.eod} (reported as "${system.eodRaw}")` : system.eod}</Field>
+          <Field label="Inhabited by">{empires.length ? empires.join(', ') : system.cities.length ? 'unknown empire' : 'nobody'}</Field>
         </div>
       </header>
       <Section title={`Stars (${system.stars.length})`}>

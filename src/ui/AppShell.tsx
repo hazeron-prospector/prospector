@@ -36,7 +36,18 @@ export function AppShell({ map, loader }: { map: StarMap; loader: MapLoader }) {
 
   const pane = (t: Tab, node: React.ReactNode) =>
     visited.has(t) && (
-      <div className={t === tab ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>{node}</div>
+      // Inactive panes stay laid out (just invisible) so inner scroll positions survive tab switches.
+      <div
+        className={
+          t === tab
+            ? 'flex min-h-0 flex-1 flex-col'
+            : 'pointer-events-none invisible absolute inset-0 flex flex-col'
+        }
+        aria-hidden={t === tab ? undefined : true}
+        inert={t !== tab}
+      >
+        {node}
+      </div>
     )
 
   return (

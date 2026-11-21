@@ -14,6 +14,8 @@ export interface MapLoader {
   error: string | undefined
   clearError: () => void
   loadFile: (file: File) => void
+  /** Drops the current map (e.g. it failed to render) and shows a message. */
+  discardMap: (message: string) => void
 }
 
 /** Owns the current map: cached restore on start, parse via worker, cache write. */
@@ -63,5 +65,10 @@ export function useMapLoader(): MapLoader {
       .finally(() => setParsing(false))
   }, [])
 
-  return { map, generation, booting, parsing, progress, error, clearError: () => setError(undefined), loadFile }
+  const discardMap = useCallback((message: string) => {
+    setMap(undefined)
+    setError(message)
+  }, [])
+
+  return { map, generation, booting, parsing, progress, error, clearError: () => setError(undefined), loadFile, discardMap }
 }

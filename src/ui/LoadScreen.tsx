@@ -8,10 +8,9 @@ export function LoadScreen({ loader }: { loader: MapLoader }) {
   const input = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
   const drop = (e: DragEvent) => {
+    // The window-level handler (useWindowDrop) loads the file; this only resets the highlight.
     e.preventDefault()
     setOver(false)
-    const f = e.dataTransfer.files[0]
-    if (f && !loader.parsing) loader.loadFile(f)
   }
   return (
     <div className="flex h-full items-center justify-center p-6">

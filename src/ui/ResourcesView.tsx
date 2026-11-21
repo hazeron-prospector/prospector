@@ -15,6 +15,7 @@ import { MultiSelect } from './MultiSelect'
 import { NumberInput } from './NumberInput'
 import { QualityCell } from './QualityCell'
 import { Segmented } from './Segmented'
+import { InhabitedCell } from './InhabitedCell'
 import { INHABITED_OPTIONS } from './segmentedOptions'
 import { VirtualTable, type Column } from './VirtualTable'
 
@@ -61,10 +62,10 @@ const COLUMNS: Column<ResourceRow>[] = [
   {
     id: 'inhabited',
     header: 'Inhab.',
-    width: 60,
+    width: 150,
     sortKey: 'inhabited',
     firstDir: 'desc',
-    cell: (r) => (r.inhabited ? <span className="text-accent-foreground">yes</span> : ''),
+    cell: (r) => <InhabitedCell inhabited={r.inhabited} empires={r.inhabitingEmpires} />,
   },
 ]
 
