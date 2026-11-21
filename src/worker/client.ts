@@ -25,6 +25,10 @@ export function parseInWorker(file: File, onProgress?: (fraction: number) => voi
       finish()
       reject(new Error(e.message || 'The parse worker crashed'))
     }
+    worker.onmessageerror = () => {
+      finish()
+      reject(new Error('The parse worker sent a message that could not be read'))
+    }
     const req: WorkerRequest = { type: 'parse', file }
     worker.postMessage(req)
   })
