@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { centerPose, easeInOutCubic, flyDestination, flyPose, frameDistance, lerp3 } from './fly'
+import { centerPose, easeInOutCubic, flyDestination, flyPose, frameDistance, lerp3, decideCameraAction } from './fly'
 
 describe('fly', () => {
   it('eases 0..1 symmetrically and clamps', () => {
@@ -44,5 +44,20 @@ describe('centerPose', () => {
     expect(out.position).toEqual([15, 15, 32])
     const d = (p: typeof cur) => Math.hypot(p.position[0] - p.target[0], p.position[1] - p.target[1], p.position[2] - p.target[2])
     expect(d(out)).toBeCloseTo(d(cur))
+  })
+})
+
+describe('decideCameraAction', () => {
+  it('flies on a new nonce even when the selection changes too', () => {
+    expect(decideCameraAction({ prevSelected: 'a', selected: 'b', prevNonce: undefined, nonce: 1 })).toBe('fly')
+    expect(decideCameraAction({ prevSelected: 'b', selected: 'b', prevNonce: 1, nonce: 2 })).toBe('fly')
+  })
+  it('re-centers on a plain selection change', () => {
+    expect(decideCameraAction({ prevSelected: 'a', selected: 'b', prevNonce: 1, nonce: 1 })).toBe('center')
+    expect(decideCameraAction({ prevSelected: undefined, selected: 'b', prevNonce: undefined, nonce: undefined })).toBe('center')
+  })
+  it('does nothing otherwise', () => {
+    expect(decideCameraAction({ prevSelected: 'a', selected: undefined, prevNonce: 1, nonce: 1 })).toBe('none')
+    expect(decideCameraAction({ prevSelected: 'a', selected: 'a', prevNonce: 1, nonce: 1 })).toBe('none')
   })
 })

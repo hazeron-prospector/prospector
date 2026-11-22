@@ -12,6 +12,7 @@ import type { StarMap } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { Legend } from './Legend'
 import { HoverCard, type HoverInfo } from './HoverCard'
+import { decideCameraAction } from './fly'
 import { MapScene, type LabelFormat, type Layers } from './scene'
 
 export type { HoverInfo, LabelFormat }
@@ -91,21 +92,24 @@ export default function MapView({ map, highlight, selectedSystemId, onSelectSyst
   useEffect(() => sceneRef.current?.setHighlight(highlight), [highlight])
   useEffect(() => sceneRef.current?.setLayers(layers), [layers])
   useEffect(() => sceneRef.current?.setLabelFormat(labelFormat), [labelFormat])
-  const centeredFor = useRef(selectedSystemId)
-  useEffect(() => {
-    sceneRef.current?.setSelected(selectedSystemId)
-    // Re-center on a newly selected system (click, peek, palette). Declared before the flyTo
-    // effect and guarded in the scene, so a "Show on map" fly-in for the same system wins.
-    if (selectedSystemId !== undefined && selectedSystemId !== centeredFor.current) {
-      sceneRef.current?.centerOn(selectedSystemId)
-    }
-    centeredFor.current = selectedSystemId
-  }, [selectedSystemId])
+  const handled = useRef({ selected: selectedSystemId, nonce: flyToRequest?.nonce })
   const nonce = flyToRequest?.nonce
+  // One effect for selection and fly requests so a "Show on map" fly-in always wins over the
+  // re-center that the accompanying selection change would trigger, whatever the order.
   useEffect(() => {
+    const scene = sceneRef.current
+    scene?.setSelected(selectedSystemId)
     const fly = latest.current.flyToRequest
-    if (fly) sceneRef.current?.flyTo(fly.systemId)
-  }, [nonce])
+    const action = decideCameraAction({
+      prevSelected: handled.current.selected,
+      selected: selectedSystemId,
+      prevNonce: handled.current.nonce,
+      nonce,
+    })
+    handled.current = { selected: selectedSystemId, nonce }
+    if (action === 'fly' && fly) scene?.flyTo(fly.systemId)
+    else if (action === 'center' && selectedSystemId !== undefined) scene?.centerOn(selectedSystemId)
+  }, [selectedSystemId, nonce])
 
   const hoverInfo = hover ? getHoverInfo?.(hover.id) : undefined
 

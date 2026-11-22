@@ -254,7 +254,7 @@ export class MapScene {
   private width = 1
   private height = 1
   private frameId = 0
-  private fly?: { from: CameraPose; to: CameraPose; start: number; duration: number; systemId?: string }
+  private fly?: { from: CameraPose; to: CameraPose; start: number; duration: number; systemId?: string; flyIn?: boolean }
   private downAt?: { x: number; y: number }
   private disposed = false
   private readonly onSelect: (systemId: string) => void
@@ -453,15 +453,16 @@ export class MapScene {
       FLY_DURATION_MS,
       systemId,
     )
+    if (this.fly) this.fly.flyIn = true
   }
 
   /**
    * Smoothly re-center on a system keeping the current zoom distance and angle (W1). Does nothing
-   * for unknown ids (Deep Space has no coordinates) or while a fly-in to the same system runs.
+   * for unknown ids (Deep Space has no coordinates) or while any fly-in runs (a fly-in always wins).
    */
   centerOn(systemId: string): void {
     const i = this.data.indexOfSystem.get(systemId)
-    if (i === undefined || this.fly?.systemId === systemId) return
+    if (i === undefined || this.fly?.flyIn || this.fly?.systemId === systemId) return
     const p = this.data.positions
     this.startFly(centerPose(this.currentPose(), [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!]), CENTER_DURATION_MS, systemId)
   }

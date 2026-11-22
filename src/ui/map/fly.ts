@@ -63,3 +63,19 @@ export function frameDistance(radius: number, fovDeg: number, aspect: number): n
   const half = Math.min(v, h) / 2
   return (radius / Math.sin(half)) * 1.05
 }
+
+/**
+ * Which camera animation to run after a render, given what was handled last time. A new fly
+ * request always wins (V8) - even when the same commit also changed the selection - while a plain
+ * selection change only re-centers keeping the zoom (W1).
+ */
+export function decideCameraAction(a: {
+  prevSelected: string | undefined
+  selected: string | undefined
+  prevNonce: number | undefined
+  nonce: number | undefined
+}): 'fly' | 'center' | 'none' {
+  if (a.nonce !== undefined && a.nonce !== a.prevNonce) return 'fly'
+  if (a.selected !== undefined && a.selected !== a.prevSelected) return 'center'
+  return 'none'
+}
