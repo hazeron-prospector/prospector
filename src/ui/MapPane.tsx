@@ -2,6 +2,7 @@ import { Component, lazy, Suspense, useCallback, useMemo, type ReactNode } from 
 import type { ResourceRow } from '@/data/rows'
 import { bestDepositsBySystem, buildSystemSummaries, hoverResources } from '@/data/systemSummary'
 import type { StarMap } from '@/data/types'
+import { ProspectPanel } from './ProspectPanel'
 import type { HoverInfo, LabelFormat } from './map/MapView'
 
 // The only reference to the map module outside src/ui/map, and it is dynamic: three.js stays in
@@ -76,6 +77,7 @@ export function MapPane({ map, highlight, selectedSystemId, onSelectSystem, flyT
           </Suspense>
         </MapBoundary>
       </div>
+      <ProspectPanel />
     </div>
   )
 }
