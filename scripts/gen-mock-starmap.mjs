@@ -432,6 +432,56 @@ const cityPlan = new Map([
   [real[14], [[null, false]]],
 ])
 
+// Spacecraft: forced coverage (own and other empires, moving or not, deep space or in system,
+// structures, drives, missing optional empire/stance attributes), then a few random extras.
+// Own-empire craft use EMPIRES[0] with stance "Empire".
+const craft = (empire, structure, moving, space, extra = {}) => ({ empire, structure, moving, space, ...extra })
+const spacecraftPlan = new Map([
+  [surveyed[0], [craft(0, 'Station', false, 'orbit', { ownership: 'Company' }), craft(0, 'Starship', true, 'system', { warp: 'hot', wormhole: 'yes', captain: true, officer: true }), craft(1, 'Spaceship', false, 'system')]],
+  [surveyed[1], [craft(0, 'Spaceship', true, 'deep')]],
+  [surveyed[2], [craft(2, 'Starship', true, 'system', { warp: 'yes', condition: 'Red', health: 40 })]],
+  [real[2], [craft(1, 'Spaceship', false, 'deep', { condition: 'Yellow' }), craft(2, 'Spaceship', true, 'deep')]],
+  [real[9], [craft(null, 'Spaceship', true, 'deep', { noStance: true }), craft(1, 'Station', false, 'atmosphere')]],
+  [real[14], [craft(null, 'Starship', false, 'system', { warp: 'yes', wormhole: 'hot', isNew: true })]],
+])
+const STANCE_OF = { 0: 'Empire', 1: 'Friend', 2: 'Neutral' }
+function spacecraftAttrs(sc) {
+  const e = sc.empire === null ? undefined : EMPIRES[sc.empire]
+  return {
+    spacecraftId: id('SCR'),
+    name: sc.name ?? `Mock ${sc.structure} ${counters.SCR}`,
+    ownership: sc.ownership ?? 'Fleet',
+    structure: sc.structure,
+    empire: e?.name,
+    empireId: e?.id,
+    stance: e && !sc.noStance ? STANCE_OF[sc.empire] : undefined,
+    condition: sc.condition ?? 'Green',
+    health: sc.health ?? 255,
+    moving: sc.moving ? 'yes' : 'no',
+    space: sc.space,
+    sensors: sc.structure === 'Station' ? 'yes' : 'no',
+    warpDrive: sc.warp ?? 'none',
+    wormholeDrive: sc.wormhole ?? 'none',
+    captain: sc.captain ? 'yes' : 'no',
+    officer: sc.officer ? 'yes' : 'no',
+    new: sc.isNew ? 'yes' : 'no',
+  }
+}
+// Separate PRNG so adding spacecraft never shifts the rest of the fixture.
+let sstate = 0x5c4a77
+function srnd() {
+  sstate = (sstate + 0x6d2b79f5) >>> 0
+  let t = sstate
+  t = Math.imul(t ^ (t >>> 15), t | 1)
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+function randomCraft() {
+  const sp = (a) => a[Math.floor(srnd() * a.length)]
+  const empire = sp([0, 1, 2, null])
+  return craft(empire, sp(['Spaceship', 'Spaceship', 'Starship', 'Station']), srnd() < 0.5, sp(['deep', 'system', 'orbit']), { noStance: srnd() < 0.25 })
+}
+
 // ---- render -------------------------------------------------------------------------------
 
 const out = []
@@ -464,9 +514,12 @@ for (const sector of sectors) {
     for (const wh of makeWormholes(sys, allSystems, polarityForced.get(sys))) {
       lines.push(`        <wormhole${attrs({ destX: fixed1(wh.destX), destY: fixed1(wh.destY), destZ: fixed1(wh.destZ), destSystemId: wh.destSystemId, explored: wh.explored, polarity: wh.polarity })}/>`)
     }
-    if (chance(0.15)) {
-      lines.push(`        <spacecraft${attrs({ spacecraftId: id('SCR'), name: 'Mock Hauler', ownership: 'Fleet', structure: 'Spaceship', condition: 'Green', health: 255, moving: 'no', space: 'deep', sensors: 'yes', warpDrive: 'none', wormholeDrive: 'none', captain: 'no', officer: 'no', new: 'no' })}/>`)
-    }
+    // The roll below stays on the main PRNG stream so existing fixture content does not shift;
+    // everything about the spacecraft itself comes from the separate spacecraft stream.
+    const extraCraft = chance(0.15)
+    const crafts = [...(spacecraftPlan.get(sys) ?? [])]
+    if (extraCraft) crafts.push(randomCraft())
+    for (const sc of crafts) lines.push(`        <spacecraft${attrs(spacecraftAttrs(sc))}/>`)
     for (const [emp, cap] of cityPlan.get(sys) ?? []) {
       const e = emp === null ? undefined : EMPIRES[emp]
       lines.push(

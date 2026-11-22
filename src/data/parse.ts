@@ -27,6 +27,7 @@ import {
   type Planet,
   type Resource,
   type Sector,
+  type Spacecraft,
   type Star,
   type StarMap,
   type System,
@@ -157,6 +158,7 @@ export function parseStarMap(xml: string, onProgress?: (fraction: number) => voi
           planets: [],
           wormholes: [],
           cities: [],
+          spacecraft: [],
         }
         if (!known) system.eodRaw = eodRawValue
         pick(system, 'catalog', a.catalog)
@@ -191,6 +193,30 @@ export function parseStarMap(xml: string, onProgress?: (fraction: number) => voi
         pick(c, 'admin', a.admin)
         pick(c, 'airport', a.airport)
         system.cities.push(c)
+        break
+      }
+      case 'spacecraft': {
+        if (!system) break
+        const sc: Spacecraft = {
+          spacecraftId: req(a, 'spacecraftId', 'spacecraft'),
+          name: a.name ?? '',
+          ownership: a.ownership ?? '',
+          structure: a.structure ?? '',
+          condition: a.condition ?? '',
+          health: optNum(a, 'health') ?? 0,
+          moving: a.moving === 'yes',
+          space: a.space ?? '',
+          sensors: a.sensors === 'yes',
+          warpDrive: a.warpDrive ?? 'none',
+          wormholeDrive: a.wormholeDrive ?? 'none',
+          captain: a.captain === 'yes',
+          officer: a.officer === 'yes',
+          isNew: a.new === 'yes',
+        }
+        pick(sc, 'empire', a.empire)
+        pick(sc, 'empireId', a.empireId)
+        pick(sc, 'stance', a.stance)
+        system.spacecraft.push(sc)
         break
       }
       case 'star': {
@@ -293,7 +319,7 @@ export function parseStarMap(xml: string, onProgress?: (fraction: number) => voi
         break
       }
       default:
-        break // spacecraft and anything unknown are ignored
+        break // anything unknown is ignored
     }
   })
 

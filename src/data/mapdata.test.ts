@@ -32,6 +32,7 @@ function sys(id: string, o: Partial<System> & { type?: string } = {}): System {
     planets: [],
     wormholes: [],
     cities: [],
+    spacecraft: [],
     ...rest,
   }
 }

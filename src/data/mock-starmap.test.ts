@@ -79,6 +79,20 @@ describe('mock starmap', () => {
     expect(habitable).toHaveLength(4)
   })
 
+  it('covers spacecraft variety', () => {
+    const craft = map.systems.flatMap((s) => s.spacecraft)
+    expect(craft).toHaveLength(38)
+    expect(new Set(craft.map((c) => c.stance))).toEqual(new Set(['Empire', 'Friend', 'Neutral', undefined]))
+    expect(new Set(craft.map((c) => c.structure))).toEqual(new Set(['Station', 'Starship', 'Spaceship']))
+    expect(new Set(craft.map((c) => c.moving))).toEqual(new Set([true, false]))
+    expect(new Set(craft.map((c) => c.space))).toEqual(new Set(['deep', 'system', 'orbit', 'atmosphere']))
+    expect(craft.filter((c) => c.empire === undefined)).toHaveLength(8)
+    expect(craft.filter((c) => c.empire !== undefined && c.stance === undefined)).toHaveLength(9)
+    expect(new Set(craft.map((c) => c.spacecraftId)).size).toBe(craft.length)
+    // never attached to Deep Space systems (no coordinates to anchor them)
+    expect(map.systems.filter((s) => s.x === undefined).every((s) => s.spacecraft.length === 0)).toBe(true)
+  })
+
   it('parses fast enough', () => {
     expect(parseMs).toBeLessThan(10_000)
   })

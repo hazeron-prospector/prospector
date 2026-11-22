@@ -6,7 +6,8 @@ export const MINI_XML = `<?xml version="1.0" encoding="UTF-8"?>
       <system systemId="SYSA" name="Aldera" catalog="XQL'A'B'a" x="754.1" y="11.8" z="9.8" eod="Surveyed">
         <wormhole destX="755.0" destY="12.0" destZ="10.0" destSystemId="SYSB" explored="Yes" polarity="positive"/>
         <wormhole destX="700.0" destY="1.0" destZ="2.5" polarity="negative"/>
-        <spacecraft spacecraftId="SC1" name="Ignored" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SC1" name="Wayfarer" ownership="Fleet" structure="Spaceship" empire="House Test" empireId="7" stance="Empire" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SC2" name="Drifter &amp; Co" ownership="Company" structure="Station" condition="Red" health="12" moving="yes" space="system" sensors="no" warpDrive="hot" wormholeDrive="yes" captain="yes" officer="yes" new="yes"/>
         <city cityId="C1" name="Homeport" empire="House Test" empireId="7" stance="Empire" capital="Empire, Galaxy, Sector" admin="Capitol" airport="Airport Terminal"/>
         <city cityId="C2" name="Outpost"/>
         <star starId="STA" name="Aldera Alpha" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="5" surfaceTempK="5,527°K" hab="Habitable Zone at 1.5au" shell="Photosphere" diameter="0.23au Diameter">

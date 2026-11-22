@@ -6,7 +6,10 @@
         <wormhole destX="409.3" destY="104.0" destZ="-16.5" destSystemId="SYS00085" explored="No" polarity="positive"/>
         <wormhole destX="413.5" destY="95.2" destZ="-25.4" destSystemId="SYS00005" explored="Yes" polarity="negative"/>
         <wormhole destX="409.2" destY="106.3" destZ="-33.8" destSystemId="SYS00045" explored="No" polarity="neutral"/>
-        <spacecraft spacecraftId="SCR00001" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00001" name="Mock Station 1" ownership="Company" structure="Station" empire="Mock Empire" empireId="7" stance="Empire" condition="Green" health="255" moving="no" space="orbit" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00002" name="Mock Starship 2" ownership="Fleet" structure="Starship" empire="Mock Empire" empireId="7" stance="Empire" condition="Green" health="255" moving="yes" space="system" sensors="no" warpDrive="hot" wormholeDrive="yes" captain="yes" officer="yes" new="no"/>
+        <spacecraft spacecraftId="SCR00003" name="Mock Spaceship 3" ownership="Fleet" structure="Spaceship" empire="Test Dominion" empireId="12" stance="Friend" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00004" name="Mock Station 4" ownership="Fleet" structure="Station" empire="Mock Empire" empireId="7" stance="Empire" condition="Green" health="255" moving="no" space="system" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <city cityId="CTY00001" name="Draebioth Hold" empire="Mock Empire" empireId="7" stance="Empire" capital="Empire, Galaxy, Sector" admin="Capitol" airport="Airport Terminal"/>
         <city cityId="CTY00002" name="Britiosaen Hold" empire="Test Dominion" empireId="12" stance="Friend"/>
         <star starId="STR00001" name="XFK'EK'QG'e Alpha" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="8" surfaceTempK="5,203°K" hab="Habitable Zone at 1.26au" shell="Photosphere" diameter="0.202au Diameter">
@@ -172,6 +175,7 @@
         </planet>
       </system>
       <system systemId="SYS00002" name="JZT'XC'ZJ'c" x="414.1" y="97.6" z="-26.8" eod="Explored">
+        <spacecraft spacecraftId="SCR00005" name="Mock Spaceship 5" ownership="Fleet" structure="Spaceship" empire="Mock Empire" empireId="7" stance="Empire" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <city cityId="CTY00003" name="Staebrefen Hold" empire="Test Dominion" empireId="12" stance="Friend" capital="Empire, Galaxy, Sector" admin="Capitol" airport="Airport Terminal"/>
         <star starId="STR00004" name="JZT'XC'ZJ'c Alpha" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="5" surfaceTempK="5,332°K" hab="Habitable Zone at 1.43au" shell="Photosphere" diameter="0.236au Diameter">
           <resource name="Type A Preons" quality="33" abundance="6"/>
@@ -278,6 +282,8 @@
       </system>
       <system systemId="SYS00003" name="HKM'LT'UX'n" x="412.0" y="96.2" z="-28.4" eod="Explored">
         <wormhole destX="424.2" destY="111.9" destZ="-32.1" destSystemId="SYS00070" explored="Yes" polarity="positive"/>
+        <spacecraft spacecraftId="SCR00006" name="Mock Spaceship 6" ownership="Fleet" structure="Spaceship" empire="Test Dominion" empireId="12" stance="Friend" condition="Yellow" health="255" moving="no" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00007" name="Mock Spaceship 7" ownership="Fleet" structure="Spaceship" empire="Placeholder Union" empireId="31" stance="Neutral" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <city cityId="CTY00004" name="Verioze Hold" empire="Mock Empire" empireId="7" stance="Empire"/>
         <star starId="STR00006" name="HKM'LT'UX'n" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="3" surfaceTempK="5,828°K" hab="Habitable Zone at 1.4au" shell="Photosphere" diameter="0.21au Diameter"/>
         <planet planetId="PLN00022" name="HKM'LT'UX'n I" bodyType="Planet" orbit="Orbiting HKM'LT'UX'n at 0.84au 153°" zone="Inner Zone">
@@ -855,6 +861,8 @@
       <system systemId="SYS00010" name="TTS'MA'PF'u" x="407.8" y="95.2" z="-34.3" eod="Surveyed">
         <wormhole destX="413.9" destY="111.1" destZ="-23.7" destSystemId="SYS00135" explored="Yes" polarity="neutral"/>
         <wormhole destX="404.8" destY="99.2" destZ="-31.9" explored="No" polarity="positive"/>
+        <spacecraft spacecraftId="SCR00008" name="Mock Spaceship 8" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00009" name="Mock Station 9" ownership="Fleet" structure="Station" empire="Test Dominion" empireId="12" stance="Friend" condition="Green" health="255" moving="no" space="atmosphere" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <city cityId="CTY00006" name="Zadrul Hold" empire="Placeholder Union" empireId="31" stance="Neutral" capital="Empire, Galaxy, Sector" admin="Capitol" airport="Airport Terminal"/>
         <star starId="STR00016" name="TTS'MA'PF'u" type="A White" orbit="Primary" size="V Main Sequence" spectralClass="4" surfaceTempK="9,681°K" hab="Habitable Zone at 2.64au" shell="Photosphere" diameter="0.411au Diameter">
           <resource name="Type K Preons" quality="126" abundance="4"/>
@@ -930,7 +938,7 @@
       </system>
       <system systemId="SYS00011" name="Deep Space" eod="Unexplored"/>
       <system systemId="SYS00012" name="Zasioth" catalog="DQD'ND'VK'e" x="407.9" y="99.5" z="-34.1" eod="Unexplored">
-        <spacecraft spacecraftId="SCR00002" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00010" name="Mock Starship 10" ownership="Fleet" structure="Starship" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
       </system>
       <system systemId="SYS00013" name="MQN'FS'CB'j" x="406.7" y="99.2" z="-30.4" eod="Explored">
         <star starId="STR00018" name="MQN'FS'CB'j Alpha" type="F Yellow White" orbit="Primary" size="V Main Sequence" spectralClass="8" surfaceTempK="7,457°K" hab="Habitable Zone at 2.32au" shell="Photosphere" diameter="0.236au Diameter"/>
@@ -949,6 +957,7 @@
         <wormhole destX="412.9" destY="102.9" destZ="-17.8" destSystemId="SYS00080" explored="Yes" polarity="neutral"/>
         <wormhole destX="421.9" destY="113.1" destZ="-34.7" destSystemId="SYS00072" explored="Yes" polarity="negative"/>
         <wormhole destX="423.9" destY="109.6" destZ="-19.4" destSystemId="SYS00139" explored="Yes" polarity="positive"/>
+        <spacecraft spacecraftId="SCR00011" name="Mock Starship 11" ownership="Fleet" structure="Starship" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="yes" wormholeDrive="hot" captain="no" officer="no" new="yes"/>
         <city cityId="CTY00007" name="Pozol Hold"/>
         <star starId="STR00022" name="PYW'XL'KY'q" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="7" surfaceTempK="5,624°K" hab="Habitable Zone at 0.82au" shell="Photosphere" diameter="0.243au Diameter">
           <resource name="Type M Preons" quality="110" abundance="12"/>
@@ -1093,7 +1102,7 @@
         <star starId="STR00026" name="WRD'DP'YE'g" type="K Orange" orbit="Primary" size="V Main Sequence" spectralClass="4" surfaceTempK="3,942°K" hab="Habitable Zone at 0.48au" shell="Photosphere" diameter="0.137au Diameter"/>
       </system>
       <system systemId="SYS00021" name="QFF'LD'AQ'z" x="421.2" y="99.9" z="-32.9" eod="Surveyed">
-        <spacecraft spacecraftId="SCR00003" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00012" name="Mock Station 12" ownership="Fleet" structure="Station" empire="Mock Empire" empireId="7" condition="Green" health="255" moving="yes" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00027" name="QFF'LD'AQ'z Alpha" type="K Orange" orbit="Primary" size="V Main Sequence" spectralClass="1" surfaceTempK="4,273°K" hab="Habitable Zone at 0.59au" shell="Photosphere" diameter="0.186au Diameter">
           <resource name="Borexino Precipitate" quality="20" abundance="11"/>
           <resource name="Type M Preons" quality="229" abundance="8"/>
@@ -1298,7 +1307,7 @@
         </star>
       </system>
       <system systemId="SYS00026" name="Thastae" catalog="UEG'ES'EV'h" x="418.9" y="96.1" z="-34.5" eod="Explored">
-        <spacecraft spacecraftId="SCR00004" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00013" name="Mock Spaceship 13" ownership="Fleet" structure="Spaceship" empire="Placeholder Union" empireId="31" stance="Neutral" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00033" name="Thastae" type="B Blue White" orbit="Primary" size="V Main Sequence" spectralClass="2" surfaceTempK="14,905°K" hab="Habitable Zone at 6.97au" shell="Photosphere" diameter="0.748au Diameter">
           <resource name="Borexino Precipitate" quality="53" abundance="7"/>
           <resource name="Type O Preons" quality="227" abundance="10"/>
@@ -1550,7 +1559,7 @@
       <system systemId="SYS00030" name="Deep Space" eod="Unexplored"/>
       <system systemId="SYS00031" name="FUT'GD'GH'k" x="416.4" y="104.0" z="-28.1" eod="Explored">
         <wormhole destX="405.9" destY="113.1" destZ="-23.3" destSystemId="SYS00131" explored="Yes" polarity="positive"/>
-        <spacecraft spacecraftId="SCR00005" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00014" name="Mock Spaceship 14" ownership="Fleet" structure="Spaceship" empire="Placeholder Union" empireId="31" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00037" name="FUT'GD'GH'k" type="A White" orbit="Primary" size="V Main Sequence" spectralClass="0" surfaceTempK="8,054°K" hab="Habitable Zone at 3.81au" shell="Photosphere" diameter="0.392au Diameter"/>
         <planet planetId="PLN00129" name="FUT'GD'GH'k I" bodyType="Planet" orbit="Orbiting FUT'GD'GH'k at 1.03au 225°" zone="Inferno Zone">
           <geosphere diameter="6,300m Diameter" gravity="6.56m/s² Sea Level Gravity" resourceZones="1">
@@ -1658,11 +1667,11 @@
         </planet>
       </system>
       <system systemId="SYS00032" name="AJV'TN'TM'c" x="423.0" y="103.5" z="-34.0" eod="Explored">
-        <spacecraft spacecraftId="SCR00006" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00015" name="Mock Spaceship 15" ownership="Fleet" structure="Spaceship" empire="Test Dominion" empireId="12" condition="Green" health="255" moving="no" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00038" name="AJV'TN'TM'c" type="M Red" orbit="Primary" size="D Dwarf" spectralClass="8" surfaceTempK="3,464°K" hab="No Habitable Zone - Too Cool" shell="Photosphere" diameter="0.15au Diameter"/>
       </system>
       <system systemId="SYS00033" name="VCH'QW'CB'v" x="422.4" y="99.8" z="-32.1" eod="Unexplored">
-        <spacecraft spacecraftId="SCR00007" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00016" name="Mock Spaceship 16" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00039" name="VCH'QW'CB'v" type="K Orange" orbit="Primary" size="V Main Sequence" spectralClass="7" surfaceTempK="3,832°K" hab="Habitable Zone at 0.71au" shell="Photosphere" diameter="0.176au Diameter"/>
       </system>
       <system systemId="SYS00034" name="Kiogoth" catalog="LGW'QR'MA'a" x="422.9" y="104.1" z="-34.7" eod="Surveyed">
@@ -2037,7 +2046,7 @@
         </planet>
       </system>
       <system systemId="SYS00040" name="GJY'LA'JC'v" x="416.6" y="99.7" z="-34.1" eod="Surveyed">
-        <spacecraft spacecraftId="SCR00008" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00017" name="Mock Spaceship 17" ownership="Fleet" structure="Spaceship" empire="Placeholder Union" empireId="31" stance="Neutral" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00046" name="GJY'LA'JC'v" type="M Red" orbit="Primary" size="D Dwarf" spectralClass="4" surfaceTempK="2,773°K" hab="No Habitable Zone - Too Cool" shell="Photosphere" diameter="0.115au Diameter">
           <resource name="Type B Preons" quality="26" abundance="1"/>
         </star>
@@ -2370,7 +2379,7 @@
         </planet>
       </system>
       <system systemId="SYS00047" name="FZD'WS'VH'q" x="406.9" y="107.7" z="-30.5" eod="Surveyed">
-        <spacecraft spacecraftId="SCR00009" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00018" name="Mock Station 18" ownership="Fleet" structure="Station" empire="Mock Empire" empireId="7" stance="Empire" condition="Green" health="255" moving="yes" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00053" name="FZD'WS'VH'q" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="7" surfaceTempK="5,391°K" hab="Habitable Zone at 1.16au" shell="Photosphere" diameter="0.226au Diameter">
           <resource name="Type G Preons" quality="155" abundance="2"/>
         </star>
@@ -2772,7 +2781,7 @@
         </planet>
       </system>
       <system systemId="SYS00054" name="ZHM'RL'VZ'u" x="413.4" y="109.2" z="-31.3" eod="Unexplored">
-        <spacecraft spacecraftId="SCR00010" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00019" name="Mock Spaceship 19" ownership="Fleet" structure="Spaceship" empire="Mock Empire" empireId="7" stance="Empire" condition="Green" health="255" moving="no" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
       </system>
       <system systemId="SYS00055" name="Diodriobar" catalog="JMD'VN'SC't" x="406.1" y="108.1" z="-29.9" eod="Surveyed">
         <wormhole destX="413.4" destY="109.2" destZ="-31.3" destSystemId="SYS00054" explored="Yes" polarity="neutral"/>
@@ -2862,7 +2871,7 @@
         <wormhole destX="424.3" destY="113.7" destZ="-16.1" destSystemId="SYS00149" explored="Yes" polarity="neutral"/>
         <wormhole destX="405.5" destY="113.1" destZ="-30.7" explored="Yes" polarity="positive"/>
         <wormhole destX="406.6" destY="107.0" destZ="-24.9" explored="Yes" polarity="neutral"/>
-        <spacecraft spacecraftId="SCR00011" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00020" name="Mock Spaceship 20" ownership="Fleet" structure="Spaceship" empire="Test Dominion" empireId="12" condition="Green" health="255" moving="yes" space="orbit" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00063" name="SKY'YT'BK'j" type="A White" orbit="Primary" size="V Main Sequence" spectralClass="6" surfaceTempK="10,142°K" hab="Habitable Zone at 2.82au" shell="Photosphere" diameter="0.351au Diameter">
           <resource name="Type B Preons" quality="215" abundance="5"/>
           <resource name="Type G Preons" quality="36" abundance="12"/>
@@ -3454,7 +3463,7 @@
         </planet>
       </system>
       <system systemId="SYS00066" name="Sasaefol" catalog="VTA'XN'SF'y" x="418.7" y="111.0" z="-25.2" eod="Explored">
-        <spacecraft spacecraftId="SCR00012" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00021" name="Mock Spaceship 21" ownership="Fleet" structure="Spaceship" empire="Placeholder Union" empireId="31" stance="Neutral" condition="Green" health="255" moving="yes" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00071" name="Sasaefol" type="M Red" orbit="Primary" size="III Giant" spectralClass="3" surfaceTempK="3,488°K" hab="No Habitable Zone - Too Cool" shell="Photosphere" diameter="1.01au Diameter"/>
       </system>
       <system systemId="SYS00067" name="YWP'QL'PW't" x="415.4" y="110.6" z="-34.4" eod="Unexplored">
@@ -3867,7 +3876,7 @@
         <wormhole destX="419.2" destY="104.2" destZ="-32.1" explored="Yes" polarity="neutral"/>
         <wormhole destX="412.3" destY="101.6" destZ="-19.1" destSystemId="SYS00079" explored="No" polarity="neutral"/>
         <wormhole destX="423.1" destY="105.3" destZ="-32.2" explored="Yes" polarity="negative"/>
-        <spacecraft spacecraftId="SCR00013" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00022" name="Mock Starship 22" ownership="Fleet" structure="Starship" empire="Test Dominion" empireId="12" stance="Friend" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00079" name="RBC'LM'YQ'e" type="A White" orbit="Primary" size="V Main Sequence" spectralClass="8" surfaceTempK="9,377°K" hab="Habitable Zone at 3.71au" shell="Photosphere" diameter="0.366au Diameter"/>
         <planet planetId="PLN00331" name="RBC'LM'YQ'e I" bodyType="Gas Giant" orbit="Orbiting RBC'LM'YQ'e at 1.26au 123°" zone="Inferno Zone">
           <geosphere diameter="5,000m Diameter" gravity="6939.52m/s² Core Gravity" resourceZones="2">
@@ -4376,7 +4385,7 @@
       <system systemId="SYS00085" name="GKX'NC'ZC'z" x="409.3" y="104.0" z="-16.5" eod="Unexplored">
         <wormhole destX="419.3" destY="95.6" destZ="-30.4" destSystemId="SYS00037" explored="Yes" polarity="positive"/>
         <wormhole destX="411.6" destY="105.5" destZ="-19.7" destSystemId="SYS00127" explored="No" polarity="negative"/>
-        <spacecraft spacecraftId="SCR00014" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00023" name="Mock Spaceship 23" ownership="Fleet" structure="Spaceship" empire="Placeholder Union" empireId="31" condition="Green" health="255" moving="no" space="orbit" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00089" name="GKX'NC'ZC'z" type="M Red" orbit="Primary" size="D Dwarf" spectralClass="1" surfaceTempK="2,746°K" hab="No Habitable Zone - Too Cool" shell="Photosphere" diameter="0.103au Diameter">
           <resource name="Type B Preons" quality="226" abundance="1"/>
           <resource name="Type F Preons" quality="173" abundance="9"/>
@@ -4569,7 +4578,7 @@
         </planet>
       </system>
       <system systemId="SYS00088" name="Bavael" catalog="EVX'FN'ER'e" x="405.9" y="96.2" z="-20.2" eod="Surveyed">
-        <spacecraft spacecraftId="SCR00015" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00024" name="Mock Spaceship 24" ownership="Fleet" structure="Spaceship" empire="Test Dominion" empireId="12" stance="Friend" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00092" name="Bavael" type="B Blue White" orbit="Primary" size="V Main Sequence" spectralClass="7" surfaceTempK="19,757°K" hab="Habitable Zone at 5.48au" shell="Photosphere" diameter="0.562au Diameter">
           <resource name="Antiflux Particles" quality="179" abundance="3"/>
           <resource name="Type G Preons" quality="231" abundance="6"/>
@@ -4675,7 +4684,7 @@
       </system>
       <system systemId="SYS00091" name="Viozakrox" catalog="JZK'UM'CV'm" x="408.8" y="101.5" z="-17.3" eod="Surveyed">
         <wormhole destX="416.2" destY="110.0" destZ="-18.7" destSystemId="SYS00138" explored="Yes" polarity="negative"/>
-        <spacecraft spacecraftId="SCR00016" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00025" name="Mock Station 25" ownership="Fleet" structure="Station" condition="Green" health="255" moving="yes" space="orbit" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00094" name="Viozakrox" type="F Yellow White" orbit="Primary" size="V Main Sequence" spectralClass="5" surfaceTempK="6,507°K" hab="Habitable Zone at 2.19au" shell="Photosphere" diameter="0.217au Diameter"/>
         <planet planetId="PLN00396" name="Viozakrox I" bodyType="Planet" orbit="Orbiting Viozakrox at 1.02au 214°" zone="Inner Zone">
           <geosphere diameter="18,800m Diameter" gravity="16.63m/s² Sea Level Gravity" resourceZones="1">
@@ -4718,7 +4727,7 @@
         </planet>
       </system>
       <system systemId="SYS00092" name="KMK'YL'UE'g" x="408.7" y="99.6" z="-18.4" eod="Surveyed">
-        <spacecraft spacecraftId="SCR00017" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00026" name="Mock Station 26" ownership="Fleet" structure="Station" empire="Placeholder Union" empireId="31" stance="Neutral" condition="Green" health="255" moving="yes" space="orbit" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00095" name="KMK'YL'UE'g" type="B Blue White" orbit="Primary" size="V Main Sequence" spectralClass="7" surfaceTempK="24,852°K" hab="Habitable Zone at 5.07au" shell="Photosphere" diameter="0.565au Diameter">
           <resource name="Type B Preons" quality="40" abundance="8"/>
           <resource name="Type O Preons" quality="69" abundance="3"/>
@@ -5320,7 +5329,7 @@
       </system>
       <system systemId="SYS00100" name="FKD'TP'GA's" x="421.7" y="103.9" z="-23.1" eod="Surveyed">
         <wormhole destX="412.3" destY="101.6" destZ="-19.1" destSystemId="SYS00079" explored="Yes" polarity="negative"/>
-        <spacecraft spacecraftId="SCR00018" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00027" name="Mock Starship 27" ownership="Fleet" structure="Starship" empire="Placeholder Union" empireId="31" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00103" name="FKD'TP'GA's" type="M Red" orbit="Primary" size="III Giant" spectralClass="5" surfaceTempK="3,406°K" hab="No Habitable Zone - Too Cool" shell="Photosphere" diameter="1.35au Diameter"/>
         <planet planetId="PLN00449" name="FKD'TP'GA's I" bodyType="Planet" orbit="Orbiting FKD'TP'GA's at 0.8au 197°" zone="Inner Zone">
           <geosphere diameter="12,200m Diameter" gravity="11.37m/s² Sea Level Gravity" resourceZones="1">
@@ -5457,7 +5466,7 @@
         </planet>
       </system>
       <system systemId="SYS00101" name="Naevoth" catalog="LXB'JW'JT'j" x="420.7" y="95.2" z="-19.3" eod="Explored">
-        <spacecraft spacecraftId="SCR00019" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00028" name="Mock Spaceship 28" ownership="Fleet" structure="Spaceship" empire="Placeholder Union" empireId="31" stance="Neutral" condition="Green" health="255" moving="no" space="orbit" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00104" name="Naevoth" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="7" surfaceTempK="5,709°K" hab="Habitable Zone at 0.91au" shell="Photosphere" diameter="0.168au Diameter">
           <resource name="Type A Preons" quality="221" abundance="1"/>
         </star>
@@ -5588,7 +5597,7 @@
         <wormhole destX="421.6" destY="98.4" destZ="-23.2" explored="No" polarity="positive"/>
         <wormhole destX="416.8" destY="96.6" destZ="-17.4" destSystemId="SYS00097" explored="Yes" polarity="positive"/>
         <wormhole destX="424.3" destY="113.7" destZ="-16.1" destSystemId="SYS00149" explored="Yes" polarity="negative"/>
-        <spacecraft spacecraftId="SCR00020" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00029" name="Mock Starship 29" ownership="Fleet" structure="Starship" empire="Mock Empire" empireId="7" stance="Empire" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00107" name="Labas" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="7" surfaceTempK="6,086°K" hab="Habitable Zone at 1.06au" shell="Photosphere" diameter="0.196au Diameter"/>
         <planet planetId="PLN00475" name="Labas I" bodyType="Planet" orbit="Orbiting Labas at 0.82au 325°" zone="Habitable Zone">
           <geosphere diameter="11,500m Diameter" gravity="4.66m/s² Sea Level Gravity" resourceZones="1">
@@ -5656,7 +5665,7 @@
       <system systemId="SYS00107" name="Tedis" catalog="JGG'MK'UY'c" x="423.0" y="96.9" z="-19.7" eod="Surveyed">
         <wormhole destX="413.5" destY="95.2" destZ="-25.4" destSystemId="SYS00005" explored="No" polarity="positive"/>
         <wormhole destX="412.3" destY="101.6" destZ="-19.1" destSystemId="SYS00079" explored="No" polarity="negative"/>
-        <spacecraft spacecraftId="SCR00021" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00030" name="Mock Starship 30" ownership="Fleet" structure="Starship" empire="Placeholder Union" empireId="31" stance="Neutral" condition="Green" health="255" moving="yes" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00109" name="Tedis" type="K Orange" orbit="Primary" size="V Main Sequence" spectralClass="5" surfaceTempK="4,584°K" hab="Habitable Zone at 0.46au" shell="Photosphere" diameter="0.199au Diameter"/>
         <planet planetId="PLN00481" name="Tedis I" bodyType="Planet" orbit="Orbiting Tedis at 0.84au 177°" zone="Outer Zone">
           <geosphere diameter="24,800m Diameter" gravity="8.51m/s² Sea Level Gravity" resourceZones="1">
@@ -6254,7 +6263,7 @@
       <system systemId="SYS00116" name="Thamazael" catalog="TNQ'FJ'NT'a" x="417.4" y="97.9" z="-21.0" eod="Surveyed">
         <wormhole destX="408.3" destY="111.0" destZ="-17.4" destSystemId="SYS00122" explored="No" polarity="neutral"/>
         <wormhole destX="406.9" destY="100.6" destZ="-16.2" destSystemId="SYS00094" explored="No" polarity="neutral"/>
-        <spacecraft spacecraftId="SCR00022" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00031" name="Mock Station 31" ownership="Fleet" structure="Station" condition="Green" health="255" moving="no" space="orbit" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00118" name="Thamazael" type="F Yellow White" orbit="Primary" size="V Main Sequence" spectralClass="2" surfaceTempK="6,393°K" hab="Habitable Zone at 2.13au" shell="Photosphere" diameter="0.224au Diameter">
           <resource name="Type G Preons" quality="46" abundance="8"/>
         </star>
@@ -6754,7 +6763,7 @@
         <wormhole destX="408.3" destY="112.9" destZ="-15.9" destSystemId="SYS00121" explored="No" polarity="negative"/>
         <wormhole destX="415.5" destY="102.3" destZ="-27.8" destSystemId="SYS00023" explored="Yes" polarity="negative"/>
         <wormhole destX="420.7" destY="96.7" destZ="-23.2" destSystemId="SYS00104" explored="Yes" polarity="positive"/>
-        <spacecraft spacecraftId="SCR00023" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00032" name="Mock Spaceship 32" ownership="Fleet" structure="Spaceship" empire="Test Dominion" empireId="12" stance="Friend" condition="Green" health="255" moving="yes" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00126" name="Kriniora" type="M Red" orbit="Primary" size="III Giant" spectralClass="5" surfaceTempK="2,866°K" hab="No Habitable Zone - Too Cool" shell="Photosphere" diameter="1.347au Diameter">
           <resource name="Antiflux Particles" quality="117" abundance="7"/>
           <resource name="Borexino Precipitate" quality="27" abundance="2"/>
@@ -7055,7 +7064,7 @@
       </system>
       <system systemId="SYS00131" name="Gluzulis" catalog="RTQ'FJ'XZ'h" x="405.9" y="113.1" z="-23.3" eod="Surveyed">
         <wormhole destX="410.2" destY="107.2" destZ="-28.8" explored="No" polarity="positive"/>
-        <spacecraft spacecraftId="SCR00024" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00033" name="Mock Station 33" ownership="Fleet" structure="Station" empire="Test Dominion" empireId="12" stance="Friend" condition="Green" health="255" moving="no" space="system" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00131" name="Gluzulis" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="1" surfaceTempK="5,695°K" hab="Habitable Zone at 0.93au" shell="Photosphere" diameter="0.226au Diameter"/>
         <planet planetId="PLN00606" name="Gluzulis I" bodyType="Planet" orbit="Orbiting Gluzulis at 0.68au 334°" zone="Inner Zone">
           <geosphere diameter="21,200m Diameter" gravity="12.45m/s² Sea Level Gravity" resourceZones="1">
@@ -7104,7 +7113,7 @@
         </planet>
       </system>
       <system systemId="SYS00132" name="MVJ'RM'CM'a" x="412.9" y="110.0" z="-23.1" eod="Surveyed">
-        <spacecraft spacecraftId="SCR00025" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00034" name="Mock Station 34" ownership="Fleet" structure="Station" empire="Mock Empire" empireId="7" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00132" name="MVJ'RM'CM'a" type="A White" orbit="Primary" size="V Main Sequence" spectralClass="2" surfaceTempK="10,289°K" hab="Habitable Zone at 3.83au" shell="Photosphere" diameter="0.463au Diameter">
           <resource name="Type B Preons" quality="124" abundance="9"/>
         </star>
@@ -7525,7 +7534,7 @@
       <system systemId="SYS00141" name="TEJ'RK'UE'l" x="416.9" y="114.6" z="-22.4" eod="Explored">
         <wormhole destX="413.5" destY="95.2" destZ="-25.4" destSystemId="SYS00005" explored="Yes" polarity="neutral"/>
         <wormhole destX="421.2" destY="99.9" destZ="-32.9" destSystemId="SYS00021" explored="Yes" polarity="positive"/>
-        <spacecraft spacecraftId="SCR00026" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00035" name="Mock Spaceship 35" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00141" name="TEJ'RK'UE'l" type="B Blue White" orbit="Primary" size="V Main Sequence" spectralClass="3" surfaceTempK="15,742°K" hab="Habitable Zone at 5.16au" shell="Photosphere" diameter="0.69au Diameter">
           <resource name="Type B Preons" quality="195" abundance="12"/>
         </star>
@@ -7847,7 +7856,7 @@
         </planet>
       </system>
       <system systemId="SYS00144" name="Mosekio" catalog="GNL'PC'YB'd" x="415.9" y="113.0" z="-20.1" eod="Unexplored">
-        <spacecraft spacecraftId="SCR00027" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00036" name="Mock Starship 36" ownership="Fleet" structure="Starship" condition="Green" health="255" moving="no" space="system" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00144" name="Mosekio" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="0" surfaceTempK="5,642°K" hab="Habitable Zone at 1.48au" shell="Photosphere" diameter="0.217au Diameter">
           <resource name="Type F Preons" quality="99" abundance="9"/>
           <resource name="Type K Preons" quality="87" abundance="7"/>
@@ -7861,7 +7870,7 @@
         </star>
       </system>
       <system systemId="SYS00146" name="RYZ'ZQ'ZV'w" x="416.0" y="106.8" z="-17.2" eod="Surveyed">
-        <spacecraft spacecraftId="SCR00028" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00037" name="Mock Starship 37" ownership="Fleet" structure="Starship" empire="Mock Empire" empireId="7" condition="Green" health="255" moving="no" space="deep" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00146" name="RYZ'ZQ'ZV'w" type="K Orange" orbit="Primary" size="V Main Sequence" spectralClass="2" surfaceTempK="3,742°K" hab="Habitable Zone at 0.45au" shell="Photosphere" diameter="0.139au Diameter">
           <resource name="Type G Preons" quality="42" abundance="5"/>
         </star>
@@ -8208,7 +8217,7 @@
         </planet>
       </system>
       <system systemId="SYS00156" name="Bravipas" catalog="CLS'PR'DP'r" x="4199.0" y="-1499.5" z="895.2" eod="Explored">
-        <spacecraft spacecraftId="SCR00029" name="Mock Hauler" ownership="Fleet" structure="Spaceship" condition="Green" health="255" moving="no" space="deep" sensors="yes" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
+        <spacecraft spacecraftId="SCR00038" name="Mock Starship 38" ownership="Fleet" structure="Starship" empire="Test Dominion" empireId="12" condition="Green" health="255" moving="no" space="orbit" sensors="no" warpDrive="none" wormholeDrive="none" captain="no" officer="no" new="no"/>
         <star starId="STR00155" name="Bravipas" type="Neutron Star" orbit="Primary" size="" surfaceTempK="396,638°K" hab="No Habitable Zone - Too Cool" shell="Neutron Sphere" diameter="0.266au Diameter"/>
         <planet planetId="PLN00701" name="Bravipas I" bodyType="Planet" orbit="Orbiting Bravipas at 0.81au 210°" zone="Inner Zone">
           <geosphere diameter="20,500m Diameter" gravity="11.26m/s² Sea Level Gravity" resourceZones="1">

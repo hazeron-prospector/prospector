@@ -46,7 +46,7 @@ describe('bestDepositsBySystem', () => {
 describe('buildSystemSummaries', () => {
   it('counts habitable worlds and attaches top resources', () => {
     const sys = (id: string, planets: Planet[]): System =>
-      ({ systemId: id, sectorId: 's', name: id, eod: 'Explored', stars: [], planets, wormholes: [], cities: [] }) as System
+      ({ systemId: id, sectorId: 's', name: id, eod: 'Explored', stars: [], planets, wormholes: [], cities: [], spacecraft: [] }) as System
     const map = {
       systems: [
         sys('A', [planet('1', 'Habitable', 'Standard'), planet('2', 'Habitable', 'Standard'), planet('3', 'Outer', 'Standard')]),

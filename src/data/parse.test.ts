@@ -70,8 +70,50 @@ describe('wormholes, cities, spacecraft', () => {
       { cityId: 'C2', name: 'Outpost' },
     ])
   })
-  it('ignores spacecraft entirely', () => {
-    expect(JSON.stringify(map)).not.toContain('Ignored')
+  it('parses spacecraft with every exporter attribute', () => {
+    expect(sys('SYSA').spacecraft[0]).toEqual({
+      spacecraftId: 'SC1',
+      name: 'Wayfarer',
+      ownership: 'Fleet',
+      structure: 'Spaceship',
+      empire: 'House Test',
+      empireId: '7',
+      stance: 'Empire',
+      condition: 'Green',
+      health: 255,
+      moving: false,
+      space: 'deep',
+      sensors: true,
+      warpDrive: 'none',
+      wormholeDrive: 'none',
+      captain: false,
+      officer: false,
+      isNew: false,
+    })
+  })
+  it('keeps empire, empireId and stance optional (written only when known)', () => {
+    const sc = sys('SYSA').spacecraft[1]
+    expect(sc).toMatchObject({
+      name: 'Drifter & Co',
+      ownership: 'Company',
+      structure: 'Station',
+      condition: 'Red',
+      health: 12,
+      moving: true,
+      space: 'system',
+      warpDrive: 'hot',
+      wormholeDrive: 'yes',
+      captain: true,
+      officer: true,
+      isNew: true,
+    })
+    expect(sc).not.toHaveProperty('empire')
+    expect(sc).not.toHaveProperty('empireId')
+    expect(sc).not.toHaveProperty('stance')
+  })
+  it('gives systems without spacecraft an empty list', () => {
+    expect(sys('SYSB').spacecraft).toEqual([])
+    expect(sys('SYSD').spacecraft).toEqual([])
   })
 })
 

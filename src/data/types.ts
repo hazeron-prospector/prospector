@@ -10,7 +10,7 @@
  */
 
 /** Bump when the shape of StarMap changes; the IndexedDB cache discards older versions. */
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export type Eod = 'Surveyed' | 'Explored' | 'Unexplored'
 export type WormholePolarity = 'positive' | 'negative' | 'neutral'
@@ -151,6 +151,40 @@ export interface City {
   airport?: string
 }
 
+/**
+ * A spacecraft listed under a system (it has no coordinates of its own).
+ * The exporter always writes every attribute except `empire`/`empireId` (only when the empire is
+ * known) and `stance` (only when known); those three are optional here.
+ */
+export interface Spacecraft {
+  spacecraftId: string
+  name: string
+  /** 'Fleet' | 'Company'. */
+  ownership: string
+  /** 'Station' | 'Starship' | 'Spaceship'. */
+  structure: string
+  empire?: string
+  empireId?: string
+  /** 'Empire' (our own) | 'Friend' | 'Neutral' | 'Enemy' | 'Vassal'. */
+  stance?: string
+  /** 'Green' | 'Yellow' | 'Red'. */
+  condition: string
+  /** 0-255. */
+  health: number
+  moving: boolean
+  /** 'atmosphere' | 'orbit' | 'system' | 'deep'. */
+  space: string
+  sensors: boolean
+  /** 'none' | 'yes' | 'hot'. */
+  warpDrive: string
+  /** 'none' | 'yes' | 'hot'. */
+  wormholeDrive: string
+  captain: boolean
+  officer: boolean
+  /** The exporter's `new` attribute. */
+  isNew: boolean
+}
+
 export interface System {
   systemId: string
   sectorId: string
@@ -169,6 +203,7 @@ export interface System {
   planets: Planet[]
   wormholes: Wormhole[]
   cities: City[]
+  spacecraft: Spacecraft[]
 }
 
 export interface Sector {

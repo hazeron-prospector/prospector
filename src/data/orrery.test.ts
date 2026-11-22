@@ -10,7 +10,7 @@ const planet = (name: string, orbit: string, bodyType = 'Planet', extra: Partial
   planetId: name, name, bodyType, orbit: parseOrbit(orbit), zone: 'Inner', ...extra,
 })
 const sys = (stars: Star[], planets: Planet[]): System => ({
-  systemId: 's', sectorId: 'x', name: 'S', eod: 'Surveyed', stars, planets, wormholes: [], cities: [],
+  systemId: 's', sectorId: 'x', name: 'S', eod: 'Surveyed', stars, planets, wormholes: [], cities: [], spacecraft: [],
 })
 const ang = (b: { x: number; y: number }, c = { x: 0, y: 0 }) =>
   ((Math.atan2(-(b.y - c.y), b.x - c.x) * 180) / Math.PI + 360) % 360
