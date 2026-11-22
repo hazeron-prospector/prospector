@@ -25,6 +25,8 @@ interface Props<T> {
   onSort: (s: Sort<T>) => void
   onRowClick?: (row: T) => void
   rowHeight?: number
+  /** Shown instead of the default message when there are no rows. */
+  empty?: ReactNode
 }
 
 /** Generic virtualized, sticky-header, click-to-sort table (fixed-height rows). */
@@ -36,6 +38,7 @@ export function VirtualTable<T>({
   onSort,
   onRowClick,
   rowHeight = 24,
+  empty,
 }: Props<T>) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
@@ -121,7 +124,7 @@ export function VirtualTable<T>({
           })}
         </div>
         {rows.length === 0 && (
-          <div className="p-6 text-center text-sm text-muted-foreground">No rows match the current filters.</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">{empty ?? 'No rows match the current filters.'}</div>
         )}
       </div>
     </div>

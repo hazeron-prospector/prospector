@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
-import { DEFAULT_RESOURCE_FILTER, sortRows, filterResourceRows } from '@/data/filter'
+import { sortRows } from '@/data/filter'
 import type { ResourceRow } from '@/data/rows'
 import type { Sphere } from '@/data/types'
 import { CATEGORIES } from '@/data/catalog'
 import { distinct } from './distinct'
 import { FilterBar } from './FilterBar'
+import { FilterChips } from './FilterChips'
+import { countSystems, resultCountText, suggestLoosen } from './filterChips'
 import { MultiSelect } from './MultiSelect'
 import { NumberInput } from './NumberInput'
 import { ResourceIcon } from './ResourceIcon'
@@ -72,14 +74,10 @@ const COLUMNS: Column<ResourceRow>[] = [
   },
 ]
 
-export function ResourcesView({
-  rows,
-  onOpenSystem,
-}: {
-  rows: readonly ResourceRow[]
-  onOpenSystem: (systemId: string) => void
-}) {
-  const { allRows, filter, patch, setFilter, sort, setSort } = useResourceFilter()
+export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: string) => void }) {
+  const { allRows: rows, filter, patch, setFilter, reset, filteredResourceRows, sort, setSort, quickFilter, setQuickFilter } =
+    useResourceFilter()
+  const quick = quickFilter.resources
 
   const options = useMemo(
     () => ({
@@ -89,18 +87,18 @@ export function ResourcesView({
     }),
     [rows],
   )
-  // Sort once per sort change; filtering preserves order.
-  const sorted = useMemo(() => sortRows(rows, sort.key, sort.dir), [rows, sort])
-  const shown = useMemo(() => filterResourceRows(sorted, filter), [sorted, filter])
+  const shown = useMemo(() => sortRows(filteredResourceRows, sort.key, sort.dir), [filteredResourceRows, sort])
+  const systems = useMemo(() => countSystems(shown), [shown])
+  const chipState = useMemo(() => ({ filter, quick }), [filter, quick])
+  const suggestion = useMemo(
+    () => (shown.length === 0 ? suggestLoosen(rows, chipState) : undefined),
+    [shown.length, rows, chipState],
+  )
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <FilterBar
-        shown={shown.length}
-        total={rows.length}
-        onReset={() => setFilter(DEFAULT_RESOURCE_FILTER)}
-      >
-        <ResourcePicker rows={allRows} value={filter.resources} onChange={(resources) => patch({ resources })} />
+      <FilterBar shown={shown.length} total={rows.length} countText={resultCountText(shown.length, systems)}>
+        <ResourcePicker rows={rows} value={filter.resources} onChange={(resources) => patch({ resources })} />
         <MultiSelect label="Category" options={options.categories} value={filter.categories} onChange={(categories) => patch({ categories })} />
         <NumberInput label="Min Q" value={filter.minBestQuality} onChange={(minBestQuality) => patch({ minBestQuality })} />
         <MultiSelect label="Body type" options={options.bodyTypes} value={filter.bodyTypes} onChange={(bodyTypes) => patch({ bodyTypes })} />
@@ -108,6 +106,14 @@ export function ResourcesView({
         <MultiSelect label="Sphere" options={SPHERES} value={filter.spheres} onChange={(spheres) => patch({ spheres })} />
         <Segmented label="Inhabited" options={INHABITED_OPTIONS} value={filter.inhabited} onChange={(inhabited) => patch({ inhabited })} />
       </FilterBar>
+      <FilterChips
+        state={chipState}
+        onChange={(s) => {
+          setFilter(s.filter)
+          setQuickFilter('resources', s.quick)
+        }}
+        onReset={reset}
+      />
       <VirtualTable
         rows={shown}
         columns={COLUMNS}
@@ -115,6 +121,16 @@ export function ResourcesView({
         sort={sort}
         onSort={setSort}
         onRowClick={(r) => onOpenSystem(r.systemId)}
+        empty={
+          suggestion ? (
+            <>
+              No deposits match. Try removing <strong className="text-foreground">{suggestion.label}</strong> (
+              {suggestion.count.toLocaleString()} deposits).
+            </>
+          ) : (
+            'No deposits match. Use Reset all to clear the filters.'
+          )
+        }
       />
     </div>
   )

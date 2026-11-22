@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { StarMap } from '@/data/types'
-import type { ResourceRow } from '@/data/rows'
 import { toBodyRows, toResourceRows, toSystemRows } from '@/data/rows'
 import { Button } from '@/ui/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/ui/ui/tabs'
@@ -18,12 +17,12 @@ export function AppShell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const resourceRows = useMemo(() => toResourceRows(map), [map])
   return (
     <ResourceFilterProvider rows={resourceRows}>
-      <Shell map={map} loader={loader} resourceRows={resourceRows} />
+      <Shell map={map} loader={loader} />
     </ResourceFilterProvider>
   )
 }
 
-function Shell({ map, loader, resourceRows }: { map: StarMap; loader: MapLoader; resourceRows: ResourceRow[] }) {
+function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const [tab, setTab] = useState<Tab>('resources')
   const [visited, setVisited] = useState<Set<Tab>>(new Set(['resources']))
   // Detail history stack: last entry is the open system.
@@ -104,7 +103,7 @@ function Shell({ map, loader, resourceRows }: { map: StarMap; loader: MapLoader;
         </div>
       )}
       <main className="relative flex min-h-0 flex-1 flex-col">
-        {pane('resources', <ResourcesView rows={resourceRows} onOpenSystem={open} />)}
+        {pane('resources', <ResourcesView onOpenSystem={open} />)}
         {pane('planets', <PlanetsView rows={bodyRows} onOpenSystem={open} />)}
         {pane('systems', <SystemsView rows={systemRows} onOpenSystem={open} />)}
         {current && (

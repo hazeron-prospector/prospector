@@ -8,20 +8,26 @@ export function FilterBar({
   shown,
   total,
   onReset,
+  countText,
 }: {
   children: ReactNode
   shown: number
   total: number
-  onReset: () => void
+  /** Omit when the caller shows its own reset (e.g. filter chips). */
+  onReset?: () => void
+  /** Replaces the default "shown / total rows" readout. */
+  countText?: string
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b bg-card/50 px-3 py-1.5">
       {children}
-      <Button variant="ghost" size="xs" onClick={onReset}>
-        <RotateCcw /> Reset
-      </Button>
+      {onReset && (
+        <Button variant="ghost" size="xs" onClick={onReset}>
+          <RotateCcw /> Reset
+        </Button>
+      )}
       <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-        {shown.toLocaleString()} / {total.toLocaleString()} rows
+        {countText ?? `${shown.toLocaleString()} / ${total.toLocaleString()} rows`}
       </span>
     </div>
   )
