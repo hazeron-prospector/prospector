@@ -3,7 +3,8 @@ import type { MapLoader } from './useMapLoader'
 
 /**
  * Window-level file drop: always cancels the browser default (which would open the
- * XML in the tab and discard the app); a dropped file is loaded unless a parse is running.
+ * XML in the tab and discard the app); a dropped file replaces the map when none is loaded
+ * (first load), otherwise it is offered to the load modal for confirmation; ignored while parsing.
  */
 export function useWindowDrop(loader: MapLoader): void {
   const ref = useRef(loader)
@@ -15,7 +16,9 @@ export function useWindowDrop(loader: MapLoader): void {
     const drop = (e: DragEvent) => {
       e.preventDefault()
       const f = e.dataTransfer?.files[0]
-      if (f && !ref.current.parsing) ref.current.loadFile(f)
+      if (!f || ref.current.parsing) return
+      if (ref.current.map) ref.current.offerFile(f)
+      else ref.current.loadFile(f)
     }
     window.addEventListener('dragover', over)
     window.addEventListener('drop', drop)
