@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import { qualityHsl } from '@/data/color'
 import { HABITABLE_COLOR, NEUTRAL_COLOR, starColor, UNEXPLORED_DIM, WORMHOLE_EXPLORED, WORMHOLE_UNEXPLORED } from '@/data/mapdata'
+import { MARKER_OTHER_COLOR, MARKER_OWN_COLOR } from '@/data/markers'
 import { Checkbox } from '@/ui/ui/checkbox'
 import type { Layers } from './scene'
 
@@ -41,6 +42,8 @@ const LAYER_ROWS: [keyof Layers, string][] = [
   ['sectors', 'Sector grid'],
   ['status', 'Explored status'],
   ['starColor', 'Star color'],
+  ['cities', 'Cities'],
+  ['spacecraft', 'Spacecraft'],
 ]
 
 export function Legend({ layers, onLayersChange, highlightActive, matchCount }: LegendProps) {
@@ -73,6 +76,19 @@ export function Legend({ layers, onLayersChange, highlightActive, matchCount }: 
             <div className="space-y-1 border-t border-border pt-1.5">
               <LineKey color={css(WORMHOLE_EXPLORED)} text="Wormhole, explored" />
               <LineKey color={css(WORMHOLE_UNEXPLORED)} text="Wormhole, unexplored" />
+            </div>
+          )}
+          {(layers.cities || layers.spacecraft) && (
+            <div className="space-y-1 border-t border-border pt-1.5">
+              {layers.cities && <GlyphKey shape="city" text="City" />}
+              {layers.spacecraft && <GlyphKey shape="craft" text="Spacecraft" />}
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="inline-block size-2 shrink-0 rounded-sm" style={{ backgroundColor: css(MARKER_OWN_COLOR) }} />
+                Own empire
+                <span className="ml-1 inline-block size-2 shrink-0 rounded-sm" style={{ backgroundColor: css(MARKER_OTHER_COLOR) }} />
+                Other
+              </div>
+              <div className="text-[10px] text-muted-foreground">Larger glyph: more than one</div>
             </div>
           )}
           <div className="space-y-1 border-t border-border pt-1.5">
@@ -112,6 +128,22 @@ export function Legend({ layers, onLayersChange, highlightActive, matchCount }: 
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function GlyphKey({ shape, text }: { shape: 'city' | 'craft'; text: string }) {
+  const fill = css(MARKER_OWN_COLOR)
+  return (
+    <div className="flex items-center gap-1.5">
+      <svg viewBox="0 0 10 10" className="size-2.5 shrink-0" aria-hidden="true" fill={fill}>
+        {shape === 'city' ? (
+          <path d="M5 0.6 L9.5 4.8 H8.6 V9.4 H1.4 V4.8 H0.5 Z" />
+        ) : (
+          <path d="M5 0.6 L9.4 9.4 L5 6.8 L0.6 9.4 Z" />
+        )}
+      </svg>
+      <span>{text}</span>
     </div>
   )
 }

@@ -72,14 +72,21 @@ export function censorText(flags: CensorFlags, kind: CensorKind, text: string): 
 /** Blur classes used for every censored element. */
 export const CENSOR_CLASS = 'blur-[4px] select-none'
 
+/** Map label kinds. City and spacecraft names follow the system-name toggle (W9, W16). */
+export type LabelKind = 'system' | 'sector' | 'city' | 'spacecraft'
+
+function censorKindOf(kind: LabelKind): CensorKind {
+  return kind === 'sector' ? 'sector' : 'system'
+}
+
 /**
  * Label seam for the map (structurally a MapView `LabelFormat`): systems follow the system-name
  * toggle, sectors the sector toggle. Build once per flag change so the map re-applies labels
  * only when something changed.
  */
-export function makeLabelFormat(flags: CensorFlags): (name: string, kind: 'system' | 'sector') => { text: string; className?: string } {
+export function makeLabelFormat(flags: CensorFlags): (name: string, kind: LabelKind) => { text: string; className?: string } {
   return (name, kind) =>
-    isCensored(flags, kind) ? { text: scramble(name), className: CENSOR_CLASS } : { text: name }
+    isCensored(flags, censorKindOf(kind)) ? { text: scramble(name), className: CENSOR_CLASS } : { text: name }
 }
 
 /**

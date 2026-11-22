@@ -5,6 +5,8 @@
  */
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import type { LabelKind } from '@/data/censor'
+import { buildMarkers, type MarkerSet } from '@/data/markers'
 import { buildMapData, WORMHOLE_OPACITY, type MapData, type StyleOptions, type Vec3 } from '@/data/mapdata'
 import type { StarMap } from '@/data/types'
 import { cubeEdges } from './cube'
@@ -28,6 +30,10 @@ export interface Layers {
   status: boolean
   /** Color systems by star type instead of neutral / habitable green (W13). Off by default. */
   starColor: boolean
+  /** City glyph beside systems that have cities (W16). */
+  cities: boolean
+  /** Spacecraft glyph beside systems that have spacecraft (W16). */
+  spacecraft: boolean
 }
 
 export interface SceneOptions {
@@ -44,8 +50,8 @@ export interface SceneOptions {
   labelFormat?: LabelFormat
 }
 
-/** How a system or sector name is shown in the canvas label overlay. See MapView `labelFormat`. */
-export type LabelFormat = (name: string, kind: 'system' | 'sector') => { text: string; className?: string }
+/** How a system, sector, city or spacecraft name is shown in the canvas label overlay. See MapView `labelFormat`. */
+export type LabelFormat = (name: string, kind: LabelKind) => { text: string; className?: string }
 const PLAIN_LABEL: LabelFormat = (name) => ({ text: name })
 
 const BG = 0x0d0e11
@@ -96,6 +102,84 @@ void main() {
   gl_FragColor = vec4(vColor, a * uOpacity);
 }
 `
+
+// City / spacecraft glyphs: sprite points nudged sideways in screen space (uOffset, CSS px, y up).
+const MARKER_VERT = /* glsl */ `
+attribute vec3 aColor;
+attribute float aSize;
+uniform float uPixelRatio;
+uniform float uRefDist;
+uniform vec2 uViewport;
+uniform vec2 uOffset;
+varying vec3 vColor;
+void main() {
+  vColor = aColor;
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vec4 clip = projectionMatrix * mv;
+  float att = clamp(pow(uRefDist / max(-mv.z, 0.001), ${glsl(ATTENUATION_POWER)}), 0.7, 1.3);
+  clip.xy += uOffset * uPixelRatio * att / (uViewport * 0.5) * clip.w;
+  gl_Position = clip;
+  gl_PointSize = aSize * uPixelRatio * att;
+}
+`
+
+// uShape: 0 = city (house), 1 = spacecraft (chevron). gl_PointCoord has its origin top-left.
+const MARKER_FRAG = /* glsl */ `
+varying vec3 vColor;
+uniform float uShape;
+void main() {
+  vec2 p = gl_PointCoord;
+  float dx = abs(p.x - 0.5);
+  bool inside;
+  if (uShape < 0.5) {
+    bool roof = p.y >= 0.06 && p.y <= 0.48 && dx <= (p.y - 0.06) * 0.95;
+    bool body = p.y > 0.48 && p.y <= 0.94 && dx <= 0.32;
+    inside = roof || body;
+  } else {
+    bool tri = p.y >= 0.06 && p.y <= 0.94 && dx <= (p.y - 0.06) * 0.5;
+    bool notch = p.y > 0.6 && dx <= (p.y - 0.6) * 0.6;
+    inside = tri && !notch;
+  }
+  if (!inside) discard;
+  gl_FragColor = vec4(vColor, 1.0);
+}
+`
+
+interface MarkerStyle {
+  shape: 0 | 1
+  /** CSS px right and up from the system point. */
+  offset: [number, number]
+}
+const CITY_STYLE: MarkerStyle = { shape: 0, offset: [9, 8] }
+const SPACECRAFT_STYLE: MarkerStyle = { shape: 1, offset: [9, -8] }
+
+function markerMaterial(style: MarkerStyle, refDist: number, pixelRatio: number): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    vertexShader: MARKER_VERT,
+    fragmentShader: MARKER_FRAG,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    uniforms: {
+      uPixelRatio: { value: pixelRatio },
+      uRefDist: { value: refDist },
+      uViewport: { value: new THREE.Vector2(1, 1) },
+      uOffset: { value: new THREE.Vector2(...style.offset) },
+      uShape: { value: style.shape },
+    },
+  })
+}
+
+function markerPoints(set: MarkerSet, style: MarkerStyle, refDist: number, pixelRatio: number): THREE.Points {
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.BufferAttribute(set.positions, 3))
+  g.setAttribute('aColor', new THREE.BufferAttribute(set.colors, 3))
+  g.setAttribute('aSize', new THREE.BufferAttribute(set.sizes, 1))
+  const pts = new THREE.Points(g, markerMaterial(style, refDist, pixelRatio))
+  pts.frustumCulled = false
+  pts.renderOrder = 2
+  return pts
+}
 
 function pointsMaterial(refDist: number, pixelRatio: number, depthTest: boolean): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
@@ -151,6 +235,8 @@ export class MapScene {
   private readonly markerGeo: THREE.BufferGeometry
   private readonly markerMat: THREE.ShaderMaterial
   private readonly markers: THREE.Points
+  private readonly cityMarkers: THREE.Points
+  private readonly spacecraftMarkers: THREE.Points
   private readonly sectorLabels: { el: HTMLDivElement; pos: Vec3; name: string }[] = []
   private readonly selectLabel = label(SELECT_LABEL)
 
@@ -218,6 +304,12 @@ export class MapScene {
     this.points.frustumCulled = false
     this.points.renderOrder = 2
     this.scene.add(this.points)
+
+    // City and spacecraft glyphs (W16).
+    const mk = buildMarkers(this.map)
+    this.cityMarkers = markerPoints(mk.cities, CITY_STYLE, refDist, pixelRatio)
+    this.spacecraftMarkers = markerPoints(mk.spacecraft, SPACECRAFT_STYLE, refDist, pixelRatio)
+    this.scene.add(this.cityMarkers, this.spacecraftMarkers)
 
     // Wormholes.
     const wg = new THREE.BufferGeometry()
@@ -299,6 +391,8 @@ export class MapScene {
     this.layers = layers
     this.wormholeLines.visible = layers.wormholes
     this.gridLines.visible = layers.sectors
+    this.cityMarkers.visible = layers.cities
+    this.spacecraftMarkers.visible = layers.spacecraft
     for (const s of this.sectorLabels) s.el.style.display = layers.sectors ? '' : 'none'
     if (statusChanged) this.refreshStyle()
     this.invalidate()
@@ -312,7 +406,7 @@ export class MapScene {
     this.invalidate()
   }
 
-  private setLabelText(el: HTMLElement, name: string, kind: 'system' | 'sector'): void {
+  private setLabelText(el: HTMLElement, name: string, kind: LabelKind): void {
     const f = this.labelFormat(name, kind)
     el.textContent = f.text
     // Keep the base classes; toggle only the formatter's classes.
@@ -384,7 +478,7 @@ export class MapScene {
     canvas.removeEventListener('pointerup', this.onPointerUp)
     this.controls.removeEventListener('change', this.invalidate)
     this.controls.dispose()
-    for (const o of [this.points, this.wormholeLines, this.gridLines, this.markers]) {
+    for (const o of [this.points, this.wormholeLines, this.gridLines, this.markers, this.cityMarkers, this.spacecraftMarkers]) {
       o.geometry.dispose()
       ;(o.material as THREE.Material).dispose()
     }
@@ -600,6 +694,10 @@ export class MapScene {
     this.width = w
     this.height = h
     this.renderer.setSize(w, h, false)
+    const buf = this.renderer.getDrawingBufferSize(new THREE.Vector2())
+    for (const m of [this.cityMarkers, this.spacecraftMarkers]) {
+      ;(m.material as THREE.ShaderMaterial).uniforms.uViewport!.value.copy(buf)
+    }
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
     this.invalidate()

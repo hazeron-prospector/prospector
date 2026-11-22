@@ -66,3 +66,18 @@ describe('splitOrbit', () => {
     expect(splitOrbit('Primary', 'X')).toBeUndefined()
   })
 })
+
+describe('makeLabelFormat city and spacecraft kinds', () => {
+  it('follow the system-name toggle, never the sector toggle', () => {
+    const on = makeLabelFormat({ systemNames: true, systemCoords: false, sectors: false })
+    for (const kind of ['city', 'spacecraft'] as const) {
+      const r = on('Homeport 7', kind)
+      expect(r.text).not.toContain('Homeport')
+      expect(r.text).toHaveLength('Homeport 7'.length)
+      expect(r.className).toContain('blur-[4px]')
+    }
+    const off = makeLabelFormat({ systemNames: false, systemCoords: false, sectors: true })
+    expect(off('Homeport', 'city')).toEqual({ text: 'Homeport' })
+    expect(off('Wayfarer', 'spacecraft')).toEqual({ text: 'Wayfarer' })
+  })
+})

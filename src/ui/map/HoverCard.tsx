@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import type { MarkerSummary } from '@/data/markers'
 import { habitableLabel, type HoverResource } from '@/data/systemSummary'
 import type { Eod } from '@/data/types'
 import { qualityStyle } from '@/ui/quality'
@@ -13,6 +14,8 @@ export interface HoverInfo {
   resources: HoverResource[]
   habitableCount: number
   empires: string[]
+  /** Capped city and spacecraft lists (W16); names are raw and rendered through the label seam. */
+  markers: MarkerSummary
 }
 
 const OFFSET = 14
@@ -83,7 +86,62 @@ export function HoverCard({
         </ul>
       )}
       <div className="mt-1 text-muted-foreground">{habitableLabel(info.habitableCount)}</div>
+      <MarkerLists markers={info.markers} labelFormat={labelFormat} />
       {info.empires.length > 0 && <div className="text-muted-foreground">Inhabited by {info.empires.join(', ')}</div>}
+    </div>
+  )
+}
+
+function Name({ text, kind, labelFormat }: { text: string; kind: 'city' | 'spacecraft'; labelFormat: LabelFormat }) {
+  const f = labelFormat(text, kind)
+  return <span className={f.className}>{f.text}</span>
+}
+
+function MarkerLists({ markers, labelFormat }: { markers: MarkerSummary; labelFormat: LabelFormat }) {
+  const { cities, spacecraft } = markers
+  if (cities.total === 0 && spacecraft.total === 0) return null
+  return (
+    <div className="mt-1 space-y-1 border-t border-border pt-1">
+      {cities.total > 0 && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {cities.total} {cities.total === 1 ? 'city' : 'cities'}
+          </div>
+          <ul>
+            {cities.items.map((c, i) => (
+              <li key={i} className="flex gap-1.5">
+                <span className="min-w-0 truncate">
+                  <Name text={c.name} kind="city" labelFormat={labelFormat} />
+                </span>
+                {c.empire && <span className="shrink-0 text-muted-foreground">{c.empire}</span>}
+              </li>
+            ))}
+            {cities.more > 0 && <li className="text-muted-foreground">+{cities.more} more</li>}
+          </ul>
+        </div>
+      )}
+      {spacecraft.total > 0 && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {spacecraft.total} spacecraft
+          </div>
+          <ul>
+            {spacecraft.items.map((c, i) => (
+              <li key={i}>
+                <span className="truncate">
+                  <Name text={c.name} kind="spacecraft" labelFormat={labelFormat} />
+                </span>
+                <span className="text-muted-foreground">
+                  {' '}
+                  {c.structure}, {c.status}
+                  {c.empire ? `, ${c.empire}` : ''}
+                </span>
+              </li>
+            ))}
+            {spacecraft.more > 0 && <li className="text-muted-foreground">+{spacecraft.more} more</li>}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }

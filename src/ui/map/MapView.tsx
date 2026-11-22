@@ -35,7 +35,7 @@ export interface MapViewProps {
   /** Hover card content for a system; undefined hides the card. Memoize it (identity = data). */
   getHoverInfo?: (systemId: string) => HoverInfo | undefined
   /**
-   * THE name seam (used by the censor feature): every system and sector name drawn by the map
+   * THE name seam (used by the censor feature): every system, sector, city and spacecraft name drawn by the map
    * (hover card, selection label, sector labels) goes through this. Return the text to show and
    * an optional class (e.g. a blur) to put on the element. Default: the real name, no class.
    * Memoize it (useCallback/useMemo): a new function re-applies all labels.
@@ -45,7 +45,7 @@ export interface MapViewProps {
 
 const PLAIN: LabelFormat = (name) => ({ text: name })
 
-const DEFAULT_LAYERS: Layers = { wormholes: true, sectors: true, status: true, starColor: false }
+const DEFAULT_LAYERS: Layers = { wormholes: true, sectors: true, status: true, starColor: false, cities: true, spacecraft: true }
 
 export default function MapView({ map, highlight, selectedSystemId, onSelectSystem, flyToRequest, getHoverInfo, labelFormat = PLAIN }: MapViewProps) {
   const hostRef = useRef<HTMLDivElement>(null)
