@@ -80,4 +80,8 @@ describe('buildHighlight', () => {
     expect([...m!]).toEqual([['S1', 9], ['S2', 3]])
     expect(buildHighlight([], ['Ore'])!.size).toBe(0)
   })
+  it('is active for a category alone', () => {
+    expect(buildHighlight([row({})], [], ['Wildcatter'])!.get('S1')).toBe(10)
+    expect(buildHighlight([row({})], [], [])).toBeUndefined()
+  })
 })

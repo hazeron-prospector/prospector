@@ -105,12 +105,16 @@ export function topResources(rows: readonly ResourceRow[], limit = 8): TopResour
     .slice(0, limit)
 }
 
-/** systemId -> best matching quality, for the map highlight; undefined when no resource is selected. */
+/**
+ * systemId -> best matching quality, for the map highlight; undefined when neither a resource nor
+ * a category is selected (both select resources).
+ */
 export function buildHighlight(
   rows: readonly ResourceRow[],
   selectedResources: readonly string[],
+  selectedCategories: readonly string[] = [],
 ): Map<string, number> | undefined {
-  if (selectedResources.length === 0) return undefined
+  if (selectedResources.length === 0 && selectedCategories.length === 0) return undefined
   const out = new Map<string, number>()
   for (const r of rows) {
     const cur = out.get(r.systemId)
