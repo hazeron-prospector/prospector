@@ -49,6 +49,13 @@ describe('fuzzyMatch', () => {
   })
 })
 
+describe('fuzzyMatch with precomputed lowercase', () => {
+  it('gives the same result as without', () => {
+    expect(fuzzyMatch('Gold Ore', 'ORE', 'gold ore')).toEqual(fuzzyMatch('Gold Ore', 'ORE'))
+    expect(fuzzyMatch('Crude Oil', 'cdl', 'crude oil')).toEqual(fuzzyMatch('Crude Oil', 'cdl'))
+  })
+})
+
 describe('substringMatch', () => {
   it('finds a case-insensitive range', () => {
     expect(substringMatch('Aldera Alpha', 'ALP')).toEqual([7, 10])
@@ -70,6 +77,17 @@ describe('buildSearchIndex', () => {
     expect(bodies.length).toBe(map.systems.reduce((n, s) => n + s.planets.length + s.stars.length, 0))
     expect(bodies.every((b) => b.kind === 'body' && b.systemName.length > 0)).toBe(true)
     expect(kinds('sector').map((s) => s.label)).toContain('Alpha Sector')
+  })
+
+  it('leaves out generic unnamed sectors (exactly "Sector", any case)', () => {
+    const [first, ...rest] = map.sectors
+    const withGeneric = {
+      ...map,
+      sectors: [first!, ...rest, { ...first!, sectorId: 'g1', name: 'Sector' }, { ...first!, sectorId: 'g2', name: 'sector' }],
+    }
+    const labels = buildSearchIndex(withGeneric).entries.filter((e) => e.kind === 'sector').map((e) => e.label)
+    expect(labels.map((l) => l.toLowerCase())).not.toContain('sector')
+    expect(labels).toContain('Alpha Sector')
   })
 
   it('has distinct resources with deposit counts', () => {

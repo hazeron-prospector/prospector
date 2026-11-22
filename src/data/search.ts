@@ -56,7 +56,8 @@ export interface FuzzyMatch {
   indices: number[]
 }
 
-const isWordChar = (c: string): boolean => /[\p{L}\p{N}]/u.test(c)
+const WORD_CHAR = /[\p{L}\p{N}]/u
+const isWordChar = (c: string): boolean => WORD_CHAR.test(c)
 
 function atWordStart(text: string, i: number): boolean {
   return i === 0 || !isWordChar(text[i - 1]!)
@@ -72,10 +73,10 @@ function range(start: number, len: number): number[] {
  * punctuation such as apostrophes are boundaries) > inner substring 400 > subsequence (<400).
  * Within a band shorter text scores slightly higher. Undefined when no match or empty query.
  */
-export function fuzzyMatch(text: string, query: string): FuzzyMatch | undefined {
+export function fuzzyMatch(text: string, query: string, textLower?: string): FuzzyMatch | undefined {
   const q = query.toLowerCase()
   if (!q) return undefined
-  const t = text.toLowerCase()
+  const t = textLower ?? text.toLowerCase()
   const lenPenalty = Math.min(t.length, 200) * 0.01
   if (t === q) return { score: 1000 - lenPenalty, indices: range(0, q.length) }
   if (t.startsWith(q)) return { score: 800 - lenPenalty, indices: range(0, q.length) }
@@ -173,6 +174,8 @@ export function buildSearchIndex(map: StarMap): SearchIndex {
 
   const bySectorName = new Map<string, SectorEntry>()
   for (const s of map.sectors) {
+    // Unnamed sectors (all just "Sector") are indistinguishable, so they are not searchable.
+    if (s.name.toLowerCase() === 'sector') continue
     const count = sectorSystems.get(s.sectorId) ?? 0
     const e = bySectorName.get(s.name)
     if (e) {
@@ -223,10 +226,10 @@ export function search(index: SearchIndex, query: string, opts: SearchOptions = 
   const buckets = new Map<SearchKind, SearchHit[]>()
   for (const entry of index.entries) {
     let hit: SearchHit | undefined
-    const m = fuzzyMatch(entry.label, q)
+    const m = fuzzyMatch(entry.label, q, entry.lower)
     if (m) hit = { entry, score: m.score, indices: m.indices, matchedVia: 'name' }
     if (entry.kind === 'system' && entry.catalog) {
-      const c = fuzzyMatch(entry.catalog, q)
+      const c = fuzzyMatch(entry.catalog, q, entry.catalogLower)
       if (c && (!hit || c.score > hit.score)) hit = { entry, score: c.score, indices: c.indices, matchedVia: 'catalog' }
     }
     if (!hit) continue
