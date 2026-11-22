@@ -6,6 +6,7 @@ import { distinct } from './distinct'
 import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
 import { NumberInput } from './NumberInput'
+import { ResourceIcon } from './ResourceIcon'
 import { QualityCell } from './QualityCell'
 import { Segmented } from './Segmented'
 import { InhabitedCell } from './InhabitedCell'
@@ -29,7 +30,13 @@ function zoneCol(n: 1 | 2 | 3 | 4): Column<ResourceRow> {
 }
 
 const COLUMNS: Column<ResourceRow>[] = [
-  { id: 'resource', header: 'Resource', width: 150, sortKey: 'resource', cell: (r) => r.resource },
+  { id: 'resource', header: 'Resource', width: 150, sortKey: 'resource', cell: (r) => (
+      <span className="inline-flex items-center gap-1.5">
+        <ResourceIcon name={r.resource} sphere={r.sphere} />
+        {r.resource}
+      </span>
+    ),
+  },
   {
     id: 'best',
     header: 'Best Q',

@@ -1,8 +1,9 @@
 import { useMemo, type ReactNode } from 'react'
 import { ArrowLeft, X } from 'lucide-react'
-import type { Planet, Resource, Star, StarMap, System, Wormhole } from '@/data/types'
+import type { Planet, Resource, Sphere, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { QualityCell } from './QualityCell'
+import { ResourceIcon } from './ResourceIcon'
 
 interface Props {
   map: StarMap
@@ -47,6 +48,7 @@ function StarBlock({ star }: { star: Star }) {
         {star.resources.length === 0 && <span className="text-muted-foreground">No resources</span>}
         {star.resources.map((r) => (
           <span key={r.name}>
+            <ResourceIcon name={r.name} sphere="star" className="mr-1" />
             {r.name} <QualityCell q={r.quality} a={r.abundance} />
           </span>
         ))}
@@ -56,7 +58,7 @@ function StarBlock({ star }: { star: Star }) {
 }
 
 function ResourceTable({ planet }: { planet: Planet }) {
-  const spheres: [string, Resource[] | undefined][] = [
+  const spheres: [Sphere, Resource[] | undefined][] = [
     ['geosphere', planet.geosphere?.resources],
     ['hydrosphere', planet.hydrosphere?.resources],
     ['atmosphere', planet.atmosphere?.resources],
@@ -79,7 +81,10 @@ function ResourceTable({ planet }: { planet: Planet }) {
         {rows.map(({ sphere, r }) => (
           <tr key={`${sphere}|${r.name}`} className="border-t border-border/40">
             <td className="py-0.5 pr-3 text-muted-foreground">{sphere}</td>
-            <td className="pr-3 text-sm">{r.name}</td>
+            <td className="pr-3 text-sm">
+              <ResourceIcon name={r.name} sphere={sphere} className="mr-1.5" />
+              {r.name}
+            </td>
             {[0, 1, 2, 3].map((i) => (
               <td key={i} className="pr-3 tabular-nums">
                 {r.zones[i] && <QualityCell q={r.zones[i].quality} a={r.zones[i].abundance} />}
