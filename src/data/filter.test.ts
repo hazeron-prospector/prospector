@@ -26,6 +26,8 @@ function rr(o: Partial<ResourceRow> & { id: string }): ResourceRow {
     categories: [],
     inhabited: false,
     inhabitingEmpires: [],
+    bodyHabitable: false,
+    systemHabitable: false,
     ...o,
   }
 }

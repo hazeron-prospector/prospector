@@ -14,6 +14,7 @@ export type RollupInput = Pick<
   | 'bodyType'
   | 'inhabited'
   | 'inhabitingEmpires'
+  | 'systemHabitable'
 > & { id: string }
 
 /** One row per system. Flat fields only, so `sortRows` works on every column. */
@@ -35,6 +36,7 @@ export interface SystemRollupRow {
   depositCount: number
   inhabited: boolean
   inhabitingEmpires: string[]
+  systemHabitable: boolean
 }
 
 const collator = new Intl.Collator('en', { sensitivity: 'base', numeric: true })
@@ -83,6 +85,7 @@ export function rollupBySystem(rows: readonly RollupInput[]): SystemRollupRow[] 
       depositCount: g.deposits,
       inhabited: b.inhabited,
       inhabitingEmpires: b.inhabitingEmpires,
+      systemHabitable: b.systemHabitable,
     })
   }
   return out

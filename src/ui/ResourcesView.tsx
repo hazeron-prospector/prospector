@@ -20,13 +20,12 @@ import { ResourceIcon } from './ResourceIcon'
 import { ResourcePicker } from './ResourcePicker'
 import { QualityCell } from './QualityCell'
 import { Segmented } from './Segmented'
-import { INHABITED_TEXT, InhabitedCell } from './InhabitedCell'
+import { InhabitedCell } from './InhabitedCell'
+import { rowTint } from './rowTint'
 import { INHABITED_OPTIONS } from './segmentedOptions'
 import { useNav } from './state/NavContext'
 import { useResourceFilter } from './state/ResourceFilterContext'
 import { VirtualTable, type Column } from './VirtualTable'
-
-const inhabitedRowClass = (r: { inhabited: boolean }) => (r.inhabited ? INHABITED_TEXT : undefined)
 
 const SPHERES: Sphere[] = ['geosphere', 'hydrosphere', 'atmosphere', 'biosphere', 'star']
 
@@ -192,7 +191,7 @@ export function ResourcesView() {
           onSort={setRollupSort}
           onRowClick={(r) => nav.peekSystem(r.systemId, r.id)}
           selectedKey={nav.selectedKey}
-          rowClassName={inhabitedRowClass}
+          rowClassName={rowTint}
           empty={emptyNode}
         />
       ) : (
@@ -204,7 +203,7 @@ export function ResourcesView() {
           onSort={setSort}
           onRowClick={(r) => nav.peekBody(r.systemId, r.bodyId, r.id)}
           selectedKey={nav.selectedKey}
-          rowClassName={inhabitedRowClass}
+          rowClassName={rowTint}
           empty={emptyNode}
         />
       )}

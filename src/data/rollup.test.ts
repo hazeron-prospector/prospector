@@ -14,11 +14,17 @@ function row(o: Partial<RollupInput> & { id: string }): RollupInput {
     bodyType: 'Planet',
     inhabited: false,
     inhabitingEmpires: [],
+    systemHabitable: false,
     ...o,
   }
 }
 
 describe('rollupBySystem', () => {
+  it('carries systemHabitable from the best row', () => {
+    const out = rollupBySystem([row({ id: '1', systemHabitable: true })])
+    expect(out[0]?.systemHabitable).toBe(true)
+  })
+
   it('returns empty for empty input', () => {
     expect(rollupBySystem([])).toEqual([])
   })

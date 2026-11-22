@@ -57,6 +57,24 @@ describe('toResourceRows', () => {
   })
 })
 
+describe('toResourceRows habitable flags', () => {
+  it('marks the habitable body and its whole system; stars never body-habitable', () => {
+    const m = structuredClone(map)
+    const sys = m.systems.find((x) => x.systemId === 'SYSA')!
+    const pa1 = sys.planets.find((p) => p.planetId === 'PA1')!
+    pa1.zone = 'Habitable'
+    pa1.atmosphere = { ...(pa1.atmosphere ?? {}), atmosphereType: 'Standard' } as typeof pa1.atmosphere
+    const rows = toResourceRows(m)
+    const sysA = rows.filter((r) => r.systemId === 'SYSA')
+    expect(sysA.every((r) => r.systemHabitable)).toBe(true)
+    expect(sysA.filter((r) => r.bodyHabitable).every((r) => r.bodyId === 'PA1')).toBe(true)
+    expect(sysA.some((r) => r.bodyId === 'PA1' && r.bodyHabitable)).toBe(true)
+    expect(sysA.some((r) => r.bodyId !== 'PA1' && !r.bodyHabitable)).toBe(true)
+    expect(sysA.filter((r) => r.sphere === 'star').every((r) => !r.bodyHabitable)).toBe(true)
+    expect(rows.filter((r) => r.systemId !== 'SYSA').every((r) => !r.systemHabitable)).toBe(true)
+  })
+})
+
 describe('toBodyRows', () => {
   const rows = toBodyRows(map)
   const row = (id: string) => rows.find((r) => r.id === id)!

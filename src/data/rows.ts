@@ -1,5 +1,6 @@
 /** Flatten the StarMap into table rows. Pure; derived in memory, never persisted. */
 import { resourceInfo } from './catalog'
+import { isHabitableWorld } from './systemSummary'
 import type { Eod, Planet, Resource, Sphere, StarMap, System } from './types'
 
 export interface ResourceRow {
@@ -31,6 +32,10 @@ export interface ResourceRow {
   /** System has at least one city (cities are per system, not per body). */
   inhabited: boolean
   inhabitingEmpires: string[]
+  /** Body is a habitable world (W3); always false for stars. */
+  bodyHabitable: boolean
+  /** System has at least one habitable world (W3). */
+  systemHabitable: boolean
 }
 
 export interface BodyRow {
@@ -116,6 +121,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
       sectorName: sectorNames.get(sys.sectorId) ?? '',
       inhabited: sys.cities.length > 0,
       inhabitingEmpires: empiresOf(sys),
+      systemHabitable: sys.planets.some(isHabitableWorld),
     }
     for (const star of sys.stars) {
       for (const r of star.resources) {
@@ -129,6 +135,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
           bodyId: star.starId,
           bodyName: star.name,
           bodyType: 'Star',
+          bodyHabitable: false,
           sphere: 'star',
           categories: resourceInfo(r.name, 'star').categories,
         })
@@ -151,6 +158,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
             bodyId: p.planetId,
             bodyName: p.name,
             bodyType: p.bodyType,
+            bodyHabitable: isHabitableWorld(p),
             orbitalZone: p.zone,
             sphere,
             categories: resourceInfo(r.name, sphere).categories,
