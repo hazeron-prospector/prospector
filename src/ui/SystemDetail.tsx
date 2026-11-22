@@ -233,6 +233,7 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
       {(system.stars.length > 0 || system.planets.length > 0) && (
         <section className="border-b px-4 py-3">
           <SystemPreview
+            key={system.systemId}
             system={system}
             size="large"
             highlightedBodyIds={highlighted}

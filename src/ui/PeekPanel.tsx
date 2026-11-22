@@ -174,6 +174,7 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
       <div className="min-h-0 flex-1 space-y-4 overflow-auto px-3 py-3 text-sm">
         {(system.stars.length > 0 || system.planets.length > 0) && (
           <SystemPreview
+            key={system.systemId}
             system={system}
             size="compact"
             highlightedBodyIds={highlighted}

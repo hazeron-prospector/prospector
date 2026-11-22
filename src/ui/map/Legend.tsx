@@ -118,9 +118,9 @@ export function Legend({ layers, onLayersChange, highlightActive, matchCount }: 
                 )}
                 {layers.status && (
                   <>
-                    <Swatch color={css(layers.starColor ? starColor('G') : NEUTRAL_COLOR)} text="Explored" />
-                    <Swatch color={css(dim(layers.starColor ? starColor('G') : NEUTRAL_COLOR))} text="Unexplored (dim)" />
-                    <Swatch color={css(layers.starColor ? starColor('G') : NEUTRAL_COLOR)} text="Surveyed (ring)" ring />
+                    {!layers.starColor && <Swatch color={css(NEUTRAL_COLOR)} text="Explored" />}
+                    <Swatch color={css(dim(NEUTRAL_COLOR))} text="Unexplored (dim)" />
+                    <Swatch color={css(NEUTRAL_COLOR)} text="Surveyed (ring)" ring />
                   </>
                 )}
               </>
