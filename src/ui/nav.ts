@@ -107,14 +107,16 @@ export function topResources(rows: readonly ResourceRow[], limit = 8): TopResour
 
 /**
  * systemId -> best matching quality, for the map highlight; undefined when neither a resource nor
- * a category is selected (both select resources).
+ * a category is selected (both select resources) and no minimum quality is set (the Prospect
+ * slider alone highlights systems with any deposit at or above it).
  */
 export function buildHighlight(
   rows: readonly ResourceRow[],
   selectedResources: readonly string[],
   selectedCategories: readonly string[] = [],
+  minBestQuality?: number,
 ): Map<string, number> | undefined {
-  if (selectedResources.length === 0 && selectedCategories.length === 0) return undefined
+  if (selectedResources.length === 0 && selectedCategories.length === 0 && !(minBestQuality !== undefined && minBestQuality > 0)) return undefined
   const out = new Map<string, number>()
   for (const r of rows) {
     const cur = out.get(r.systemId)

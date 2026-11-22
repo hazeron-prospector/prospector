@@ -80,6 +80,11 @@ describe('buildHighlight', () => {
     expect([...m!]).toEqual([['S1', 9], ['S2', 3]])
     expect(buildHighlight([], ['Ore'])!.size).toBe(0)
   })
+  it('is active for a min quality alone', () => {
+    expect(buildHighlight([row({})], [], [], 5)!.get('S1')).toBe(10)
+    expect(buildHighlight([row({})], [], [], 0)).toBeUndefined()
+    expect(buildHighlight([row({})], [], [], undefined)).toBeUndefined()
+  })
   it('is active for a category alone', () => {
     expect(buildHighlight([row({})], [], ['Wildcatter'])!.get('S1')).toBe(10)
     expect(buildHighlight([row({})], [], [])).toBeUndefined()

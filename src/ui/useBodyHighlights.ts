@@ -13,9 +13,9 @@ export function bodyHighlights(rows: readonly ResourceRow[], systemId: string, a
   return m
 }
 
-/** Bodies of `systemId` present in the shared filtered resource rows while a resource/category filter is on. */
+/** Bodies of `systemId` present in the shared filtered resource rows while a resource/category/min-quality filter is on. */
 export function useBodyHighlights(systemId: string): Map<string, number> {
   const { filter, filteredResourceRows } = useResourceFilter()
-  const active = filter.resources.length > 0 || filter.categories.length > 0
+  const active = filter.resources.length > 0 || filter.categories.length > 0 || (filter.minBestQuality ?? 0) > 0
   return useMemo(() => bodyHighlights(filteredResourceRows, systemId, active), [filteredResourceRows, systemId, active])
 }

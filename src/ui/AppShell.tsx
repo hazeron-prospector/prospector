@@ -81,8 +81,8 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   // Systems holding the selected resources, with their best quality; undefined = nothing selected.
   const mapVisited = visited.has('map')
   const highlight = useMemo(
-    () => (mapVisited ? buildHighlight(filteredResourceRows, filter.resources, filter.categories) : undefined),
-    [mapVisited, filteredResourceRows, filter.resources, filter.categories],
+    () => (mapVisited ? buildHighlight(filteredResourceRows, filter.resources, filter.categories, filter.minBestQuality) : undefined),
+    [mapVisited, filteredResourceRows, filter.resources, filter.categories, filter.minBestQuality],
   )
 
   const nav = useMemo<Nav>(
