@@ -2,6 +2,8 @@
 import type { Vec3 } from '@/data/mapdata'
 
 export const FLY_DURATION_MS = 600
+/** Re-centering on a selected system is quicker than a fly-in. */
+export const CENTER_DURATION_MS = 400
 
 export function easeInOutCubic(t: number): number {
   const c = Math.min(1, Math.max(0, t))
@@ -39,6 +41,18 @@ export function flyDestination(current: CameraPose, systemPos: Vec3, boundsRadiu
   return {
     target: systemPos,
     position: [systemPos[0] + (ux / len) * want, systemPos[1] + (uy / len) * want, systemPos[2] + (uz / len) * want],
+  }
+}
+
+/**
+ * Pose that looks at `systemPos` from the same distance and direction: camera and target move by
+ * the same offset, so the zoom level and viewing angle do not change (BLUEPRINT W1).
+ */
+export function centerPose(current: CameraPose, systemPos: Vec3): CameraPose {
+  const o: Vec3 = [systemPos[0] - current.target[0], systemPos[1] - current.target[1], systemPos[2] - current.target[2]]
+  return {
+    target: systemPos,
+    position: [current.position[0] + o[0], current.position[1] + o[1], current.position[2] + o[2]],
   }
 }
 

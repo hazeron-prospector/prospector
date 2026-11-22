@@ -8,7 +8,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { buildMapData, SIZE_EXPLORED, UNEXPLORED_DIM, type MapData, type Vec3 } from '@/data/mapdata'
 import type { StarMap } from '@/data/types'
 import { cubeEdges } from './cube'
-import { flyDestination, flyPose, frameDistance, type CameraPose } from './fly'
+import { centerPose, CENTER_DURATION_MS, FLY_DURATION_MS, flyDestination, flyPose, frameDistance, type CameraPose } from './fly'
 import {
   ATTENUATION_MAX,
   ATTENUATION_MIN,
@@ -160,7 +160,7 @@ export class MapScene {
   private width = 1
   private height = 1
   private frameId = 0
-  private fly?: { from: CameraPose; to: CameraPose; start: number; duration: number }
+  private fly?: { from: CameraPose; to: CameraPose; start: number; duration: number; systemId?: string }
   private downAt?: { x: number; y: number }
   private disposed = false
   private readonly onSelect: (systemId: string) => void
@@ -322,7 +322,22 @@ export class MapScene {
     const i = this.data.indexOfSystem.get(systemId)
     if (i === undefined) return
     const p = this.data.positions
-    this.startFly(flyDestination(this.currentPose(), [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!], this.data.bounds.radius))
+    this.startFly(
+      flyDestination(this.currentPose(), [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!], this.data.bounds.radius),
+      FLY_DURATION_MS,
+      systemId,
+    )
+  }
+
+  /**
+   * Smoothly re-center on a system keeping the current zoom distance and angle (W1). Does nothing
+   * for unknown ids (Deep Space has no coordinates) or while a fly-in to the same system runs.
+   */
+  centerOn(systemId: string): void {
+    const i = this.data.indexOfSystem.get(systemId)
+    if (i === undefined || this.fly?.systemId === systemId) return
+    const p = this.data.positions
+    this.startFly(centerPose(this.currentPose(), [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!]), CENTER_DURATION_MS, systemId)
   }
 
   dispose(): void {
@@ -407,8 +422,8 @@ export class MapScene {
     this.invalidate()
   }
 
-  private startFly(to: CameraPose): void {
-    this.fly = { from: this.currentPose(), to, start: performance.now(), duration: 600 }
+  private startFly(to: CameraPose, duration = FLY_DURATION_MS, systemId?: string): void {
+    this.fly = { from: this.currentPose(), to, start: performance.now(), duration, ...(systemId !== undefined && { systemId }) }
     this.invalidate()
   }
 

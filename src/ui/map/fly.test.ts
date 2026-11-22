@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { easeInOutCubic, flyDestination, flyPose, frameDistance, lerp3 } from './fly'
+import { centerPose, easeInOutCubic, flyDestination, flyPose, frameDistance, lerp3 } from './fly'
 
 describe('fly', () => {
   it('eases 0..1 symmetrically and clamps', () => {
@@ -33,5 +33,16 @@ describe('fly', () => {
     const d = frameDistance(10, 50, 1.5)
     expect(d).toBeGreaterThan(10)
     expect(frameDistance(10, 50, 0.5)).toBeGreaterThan(d) // narrow viewport needs more distance
+  })
+})
+
+describe('centerPose', () => {
+  it('moves camera and target by the same offset, keeping distance', () => {
+    const cur = { position: [10, 20, 30] as [number, number, number], target: [0, 0, 0] as [number, number, number] }
+    const out = centerPose(cur, [5, -5, 2])
+    expect(out.target).toEqual([5, -5, 2])
+    expect(out.position).toEqual([15, 15, 32])
+    const d = (p: typeof cur) => Math.hypot(p.position[0] - p.target[0], p.position[1] - p.target[1], p.position[2] - p.target[2])
+    expect(d(out)).toBeCloseTo(d(cur))
   })
 })

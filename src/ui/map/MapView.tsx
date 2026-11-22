@@ -73,7 +73,16 @@ export default function MapView({ map, highlight, selectedSystemId, onSelectSyst
 
   useEffect(() => sceneRef.current?.setHighlight(highlight), [highlight])
   useEffect(() => sceneRef.current?.setLayers(layers), [layers])
-  useEffect(() => sceneRef.current?.setSelected(selectedSystemId), [selectedSystemId])
+  const centeredFor = useRef(selectedSystemId)
+  useEffect(() => {
+    sceneRef.current?.setSelected(selectedSystemId)
+    // Re-center on a newly selected system (click, peek, palette). Declared before the flyTo
+    // effect and guarded in the scene, so a "Show on map" fly-in for the same system wins.
+    if (selectedSystemId !== undefined && selectedSystemId !== centeredFor.current) {
+      sceneRef.current?.centerOn(selectedSystemId)
+    }
+    centeredFor.current = selectedSystemId
+  }, [selectedSystemId])
   const nonce = flyToRequest?.nonce
   useEffect(() => {
     const fly = latest.current.flyToRequest
