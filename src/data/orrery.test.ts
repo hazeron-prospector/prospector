@@ -112,3 +112,15 @@ describe('layoutOrrery', () => {
     expect(r.bodies.find((x) => x.id === 'A I')!.placed).toBe(true)
   })
 })
+
+describe('orbit zones (W17)', () => {
+  it('tags planet and moon orbits with the body zone', () => {
+    const o = layoutOrrery(
+      sys([star('A')], [
+        planet('P', 'Orbiting A at 1au 10', 'Planet', { zone: 'Habitable' }),
+        planet('M', 'Orbiting P at 100,000m 10', 'Moon', { zone: 'Outer' }),
+      ]),
+    )
+    expect(o.orbits.map((c) => c.zone).sort()).toEqual(['Habitable', 'Outer'])
+  })
+})

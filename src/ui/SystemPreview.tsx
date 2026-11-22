@@ -2,6 +2,7 @@ import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { layoutOrrery, ORRERY_VIEWBOX } from "@/data/orrery";
 import { starColor } from "@/data/mapdata";
 import { qualityHsl } from "@/data/color";
+import { zoneColor, zonesPresent } from "@/data/zoneColor";
 import type { System } from "@/data/types";
 import { bestDepositsByBody, hoverResources } from "@/data/systemSummary";
 import { Censored } from "./Censored";
@@ -66,6 +67,10 @@ export function SystemPreview({
         : undefined,
     };
   }, [allRows, filteredResourceRows, active, system.systemId]);
+  const legend = useMemo(
+    () => zonesPresent(orrery.orbits.filter((o) => o.zone !== undefined).map((o) => o.zone)),
+    [orrery],
+  );
   const [hover, setHover] = useState<Hover | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -147,10 +152,10 @@ export function SystemPreview({
             cy={o.cy}
             r={o.r}
             fill="none"
-            stroke="currentColor"
-            strokeOpacity="0.14"
-            strokeWidth="0.35"
-            className="text-foreground"
+            stroke={o.zone === undefined ? "currentColor" : zoneColor(o.zone)}
+            strokeOpacity={o.zone === undefined ? 0.14 : 0.45}
+            strokeWidth="0.4"
+            className={o.zone === undefined ? "text-foreground" : undefined}
           />
         ))}
         {orrery.stars.map((s) => (
@@ -276,6 +281,23 @@ export function SystemPreview({
             </ul>
           )}
         </div>
+      )}
+      {legend.length > 0 && (
+        <ul
+          aria-label="Orbit zones"
+          className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground"
+        >
+          {legend.map((z) => (
+            <li key={z} className="flex items-center gap-1">
+              <span
+                aria-hidden
+                className="inline-block h-0.5 w-3 rounded-full"
+                style={{ backgroundColor: zoneColor(z === "unknown" ? undefined : z) }}
+              />
+              {z === "unknown" ? "Unknown" : z}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

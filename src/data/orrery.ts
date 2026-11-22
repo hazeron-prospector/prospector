@@ -57,6 +57,8 @@ export interface OrreryCircle {
   cx: number
   cy: number
   r: number
+  /** Orbital zone of the body on this orbit (W17); undefined for stars and mixed outer rings. */
+  zone?: string
 }
 
 export interface Orrery {
@@ -163,6 +165,7 @@ export function layoutOrrery(system: System, highlighted?: ReadonlySet<string>):
     id: string
     au: number
     deg: number
+    zone?: string
   }
   const childrenOf = new Map<string, Child[]>()
   const orphanStars: Star[] = []
@@ -183,7 +186,7 @@ export function layoutOrrery(system: System, highlighted?: ReadonlySet<string>):
     const au = orbitAu(p.orbit)
     if (host && host !== p.name && au !== undefined && p.orbit.deg !== undefined) {
       if (starByName.has(host)) {
-        add(host, { kind: 'planet', id: p.planetId, au, deg: p.orbit.deg })
+        add(host, { kind: 'planet', id: p.planetId, au, deg: p.orbit.deg, zone: p.zone })
         continue
       }
       if (planetByName.has(host)) {
@@ -224,7 +227,7 @@ export function layoutOrrery(system: System, highlighted?: ReadonlySet<string>):
       visited.add(m.planetId)
       const lr = localOrbitRadius(orbitMeters(m.orbit), pp.r)
       const { x, y } = polar(pp.x, pp.y, lr, m.orbit.deg ?? 0)
-      orbits.push({ cx: pp.x, cy: pp.y, r: lr })
+      orbits.push({ cx: pp.x, cy: pp.y, r: lr, zone: m.zone })
       placePlanet(m, x, y, parent.planetId, true)
       placeMoons(m, visited)
     }
@@ -242,7 +245,10 @@ export function layoutOrrery(system: System, highlighted?: ReadonlySet<string>):
     const distinct = [...new Set(kids.map((k) => k.au))]
     const radii = spacedRadii(distinct, hp.r + 8, maxR)
     const radiusOf = new Map(distinct.map((au, i) => [au, radii[i]!]))
-    for (const au of distinct) orbits.push({ cx: hp.x, cy: hp.y, r: radiusOf.get(au)! })
+    for (const au of distinct) {
+      const zone = kids.find((k) => k.au === au && k.zone)?.zone
+      orbits.push({ cx: hp.x, cy: hp.y, r: radiusOf.get(au)!, zone })
+    }
     const companions: string[] = []
     for (const k of kids) {
       const { x, y } = polar(hp.x, hp.y, radiusOf.get(k.au)!, k.deg)
