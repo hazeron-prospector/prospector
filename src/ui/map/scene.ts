@@ -5,7 +5,7 @@
  */
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { buildMapData, type MapData, type StyleOptions, type Vec3 } from '@/data/mapdata'
+import { buildMapData, WORMHOLE_OPACITY, type MapData, type StyleOptions, type Vec3 } from '@/data/mapdata'
 import type { StarMap } from '@/data/types'
 import { cubeEdges } from './cube'
 import { centerPose, CENTER_DURATION_MS, FLY_DURATION_MS, flyDestination, flyPose, frameDistance, type CameraPose } from './fly'
@@ -225,7 +225,7 @@ export class MapScene {
     wg.setAttribute('color', new THREE.BufferAttribute(d.wormholes.colors, 3))
     this.wormholeLines = new THREE.LineSegments(
       wg,
-      new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.75, depthWrite: false }),
+      new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: WORMHOLE_OPACITY, depthWrite: false }),
     )
     this.wormholeLines.frustumCulled = false
     this.wormholeLines.renderOrder = 1

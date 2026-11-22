@@ -9,7 +9,7 @@
  */
 import { qualityHsl, qualityRgb } from './color'
 import { isHabitableWorld } from './systemSummary'
-import type { Star, StarMap, System, WormholePolarity } from './types'
+import type { Star, StarMap, System } from './types'
 
 export const SECTOR_SIZE = 10
 
@@ -30,21 +30,13 @@ export const HABITABLE_COLOR: [number, number, number] = [0.3, 0.9, 0.45]
 /** Non-matching systems while a resource highlight is active. */
 export const DIM_GREY: [number, number, number] = [0.27, 0.29, 0.33]
 
-/** Stub length for wormholes with no resolvable destination: 25% of the distance, capped (parsecs). */
-export const STUB_FRACTION = 0.25
-export const STUB_MAX_LENGTH = 3
-
 export type RGB = [number, number, number]
 export type Vec3 = [number, number, number]
 
-export type LinkPolarity = WormholePolarity | 'unknown'
-
-export const WORMHOLE_COLORS: Record<LinkPolarity, RGB> = {
-  positive: [0.3, 0.79, 0.94],
-  negative: [0.97, 0.15, 0.52],
-  neutral: [0.6, 0.63, 0.65],
-  unknown: [0.42, 0.45, 0.5],
-}
+/** In-game wormhole colors (austarmapwidget.cpp): explored rgba(192,64,32,200), unexplored rgba(32,64,192,200). */
+export const WORMHOLE_EXPLORED: RGB = [192 / 255, 64 / 255, 32 / 255]
+export const WORMHOLE_UNEXPLORED: RGB = [32 / 255, 64 / 255, 192 / 255]
+export const WORMHOLE_OPACITY = 200 / 255
 
 const FALLBACK_STAR: RGB = [0.81, 0.83, 0.86]
 const hex = (h: number): RGB => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255]
@@ -97,14 +89,13 @@ export interface SectorCube {
 }
 
 export interface WormholeLines {
-  /** 6 floats per segment (two xyz endpoints). Links first, then stubs. */
+  /** 6 floats per segment (two xyz endpoints): the system, then its wormhole's destination. Explored segments first. */
   positions: Float32Array
-  /** 6 floats per segment (rgb per endpoint; links blend polarity from each end). */
+  /** 6 floats per segment: the same flat rgb at both endpoints (no gradient). */
   colors: Float32Array
-  /** Segments joining two systems. */
-  linkCount: number
-  /** Short segments toward an unresolved destination. */
-  stubCount: number
+  /** Leading segments that are explored; the rest are unexplored. */
+  exploredCount: number
+  unexploredCount: number
 }
 
 export interface MapData {
@@ -219,56 +210,51 @@ export function buildMapData(map: StarMap, highlight?: ReadonlyMap<string, numbe
   }
 }
 
-function buildWormholes(pts: (System & { x: number; y: number; z: number })[]): WormholeLines {
+const coordKey = (x: number, y: number, z: number): string => `${x.toFixed(1)},${y.toFixed(1)},${z.toFixed(1)}`
+
+type Located = System & { x: number; y: number; z: number }
+
+/**
+ * Wormhole segments like the in-game map (W14): one flat-colored line per wormhole, running from
+ * the system to its `destX/Y/Z` whether or not the destination is in the map. Per system, an
+ * unexplored wormhole to a destination that also has an explored one is dropped; A-to-B and
+ * B-to-A collapse into one line, explored winning.
+ */
+function buildWormholes(pts: Located[]): WormholeLines {
   const byId = new Map(pts.map((s) => [s.systemId, s]))
-  const pol = (p: WormholePolarity | undefined): RGB => WORMHOLE_COLORS[p ?? 'unknown']
-  const links: { a: System & { x: number; y: number; z: number }; b: System & { x: number; y: number; z: number }; ca: RGB; cb: RGB }[] = []
-  const linkIndex = new Map<string, number>()
-  const stubs: { pos: number[]; c: RGB }[] = []
+  const byCoord = new Map(pts.map((s) => [coordKey(s.x, s.y, s.z), s]))
+  const lines = new Map<string, { from: Located; to: Vec3; explored: boolean }>()
 
   for (const s of pts) {
+    // Per system: explored wins over unexplored for the same destination.
+    const dests = new Map<string, { to: Vec3; destId: string; explored: boolean }>()
     for (const w of s.wormholes) {
-      const dest = w.destSystemId !== undefined ? byId.get(w.destSystemId) : undefined
-      if (dest && dest.systemId !== s.systemId) {
-        const [lo, hi] = s.systemId < dest.systemId ? [s, dest] : [dest, s]
-        const key = `${lo.systemId}|${hi.systemId}`
-        const at = linkIndex.get(key)
-        if (at === undefined) {
-          linkIndex.set(key, links.length)
-          // Both ends start with this side's polarity; the reverse link may refine its own end.
-          links.push({ a: lo, b: hi, ca: pol(w.polarity), cb: pol(w.polarity) })
-        } else if (w.polarity !== undefined) {
-          const l = links[at]!
-          if (s === l.a) l.ca = pol(w.polarity)
-          else l.cb = pol(w.polarity)
-        }
-        continue
-      }
-      if (dest) continue // self link
-      const dx = w.destX - s.x
-      const dy = w.destY - s.y
-      const dz = w.destZ - s.z
-      const dist = Math.hypot(dx, dy, dz)
-      if (dist === 0) continue
-      const len = Math.min(dist * STUB_FRACTION, STUB_MAX_LENGTH)
-      const k = len / dist
-      stubs.push({ pos: [s.x, s.y, s.z, s.x + dx * k, s.y + dy * k, s.z + dz * k], c: pol(w.polarity) })
+      const dest = (w.destSystemId !== undefined ? byId.get(w.destSystemId) : undefined) ?? byCoord.get(coordKey(w.destX, w.destY, w.destZ))
+      const destId = dest?.systemId ?? coordKey(w.destX, w.destY, w.destZ)
+      if (destId === s.systemId) continue
+      const cur = dests.get(destId)
+      if (!cur) dests.set(destId, { to: [w.destX, w.destY, w.destZ], destId, explored: w.explored })
+      else if (w.explored && !cur.explored) dests.set(destId, { to: [w.destX, w.destY, w.destZ], destId, explored: true })
+    }
+    for (const d of dests.values()) {
+      const key = s.systemId < d.destId ? `${s.systemId}|${d.destId}` : `${d.destId}|${s.systemId}`
+      const cur = lines.get(key)
+      if (!cur) lines.set(key, { from: s, to: d.to, explored: d.explored })
+      else if (d.explored && !cur.explored) cur.explored = true
     }
   }
 
-  const total = links.length + stubs.length
-  const positions = new Float32Array(total * 6)
-  const colors = new Float32Array(total * 6)
-  links.forEach((l, i) => {
-    positions.set([l.a.x, l.a.y, l.a.z, l.b.x, l.b.y, l.b.z], i * 6)
-    colors.set([...l.ca, ...l.cb], i * 6)
+  const all = [...lines.values()]
+  const ordered = [...all.filter((l) => l.explored), ...all.filter((l) => !l.explored)]
+  const positions = new Float32Array(ordered.length * 6)
+  const colors = new Float32Array(ordered.length * 6)
+  ordered.forEach((l, i) => {
+    positions.set([l.from.x, l.from.y, l.from.z, ...l.to], i * 6)
+    const c = l.explored ? WORMHOLE_EXPLORED : WORMHOLE_UNEXPLORED
+    colors.set([...c, ...c], i * 6)
   })
-  stubs.forEach((st, j) => {
-    const i = links.length + j
-    positions.set(st.pos, i * 6)
-    colors.set([...st.c, ...st.c], i * 6)
-  })
-  return { positions, colors, linkCount: links.length, stubCount: stubs.length }
+  const exploredCount = all.filter((l) => l.explored).length
+  return { positions, colors, exploredCount, unexploredCount: all.length - exploredCount }
 }
 
 function buildSectors(map: StarMap): SectorCube[] {

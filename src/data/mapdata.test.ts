@@ -12,9 +12,10 @@ import {
   HABITABLE_COLOR,
   NEUTRAL_COLOR,
   UNEXPLORED_DIM,
-  STUB_MAX_LENGTH,
   starColor,
-  WORMHOLE_COLORS,
+  WORMHOLE_EXPLORED,
+  WORMHOLE_OPACITY,
+  WORMHOLE_UNEXPLORED,
 } from './mapdata'
 import { parseStarMap } from './parse'
 import type { Eod, Planet, StarMap, System, Wormhole } from './types'
@@ -162,63 +163,85 @@ describe('starColor', () => {
   })
 })
 
-describe('wormholes', () => {
-  it('dedupes A->B / B->A and blends polarity per end', () => {
-    const map = mapOf([
-      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destSystemId: 'B', polarity: 'positive' })] }),
-      sys('B', { x: 10, y: 0, z: 0, wormholes: [wh({ destSystemId: 'A', polarity: 'negative' })] }),
-    ])
-    const d = buildMapData(map)
-    expect(d.wormholes.linkCount).toBe(1)
-    expect(d.wormholes.stubCount).toBe(0)
-    expect(d.wormholes.positions).toHaveLength(6)
-    close(d.wormholes.positions, [0, 0, 0, 10, 0, 0])
-    close(d.wormholes.colors.subarray(0, 3), WORMHOLE_COLORS.positive)
-    close(d.wormholes.colors.subarray(3, 6), WORMHOLE_COLORS.negative)
+describe('wormholes (in-game style, W14)', () => {
+  it('uses the in-game flat colors and opacity', () => {
+    close(WORMHOLE_EXPLORED, [192 / 255, 64 / 255, 32 / 255])
+    close(WORMHOLE_UNEXPLORED, [32 / 255, 64 / 255, 192 / 255])
+    expect(WORMHOLE_OPACITY).toBeCloseTo(200 / 255)
   })
 
-  it('one-sided link uses its polarity at both ends; missing polarity is unknown', () => {
-    const map = mapOf([
-      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destSystemId: 'B' })] }),
-      sys('B', { x: 5, y: 0, z: 0 }),
-    ])
-    const d = buildMapData(map)
-    expect(d.wormholes.linkCount).toBe(1)
-    close(d.wormholes.colors.subarray(0, 3), WORMHOLE_COLORS.unknown)
-    close(d.wormholes.colors.subarray(3, 6), WORMHOLE_COLORS.unknown)
-  })
-
-  it('builds a capped stub toward dest for unresolved links', () => {
-    const map = mapOf([
-      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destX: 100, destY: 0, destZ: 0, polarity: 'negative' })] }),
-    ])
-    const d = buildMapData(map)
-    expect(d.wormholes.linkCount).toBe(0)
-    expect(d.wormholes.stubCount).toBe(1)
-    close(d.wormholes.positions, [0, 0, 0, STUB_MAX_LENGTH, 0, 0])
-    close(d.wormholes.colors.subarray(0, 3), WORMHOLE_COLORS.negative)
-  })
-
-  it('stub is a fraction of a short distance and skipped for zero distance', () => {
-    const map = mapOf([
-      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destX: 0, destY: 4, destZ: 0 }), wh({ destX: 0, destY: 0, destZ: 0 })] }),
-    ])
-    const d = buildMapData(map)
-    expect(d.wormholes.stubCount).toBe(1)
-    close(d.wormholes.positions, [0, 0, 0, 0, 1, 0])
-  })
-
-  it('treats a destSystemId missing from the map or without coords as a stub; ignores self links', () => {
+  it('draws a flat-colored line per wormhole to destX/Y/Z, colored by explored, ignoring polarity', () => {
     const map = mapOf([
       sys('A', {
         x: 0, y: 0, z: 0,
-        wormholes: [wh({ destSystemId: 'ZZZ', destX: 50, destY: 0, destZ: 0 }), wh({ destSystemId: 'A' }), wh({ destSystemId: 'D', destX: 0, destY: 50, destZ: 0 })],
+        wormholes: [
+          wh({ destX: 100, destY: 0, destZ: 0, explored: true, polarity: 'negative' }),
+          wh({ destX: 0, destY: 50, destZ: 0, explored: false, polarity: 'positive' }),
+        ],
       }),
-      sys('D', {}),
     ])
-    const d = buildMapData(map)
-    expect(d.wormholes.linkCount).toBe(0)
-    expect(d.wormholes.stubCount).toBe(2)
+    const w = buildMapData(map).wormholes
+    expect(w.exploredCount).toBe(1)
+    expect(w.unexploredCount).toBe(1)
+    close(w.positions, [0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 50, 0]) // full length, no stubs
+    close(w.colors.subarray(0, 3), WORMHOLE_EXPLORED)
+    close(w.colors.subarray(3, 6), WORMHOLE_EXPLORED) // no gradient
+    close(w.colors.subarray(6, 9), WORMHOLE_UNEXPLORED)
+    close(w.colors.subarray(9, 12), WORMHOLE_UNEXPLORED)
+  })
+
+  it('dedupes A->B / B->A into one line; explored wins', () => {
+    const map = mapOf([
+      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destSystemId: 'B', destX: 10, explored: false })] }),
+      sys('B', { x: 10, y: 0, z: 0, wormholes: [wh({ destSystemId: 'A', destX: 0, explored: true })] }),
+    ])
+    const w = buildMapData(map).wormholes
+    expect(w.exploredCount).toBe(1)
+    expect(w.unexploredCount).toBe(0)
+    expect(w.positions).toHaveLength(6)
+    close(w.colors.subarray(0, 3), WORMHOLE_EXPLORED)
+  })
+
+  it('dedupes a reverse link whose destination is only known by coordinates', () => {
+    const map = mapOf([
+      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destX: 10, destY: 0, destZ: 0 })] }),
+      sys('B', { x: 10, y: 0, z: 0, wormholes: [wh({ destSystemId: 'A', destX: 0, destY: 0, destZ: 0 })] }),
+    ])
+    expect(buildMapData(map).wormholes.exploredCount).toBe(1)
+  })
+
+  it('per system, keeps only the explored wormhole when both go to the same destination', () => {
+    const map = mapOf([
+      sys('A', {
+        x: 0, y: 0, z: 0,
+        wormholes: [
+          wh({ destX: 50, destY: 0, destZ: 0, explored: false }),
+          wh({ destX: 50, destY: 0, destZ: 0, explored: true }),
+          wh({ destX: 50, destY: 0, destZ: 0, explored: false }),
+          wh({ destX: 0, destY: 50, destZ: 0, explored: false }),
+        ],
+      }),
+    ])
+    const w = buildMapData(map).wormholes
+    expect(w.exploredCount).toBe(1)
+    expect(w.unexploredCount).toBe(1)
+  })
+
+  it('keeps unexplored when there is no explored wormhole to that destination', () => {
+    const map = mapOf([
+      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destX: 5, destY: 0, destZ: 0, explored: false }), wh({ destX: 5, destY: 0, destZ: 0, explored: false })] }),
+    ])
+    expect(buildMapData(map).wormholes.unexploredCount).toBe(1)
+  })
+
+  it('draws lines to destinations outside the map and skips self links', () => {
+    const map = mapOf([
+      sys('A', { x: 0, y: 0, z: 0, wormholes: [wh({ destSystemId: 'ZZZ', destX: 500, destY: 0, destZ: 0 }), wh({ destSystemId: 'A' }), wh({ destX: 0, destY: 0, destZ: 0 })] }),
+      sys('D', {}), // Deep Space: no point to draw from
+    ])
+    const w = buildMapData(map).wormholes
+    expect(w.exploredCount).toBe(1)
+    close(w.positions, [0, 0, 0, 500, 0, 0])
   })
 })
 
@@ -266,13 +289,14 @@ describe('mock starmap map data', () => {
     expect(d.count).toBe(map.systems.filter((s) => s.x !== undefined).length)
     expect(d.positions.length).toBe(d.count * 3)
     expect(d.sectors).toHaveLength(map.sectors.length)
-    expect(d.wormholes.stubCount).toBe(
-      map.systems.flatMap((s) => s.wormholes).filter((w) => w.destSystemId === undefined).length,
-    )
-    expect(d.wormholes.positions.length).toBe((d.wormholes.linkCount + d.wormholes.stubCount) * 6)
-    expect(d.wormholes.linkCount).toBeGreaterThan(0)
+    const total = d.wormholes.exploredCount + d.wormholes.unexploredCount
+    expect(d.wormholes.positions.length).toBe(total * 6)
+    expect(d.wormholes.colors.length).toBe(total * 6)
+    expect(d.wormholes.exploredCount).toBeGreaterThan(0)
+    expect(d.wormholes.unexploredCount).toBeGreaterThan(0)
+    expect(total).toBeLessThanOrEqual(map.systems.flatMap((s) => s.wormholes).length)
     expect(Number.isFinite(d.bounds.radius)).toBe(true)
-    // bounds match the system position extents exactly (not wormhole stubs or sector cubes)
+    // bounds match the system position extents exactly (not wormhole lines or sector cubes)
     const ext = [0, 1, 2].map((k) => {
       const v = map.systems.filter((s) => s.x !== undefined).map((s) => [s.x!, s.y!, s.z!][k]!)
       return [Math.min(...v), Math.max(...v)] as const

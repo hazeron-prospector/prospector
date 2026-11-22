@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import { qualityHsl } from '@/data/color'
-import { HABITABLE_COLOR, NEUTRAL_COLOR, starColor, UNEXPLORED_DIM } from '@/data/mapdata'
+import { HABITABLE_COLOR, NEUTRAL_COLOR, starColor, UNEXPLORED_DIM, WORMHOLE_EXPLORED, WORMHOLE_UNEXPLORED } from '@/data/mapdata'
 import { Checkbox } from '@/ui/ui/checkbox'
 import type { Layers } from './scene'
 
@@ -69,6 +69,12 @@ export function Legend({ layers, onLayersChange, highlightActive, matchCount }: 
               </label>
             ))}
           </div>
+          {layers.wormholes && (
+            <div className="space-y-1 border-t border-border pt-1.5">
+              <LineKey color={css(WORMHOLE_EXPLORED)} text="Wormhole, explored" />
+              <LineKey color={css(WORMHOLE_UNEXPLORED)} text="Wormhole, unexplored" />
+            </div>
+          )}
           <div className="space-y-1 border-t border-border pt-1.5">
             {highlightActive ? (
               <>
@@ -106,6 +112,15 @@ export function Legend({ layers, onLayersChange, highlightActive, matchCount }: 
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function LineKey({ color, text }: { color: string; text: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="inline-block h-0.5 w-2.5 shrink-0" style={{ backgroundColor: color }} />
+      <span>{text}</span>
     </div>
   )
 }
