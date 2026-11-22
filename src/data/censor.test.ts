@@ -21,8 +21,20 @@ describe('scramble', () => {
     expect(scramble('')).toBe('')
     expect(scramble(' - ')).toBe(' - ')
   })
-  it('handles non-ASCII without throwing', () => {
-    expect(scramble('Ünï')).toHaveLength(3)
+  it('scrambles accented and Cyrillic letters, same code-point length, never equal', () => {
+    for (const t of ['Ünï', 'Éridani Ünü 7', 'Москва', 'Альфа-Центавр 3', 'Ωmega ²']) {
+      const s = scramble(t)
+      const a = [...t]
+      const b = [...s]
+      expect(b).toHaveLength(a.length)
+      expect(s).not.toBe(t)
+      a.forEach((ch, i) => {
+        if (/\p{L}/u.test(ch)) expect(b[i]).toMatch(/^[A-Za-z]$/)
+        else if (/\p{N}/u.test(ch)) expect(b[i]).toMatch(/^[0-9]$/)
+        else expect(b[i]).toBe(ch)
+      })
+    }
+    expect(scramble('Москва')).toMatch(/^[A-Z][a-z]{5}$/)
   })
 })
 

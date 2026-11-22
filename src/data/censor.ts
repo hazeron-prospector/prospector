@@ -34,7 +34,7 @@ function pick(set: string, not: string, r: () => number): string {
 }
 
 /**
- * Same length as `text`; letters become other letters (case kept), digits other digits, every
+ * Same length as `text` in code points; letters become other letters (case kept), digits other digits, every
  * other character (spaces, punctuation, signs) stays in place. Deterministic per (text, salt).
  * Any text with a letter or digit differs from its input at every such position.
  */
@@ -42,10 +42,12 @@ export function scramble(text: string, salt = ''): string {
   const r = rng(hash(`${salt}\u0000${text}`))
   let out = ''
   for (const ch of text) {
-    if (ch >= 'a' && ch <= 'z') out += pick(LOWER, ch, r)
-    else if (ch >= 'A' && ch <= 'Z') out += pick(UPPER, ch, r)
-    else if (ch >= '0' && ch <= '9') out += pick(DIGITS, ch, r)
-    else out += ch
+    if (/\p{N}/u.test(ch)) out += pick(DIGITS, ch, r)
+    else if (/\p{L}/u.test(ch)) {
+      // Unicode letters draw from the ASCII pool; case kept where the letter has one.
+      const upper = ch !== ch.toLowerCase() && ch === ch.toUpperCase()
+      out += pick(upper ? UPPER : LOWER, ch, r)
+    } else out += ch
   }
   return out
 }

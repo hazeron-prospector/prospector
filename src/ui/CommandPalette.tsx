@@ -1,5 +1,6 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { Globe, Grid3x3, MapPin, Orbit, Star } from 'lucide-react'
+import { CENSOR_CLASS, scramble } from '@/data/censor'
 import { search, type SearchHit, type SearchIndex } from '@/data/search'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/ui/ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/ui/ui/dialog'
@@ -60,6 +61,7 @@ function PaletteBody({ close, index, onResource, onSector }: PaletteActions & { 
   const nav = useNav()
   const { on, text: censorText } = useCensor()
   const [query, setQuery] = useState('')
+  const hideQuery = query !== '' && (on('system') || on('sector'))
   const [selected, setSelected] = useState('')
   const deferred = useDeferredValue(query)
   const groups = useMemo(() => search(index, deferred, { perGroupCap: PER_GROUP }), [index, deferred])
@@ -99,7 +101,19 @@ function PaletteBody({ close, index, onResource, onSector }: PaletteActions & { 
         if (h) showOnMap(h)
       }}
     >
-      <CommandInput value={query} onValueChange={setQuery} placeholder="Search systems, bodies, resources, sectors" />
+      <div className="relative">
+        <CommandInput
+          value={query}
+          onValueChange={setQuery}
+          placeholder="Search systems, bodies, resources, sectors"
+          className={hideQuery ? 'caret-foreground text-transparent selection:text-transparent' : undefined}
+        />
+        {hideQuery && (
+          <span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-9 right-3 flex items-center truncate text-sm ${CENSOR_CLASS}`}>
+            {scramble(query)}
+          </span>
+        )}
+      </div>
       <CommandList className="max-h-[360px]">
         {deferred.trim() === '' ? (
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">

@@ -1,7 +1,7 @@
 import { Search, X } from 'lucide-react'
 import { Input } from '@/ui/ui/input'
 import { cn } from '@/lib/utils'
-import { CENSOR_CLASS } from '@/data/censor'
+import { CENSOR_CLASS, scramble } from '@/data/censor'
 import { useCensor } from './state/useCensor'
 
 /** Per-table text box; the table hides rows whose system or body name does not contain it. */
@@ -14,7 +14,7 @@ export function QuickFilter({
   onChange: (v: string) => void
   placeholder: string
 }) {
-  // The typed text may be a real system or sector name (the palette also fills it in), so blur it.
+  // The typed text may be a real system or sector name (the palette also fills it in), so mask it: the input's own glyphs are transparent and a scramble is overlaid.
   const { on } = useCensor()
   const hide = value !== '' && (on('system') || on('sector'))
   return (
@@ -32,8 +32,16 @@ export function QuickFilter({
             onChange('')
           }
         }}
-        className={cn('h-6 w-56 px-6 py-0 text-xs md:text-xs', hide && CENSOR_CLASS)}
+        className={cn('h-6 w-56 px-6 py-0 text-xs md:text-xs', hide && 'caret-foreground text-transparent selection:text-transparent')}
       />
+      {hide && (
+        <span
+          aria-hidden="true"
+          className={cn('pointer-events-none absolute left-[calc(1.5rem+1px)] right-6 truncate text-xs', CENSOR_CLASS)}
+        >
+          {scramble(value)}
+        </span>
+      )}
       {value && (
         <button
           type="button"

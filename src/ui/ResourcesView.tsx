@@ -102,7 +102,7 @@ const makeRollupColumns = (q: string): Column<SystemRollupRow>[] => [
       </span>
     ),
   },
-  { id: 'body', header: 'Best body', width: 140, sortKey: 'bestBodyName', cell: (r) => <Highlight text={r.bestBodyName} q={q} /> },
+  { id: 'body', header: 'Best body', width: 140, sortKey: 'bestBodyName', cell: (r) => <Highlight text={r.bestBodyName} q={q} kind="system" /> },
   { id: 'type', header: 'Body type', width: 90, sortKey: 'bestBodyType', cell: (r) => r.bestBodyType },
   { id: 'bodies', header: 'Bodies', width: 70, align: 'right', sortKey: 'bodyCount', firstDir: 'desc', cell: (r) => r.bodyCount },
   { id: 'deposits', header: 'Deposits', width: 80, align: 'right', sortKey: 'depositCount', firstDir: 'desc', cell: (r) => r.depositCount },
