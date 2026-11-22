@@ -1,8 +1,10 @@
 /** Pure filter predicates and sorting for the table views (BLUEPRINT 5.2, 5.3, 5.5). */
-import type { BodyRow, ResourceRow, SystemRow } from './rows'
+import { foldBodyType, type BodyRow, type ResourceRow, type SystemRow } from './rows'
 import type { Eod, Sphere } from './types'
 
 export type InhabitedMode = 'any' | 'hide' | 'only'
+/** Ringworld filter: 'only' keeps rows whose system has a ringworld (R3). */
+export type RingworldMode = 'any' | 'only'
 export type TriState = 'any' | 'yes' | 'no'
 export interface Range {
   min?: number
@@ -26,6 +28,7 @@ export interface ResourceFilter {
   /** Bay categories; a row matches when it has any selected category. */
   categories: string[]
   inhabited: InhabitedMode
+  ringworld: RingworldMode
 }
 
 export interface BodyFilter {
@@ -45,6 +48,7 @@ export interface BodyFilter {
 export interface SystemFilter {
   /** Empty means all statuses. */
   eod: Eod[]
+  ringworld: RingworldMode
 }
 
 export const DEFAULT_RESOURCE_FILTER: ResourceFilter = {
@@ -55,6 +59,7 @@ export const DEFAULT_RESOURCE_FILTER: ResourceFilter = {
   spheres: [],
   categories: [],
   inhabited: 'any',
+  ringworld: 'any',
 }
 
 export const DEFAULT_BODY_FILTER: BodyFilter = {
@@ -71,12 +76,17 @@ export const DEFAULT_BODY_FILTER: BodyFilter = {
   inhabited: 'any',
 }
 
-export const DEFAULT_SYSTEM_FILTER: SystemFilter = { eod: [] }
+export const DEFAULT_SYSTEM_FILTER: SystemFilter = { eod: [], ringworld: 'any' }
 
 export const DEFAULT_RESOURCE_SORT: Sort<ResourceRow> = { key: 'bestQuality', dir: 'desc' }
 
 function inList<T>(list: readonly T[], v: T | undefined): boolean {
   return list.length === 0 || (v !== undefined && list.includes(v))
+}
+
+/** Body type list match; "Ringworld Arc" in the list matches every "Ringworld Arc N" (R3). */
+function bodyTypeOk(list: readonly string[], bodyType: string): boolean {
+  return list.length === 0 || list.includes(bodyType) || list.includes(foldBodyType(bodyType))
 }
 
 function anyOf(selected: readonly string[], have: readonly string[]): boolean {
@@ -105,18 +115,19 @@ export function filterResourceRows(rows: readonly ResourceRow[], f: ResourceFilt
     (r) =>
       (!res || res.has(r.resource)) &&
       (f.minBestQuality === undefined || r.bestQuality >= f.minBestQuality) &&
-      inList(f.bodyTypes, r.bodyType) &&
+      bodyTypeOk(f.bodyTypes, r.bodyType) &&
       inList(f.orbitalZones, r.orbitalZone) &&
       inList(f.spheres, r.sphere) &&
       anyOf(f.categories, r.categories) &&
-      inhabitedOk(f.inhabited, r.inhabited),
+      inhabitedOk(f.inhabited, r.inhabited) &&
+      (f.ringworld !== 'only' || r.hasRingworld),
   )
 }
 
 export function filterBodyRows(rows: readonly BodyRow[], f: BodyFilter): BodyRow[] {
   return rows.filter(
     (r) =>
-      inList(f.bodyTypes, r.bodyType) &&
+      bodyTypeOk(f.bodyTypes, r.bodyType) &&
       inList(f.orbitalZones, r.orbitalZone) &&
       inRange(f.diameter, r.diameterM) &&
       inRange(f.gravity, r.gravity) &&
@@ -131,7 +142,7 @@ export function filterBodyRows(rows: readonly BodyRow[], f: BodyFilter): BodyRow
 }
 
 export function filterSystemRows(rows: readonly SystemRow[], f: SystemFilter): SystemRow[] {
-  return rows.filter((r) => inList(f.eod, r.eod))
+  return rows.filter((r) => inList(f.eod, r.eod) && (f.ringworld !== 'only' || r.hasRingworld))
 }
 
 const collator = new Intl.Collator('en', { sensitivity: 'base', numeric: true })

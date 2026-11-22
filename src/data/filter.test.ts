@@ -161,7 +161,13 @@ describe('filterSystemRows', () => {
   const rows = [mk('a', 'Surveyed'), mk('b', 'Explored'), mk('c', 'Unexplored')]
   it('status filter', () => {
     expect(ids(filterSystemRows(rows, DEFAULT_SYSTEM_FILTER))).toEqual(['a', 'b', 'c'])
-    expect(ids(filterSystemRows(rows, { eod: ['Surveyed', 'Explored'] }))).toEqual(['a', 'b'])
+    expect(ids(filterSystemRows(rows, { ...DEFAULT_SYSTEM_FILTER, eod: ['Surveyed', 'Explored'] }))).toEqual(['a', 'b'])
+  })
+  it('ringworld any / only', () => {
+    const rw = [{ ...mk('a', 'Surveyed'), hasRingworld: true }, mk('b', 'Surveyed'), { ...mk('c', 'Explored'), hasRingworld: true }]
+    expect(ids(filterSystemRows(rw, { ...DEFAULT_SYSTEM_FILTER, ringworld: 'any' }))).toEqual(['a', 'b', 'c'])
+    expect(ids(filterSystemRows(rw, { ...DEFAULT_SYSTEM_FILTER, ringworld: 'only' }))).toEqual(['a', 'c'])
+    expect(ids(filterSystemRows(rw, { eod: ['Explored'], ringworld: 'only' }))).toEqual(['c'])
   })
 })
 
@@ -193,5 +199,30 @@ describe('sortRows', () => {
   })
   it('default resource sort is bestQuality desc', () => {
     expect(DEFAULT_RESOURCE_SORT).toEqual({ key: 'bestQuality', dir: 'desc' })
+  })
+})
+
+describe('ringworld filter and body type folding (R3)', () => {
+  const arcs = [
+    rr({ id: 'a1', bodyType: 'Ringworld Arc 1', isRingworld: true, hasRingworld: true }),
+    rr({ id: 'a2', bodyType: 'Ringworld Arc 12', isRingworld: true, hasRingworld: true }),
+    rr({ id: 'star', bodyType: 'Star', sphere: 'star', hasRingworld: true }),
+    rr({ id: 'p', bodyType: 'Planet' }),
+  ]
+  it('only keeps rows of ringworld systems (stars of those systems included)', () => {
+    expect(ids(filterResourceRows(arcs, { ...DEFAULT_RESOURCE_FILTER, ringworld: 'only' }))).toEqual(['a1', 'a2', 'star'])
+    expect(ids(filterResourceRows(arcs, DEFAULT_RESOURCE_FILTER))).toEqual(['a1', 'a2', 'star', 'p'])
+  })
+  it('the folded body type option matches every arc', () => {
+    const f = { ...DEFAULT_RESOURCE_FILTER, bodyTypes: ['Ringworld Arc'] }
+    expect(ids(filterResourceRows(arcs, f))).toEqual(['a1', 'a2'])
+    expect(ids(filterResourceRows(arcs, { ...DEFAULT_RESOURCE_FILTER, bodyTypes: ['Ringworld Arc', 'Planet'] }))).toEqual(['a1', 'a2', 'p'])
+  })
+  it('works for the Planets filter too', () => {
+    const bodies: BodyRow[] = ['Ringworld Arc 3', 'Moon'].map((bodyType, i) => ({
+      id: String(i), systemId: 's', systemName: 'S', sectorName: 'Sec', bodyName: 'B', bodyType, orbitalZone: 'Inner',
+      inhabited: false, inhabitingEmpires: [], isRingworld: i === 0, hasRingworld: i === 0,
+    }))
+    expect(ids(filterBodyRows(bodies, { ...DEFAULT_BODY_FILTER, bodyTypes: ['Ringworld Arc'] }))).toEqual(['0'])
   })
 })

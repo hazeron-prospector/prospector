@@ -9,3 +9,8 @@ export const TRI_OPTIONS = [
   { value: 'yes', text: 'yes' },
   { value: 'no', text: 'no' },
 ] as const
+
+export const RINGWORLD_OPTIONS = [
+  { value: 'any', text: 'any' },
+  { value: 'only', text: 'only' },
+] as const

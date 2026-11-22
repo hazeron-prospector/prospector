@@ -8,7 +8,9 @@ import {
   type Sort,
 } from '@/data/filter'
 import type { BodyRow } from '@/data/rows'
+import { foldBodyType } from '@/data/rows'
 import { distinct } from './distinct'
+import { shimmerClass } from './rowTint'
 import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
 import { NumberInput } from './NumberInput'
@@ -76,7 +78,7 @@ export function PlanetsView({ rows }: { rows: readonly BodyRow[] }) {
   const patch = (p: Partial<BodyFilter>) => setFilter((f) => ({ ...f, ...p }))
   const options = useMemo(
     () => ({
-      bodyTypes: distinct(rows, (r) => r.bodyType),
+      bodyTypes: distinct(rows, (r) => foldBodyType(r.bodyType)),
       zones: distinct(rows, (r) => r.orbitalZone),
       atmospheres: distinct(rows, (r) => r.atmosphereType),
       liquids: distinct(rows, (r) => r.liquidType),
@@ -118,6 +120,7 @@ export function PlanetsView({ rows }: { rows: readonly BodyRow[] }) {
         onSort={setSort}
         onRowClick={(r) => nav.peekBody(r.systemId, r.id, r.id)}
         selectedKey={nav.selectedKey}
+        rowClassName={shimmerClass}
       />
     </div>
   )

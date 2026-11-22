@@ -4,6 +4,7 @@ import { rollupBySystem, type SystemRollupRow } from '@/data/rollup'
 import type { ResourceRow } from '@/data/rows'
 import type { Sphere } from '@/data/types'
 import { CATEGORIES } from '@/data/catalog'
+import { foldBodyType } from '@/data/rows'
 import { distinct } from './distinct'
 import { mapColumn } from './ShowOnMapButton'
 import { Censored } from './Censored'
@@ -21,8 +22,8 @@ import { ResourcePicker } from './ResourcePicker'
 import { QualityCell } from './QualityCell'
 import { Segmented } from './Segmented'
 import { InhabitedCell } from './InhabitedCell'
-import { rowTint } from './rowTint'
-import { INHABITED_OPTIONS } from './segmentedOptions'
+import { rowClass } from './rowTint'
+import { INHABITED_OPTIONS, RINGWORLD_OPTIONS } from './segmentedOptions'
 import { useNav } from './state/NavContext'
 import { useResourceFilter } from './state/ResourceFilterContext'
 import { VirtualTable, type Column } from './VirtualTable'
@@ -124,7 +125,7 @@ export function ResourcesView() {
   const options = useMemo(
     () => ({
       categories: CATEGORIES.filter((c) => rows.some((r) => r.categories.includes(c))),
-      bodyTypes: distinct(rows, (r) => r.bodyType),
+      bodyTypes: distinct(rows, (r) => foldBodyType(r.bodyType)),
       zones: distinct(rows, (r) => r.orbitalZone),
     }),
     [rows],
@@ -164,6 +165,7 @@ export function ResourcesView() {
         <MultiSelect label="Orbital zone" options={options.zones} value={filter.orbitalZones} onChange={(orbitalZones) => patch({ orbitalZones })} />
         <MultiSelect label="Sphere" options={SPHERES} value={filter.spheres} onChange={(spheres) => patch({ spheres })} />
         <Segmented label="Inhabited" options={INHABITED_OPTIONS} value={filter.inhabited} onChange={(inhabited) => patch({ inhabited })} />
+        <Segmented label="Ringworld" options={RINGWORLD_OPTIONS} value={filter.ringworld} onChange={(ringworld) => patch({ ringworld })} />
         <Button
           variant={rollup ? 'secondary' : 'outline'}
           size="xs"
@@ -191,7 +193,7 @@ export function ResourcesView() {
           onSort={setRollupSort}
           onRowClick={(r) => nav.peekSystem(r.systemId, r.id)}
           selectedKey={nav.selectedKey}
-          rowClassName={rowTint}
+          rowClassName={rowClass}
           empty={emptyNode}
         />
       ) : (
@@ -203,7 +205,7 @@ export function ResourcesView() {
           onSort={setSort}
           onRowClick={(r) => nav.peekBody(r.systemId, r.bodyId, r.id)}
           selectedKey={nav.selectedKey}
-          rowClassName={rowTint}
+          rowClassName={rowClass}
           empty={emptyNode}
         />
       )}

@@ -10,6 +10,9 @@ import { useNav } from './state/NavContext'
 import { useResourceFilter } from './state/ResourceFilterContext'
 import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
+import { Segmented } from './Segmented'
+import { shimmerClass } from './rowTint'
+import { RINGWORLD_OPTIONS } from './segmentedOptions'
 import { VirtualTable, type Column } from './VirtualTable'
 
 const STATUSES: Eod[] = ['Surveyed', 'Explored', 'Unexplored']
@@ -66,7 +69,8 @@ export function SystemsView({ rows }: { rows: readonly SystemRow[] }) {
         }}
       >
         <QuickFilter value={quick} onChange={(v) => setQuickFilter('systems', v)} placeholder="Filter by system, catalog or sector name" />
-        <MultiSelect label="Status" options={STATUSES} value={filter.eod} onChange={(eod) => setFilter({ eod })} />
+        <MultiSelect label="Status" options={STATUSES} value={filter.eod} onChange={(eod) => setFilter((f) => ({ ...f, eod }))} />
+        <Segmented label="Ringworld" options={RINGWORLD_OPTIONS} value={filter.ringworld} onChange={(ringworld) => setFilter((f) => ({ ...f, ringworld }))} />
       </FilterBar>
       <VirtualTable
         rows={shown}
@@ -76,6 +80,7 @@ export function SystemsView({ rows }: { rows: readonly SystemRow[] }) {
         onSort={setSort}
         onRowClick={(r) => nav.peekSystem(r.id, r.id)}
         selectedKey={nav.selectedKey}
+        rowClassName={shimmerClass}
       />
     </div>
   )

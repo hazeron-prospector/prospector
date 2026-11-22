@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { INHABITED_TEXT } from './InhabitedCell'
-import { BODY_HABITABLE_TEXT, SYSTEM_HABITABLE_TEXT, rowTint } from './rowTint'
+import { BODY_HABITABLE_TEXT, RINGWORLD_ROW, SYSTEM_HABITABLE_TEXT, rowClass, rowTint, shimmerClass } from './rowTint'
 
 describe('rowTint', () => {
   it('inhabited wins over everything', () => {
@@ -15,5 +15,18 @@ describe('rowTint', () => {
   })
   it('no tint otherwise', () => {
     expect(rowTint({ inhabited: false, bodyHabitable: false, systemHabitable: false })).toBeUndefined()
+  })
+})
+
+describe('ringworld shimmer class', () => {
+  it('layers over the text tint without replacing it', () => {
+    expect(rowClass({ inhabited: true, systemHabitable: false, hasRingworld: true })).toBe(`${INHABITED_TEXT} ${RINGWORLD_ROW}`)
+    expect(rowClass({ inhabited: false, systemHabitable: false, hasRingworld: true })).toBe(RINGWORLD_ROW)
+    expect(rowClass({ inhabited: true, systemHabitable: false, hasRingworld: false })).toBe(INHABITED_TEXT)
+    expect(rowClass({ inhabited: false, systemHabitable: false, hasRingworld: false })).toBeUndefined()
+  })
+  it('planets and systems get only the shimmer', () => {
+    expect(shimmerClass({ hasRingworld: true })).toBe(RINGWORLD_ROW)
+    expect(shimmerClass({ hasRingworld: false })).toBeUndefined()
   })
 })

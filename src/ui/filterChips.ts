@@ -10,7 +10,7 @@ export interface ChipState {
 }
 
 /** Filter fields that can be cleared as a unit ('quick' is the table text box). */
-export type FilterKey = 'resources' | 'minBestQuality' | 'bodyTypes' | 'orbitalZones' | 'spheres' | 'categories' | 'inhabited' | 'quick'
+export type FilterKey = 'resources' | 'minBestQuality' | 'bodyTypes' | 'orbitalZones' | 'spheres' | 'categories' | 'inhabited' | 'ringworld' | 'quick'
 
 export interface Chip {
   id: string
@@ -57,6 +57,13 @@ export function activeChips(s: ChipState): Chip[] {
       label: f.inhabited === 'only' ? 'Inhabited only' : 'Uninhabited only',
       remove: (st) => ({ ...st, filter: { ...st.filter, inhabited: 'any' } }),
     })
+  if (f.ringworld === 'only')
+    out.push({
+      id: 'ringworld',
+      key: 'ringworld',
+      label: 'Ringworld only',
+      remove: (st) => ({ ...st, filter: { ...st.filter, ringworld: 'any' } }),
+    })
   if (s.quick.trim())
     out.push({ id: 'quick', key: 'quick', label: `Search: "${s.quick.trim()}"`, remove: (st) => ({ ...st, quick: '' }) })
   return out
@@ -93,6 +100,8 @@ function fieldLabel(s: ChipState, key: FilterKey): string {
       return many('Category', f.categories)
     case 'inhabited':
       return f.inhabited === 'only' ? 'Inhabited only' : 'Uninhabited only'
+    case 'ringworld':
+      return 'Ringworld only'
     case 'quick':
       return `Search "${s.quick.trim()}"`
   }

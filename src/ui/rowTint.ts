@@ -12,3 +12,18 @@ export function rowTint(r: { inhabited: boolean; bodyHabitable?: boolean; system
   if (r.systemHabitable) return SYSTEM_HABITABLE_TEXT
   return undefined
 }
+
+/** CSS class (index.css) for the animated light sweep on rows whose system has a ringworld (R2). */
+export const RINGWORLD_ROW = 'ringworld-row'
+
+/** Row class: the text tint (W20) plus the ringworld shimmer layered over it. */
+export function rowClass(r: { inhabited: boolean; bodyHabitable?: boolean; systemHabitable?: boolean; hasRingworld: boolean }): string | undefined {
+  const tint = rowTint({ ...r, systemHabitable: r.systemHabitable ?? false })
+  if (!r.hasRingworld) return tint
+  return tint ? `${tint} ${RINGWORLD_ROW}` : RINGWORLD_ROW
+}
+
+/** Planets and Systems tables have no text tint; only the shimmer. */
+export function shimmerClass(r: { hasRingworld: boolean }): string | undefined {
+  return r.hasRingworld ? RINGWORLD_ROW : undefined
+}

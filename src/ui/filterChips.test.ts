@@ -43,6 +43,12 @@ describe('activeChips', () => {
     expect(chips.map((c) => c.label)).toEqual(['Iron', 'Gold', 'Min Q ≥ 200', 'Inhabited only', 'Search: "sol"'])
     expect(chips[0]!.resource).toBe('Iron')
   })
+  it('adds a Ringworld chip that removes itself', () => {
+    const s = state({ ringworld: 'only' })
+    const chips = activeChips(s)
+    expect(chips.map((c) => c.label)).toEqual(['Ringworld only'])
+    expect(chips[0]!.remove(s).filter.ringworld).toBe('any')
+  })
   it('removes just that chip', () => {
     const s = state({ resources: ['Iron', 'Gold'], minBestQuality: 200 })
     const chips = activeChips(s)
@@ -57,6 +63,10 @@ describe('suggestLoosen', () => {
     const s = state({ resources: ['Iron'], minBestQuality: 200 })
     // Removing Min Q frees 2 Iron rows; removing Resource frees 1 Gold row.
     expect(suggestLoosen(rows, s)).toEqual({ label: 'Min Q ≥ 200', count: 2 })
+  })
+  it('can suggest dropping the ringworld filter', () => {
+    const s = state({ ringworld: 'only' })
+    expect(suggestLoosen(rows, s)).toEqual({ label: 'Ringworld only', count: 3 })
   })
   it('accounts for the quick filter', () => {
     const s = state({ minBestQuality: 200 }, 'zzz')
