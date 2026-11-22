@@ -10,7 +10,7 @@
  */
 
 /** Bump when the shape of StarMap changes; the IndexedDB cache discards older versions. */
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 export type Eod = 'Surveyed' | 'Explored' | 'Unexplored'
 export type WormholePolarity = 'positive' | 'negative' | 'neutral'
@@ -199,6 +199,8 @@ export interface System {
   eod: Eod
   /** Original eod text, present only when it was not a known status (eod is then 'Unexplored'). */
   eodRaw?: string
+  /** createDate of the export this system came from; stamped when maps are merged (absent = the map's createDate). */
+  sourceDate?: string
   stars: Star[]
   planets: Planet[]
   wormholes: Wormhole[]
