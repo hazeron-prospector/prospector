@@ -2,11 +2,13 @@ import { useMemo } from 'react'
 import { DEFAULT_RESOURCE_FILTER, sortRows, filterResourceRows } from '@/data/filter'
 import type { ResourceRow } from '@/data/rows'
 import type { Sphere } from '@/data/types'
+import { CATEGORIES } from '@/data/catalog'
 import { distinct } from './distinct'
 import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
 import { NumberInput } from './NumberInput'
 import { ResourceIcon } from './ResourceIcon'
+import { ResourcePicker } from './ResourcePicker'
 import { QualityCell } from './QualityCell'
 import { Segmented } from './Segmented'
 import { InhabitedCell } from './InhabitedCell'
@@ -77,11 +79,11 @@ export function ResourcesView({
   rows: readonly ResourceRow[]
   onOpenSystem: (systemId: string) => void
 }) {
-  const { filter, patch, setFilter, sort, setSort } = useResourceFilter()
+  const { allRows, filter, patch, setFilter, sort, setSort } = useResourceFilter()
 
   const options = useMemo(
     () => ({
-      resources: distinct(rows, (r) => r.resource),
+      categories: CATEGORIES.filter((c) => rows.some((r) => r.categories.includes(c))),
       bodyTypes: distinct(rows, (r) => r.bodyType),
       zones: distinct(rows, (r) => r.orbitalZone),
     }),
@@ -98,7 +100,8 @@ export function ResourcesView({
         total={rows.length}
         onReset={() => setFilter(DEFAULT_RESOURCE_FILTER)}
       >
-        <MultiSelect label="Resource" searchable options={options.resources} value={filter.resources} onChange={(resources) => patch({ resources })} />
+        <ResourcePicker rows={allRows} value={filter.resources} onChange={(resources) => patch({ resources })} />
+        <MultiSelect label="Category" options={options.categories} value={filter.categories} onChange={(categories) => patch({ categories })} />
         <NumberInput label="Min Q" value={filter.minBestQuality} onChange={(minBestQuality) => patch({ minBestQuality })} />
         <MultiSelect label="Body type" options={options.bodyTypes} value={filter.bodyTypes} onChange={(bodyTypes) => patch({ bodyTypes })} />
         <MultiSelect label="Orbital zone" options={options.zones} value={filter.orbitalZones} onChange={(orbitalZones) => patch({ orbitalZones })} />
