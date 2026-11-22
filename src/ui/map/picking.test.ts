@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickNearest, projectPoint, projectPoints } from './picking'
+import { pickNearest, pointPixelSize, projectPoint, projectPoints } from './picking'
 
 // Orthographic-like identity: clip = world, so ndc x,y in [-1,1].
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
@@ -36,5 +36,34 @@ describe('pickNearest', () => {
   it('skips invisible points', () => {
     const p = projectPoints(new Float32Array([0, 0, 5]), I, 100, 100)
     expect(pickNearest(p, 50, 50, 20)).toBe(-1)
+  })
+})
+
+describe('pointPixelSize', () => {
+  it('matches the shader formula: attenuated, clamped', () => {
+    expect(pointPixelSize(6, 100, 100, 2)).toBeCloseTo(12) // att 1, devicePixelRatio 2
+    expect(pointPixelSize(6, 1, 100, 1)).toBeCloseTo(12) // att capped at 2
+    expect(pointPixelSize(6, 1e6, 100, 1)).toBeCloseTo(3) // att floored at 0.5
+    expect(pointPixelSize(1000, 100, 100, 1)).toBe(96)
+  })
+})
+
+describe('pickNearest on-screen size and highlight preference', () => {
+  const pos = new Float32Array([-0.5, 0, 0, -0.4, 0, 0])
+  const proj = projectPoints(pos, I, 200, 100) // x = 50 and 60, depth 1
+  it('derives the hit bonus from the drawn size (pixel ratio and attenuation)', () => {
+    // size 10 at ratio 2, att 1: drawn 20 device px = 10 css px, bonus 5 -> reach 5 + 5 = 10
+    const screen = { refDist: 1, pixelRatio: 2 }
+    expect(pickNearest(proj, 40, 50, 5, [10, 1], { screen })).toBe(0) // d=10 <= 10
+    expect(pickNearest(proj, 39, 50, 5, [10, 1], { screen })).toBe(-1) // d=11
+    // far away: attenuation floors at 0.5, so bonus shrinks to 2.5 css px
+    expect(pickNearest(proj, 40, 50, 5, [10, 1], { screen: { refDist: 1e-6, pixelRatio: 2 } })).toBe(-1)
+  })
+  it('prefers highlighted points within the threshold over a nearer dim one', () => {
+    // click at x=58: dim point 1 (x=60) is nearer than highlighted point 0 (x=50), both within radius 10
+    expect(pickNearest(proj, 58, 50, 10, [3, 3])).toBe(1)
+    expect(pickNearest(proj, 58, 50, 10, [3, 3], { prefer: [1, 0] })).toBe(0)
+    // a highlighted point out of range does not win
+    expect(pickNearest(proj, 58, 50, 5, [3, 3], { prefer: [1, 0] })).toBe(1)
   })
 })

@@ -66,10 +66,35 @@ export function projectPoints(
   return o
 }
 
+/** Point-size attenuation shared by the vertex shader (scene.ts) and hit testing. */
+export const ATTENUATION_POWER = 0.6
+export const ATTENUATION_MIN = 0.5
+export const ATTENUATION_MAX = 2
+export const POINT_PX_MIN = 1
+export const POINT_PX_MAX = 96
+
+/**
+ * Device-pixel diameter the shader draws for a point of `size` at view distance `depth`:
+ * clamp(size * pixelRatio * clamp((refDist / depth)^0.6, 0.5, 2), 1, 96).
+ */
+export function pointPixelSize(size: number, depth: number, refDist: number, pixelRatio: number): number {
+  const att = Math.min(ATTENUATION_MAX, Math.max(ATTENUATION_MIN, (refDist / Math.max(depth, 0.001)) ** ATTENUATION_POWER))
+  return Math.min(POINT_PX_MAX, Math.max(POINT_PX_MIN, size * pixelRatio * att))
+}
+
+export interface PickOptions {
+  /** Treat `sizes` as raw point sizes and convert to drawn CSS pixels with the shader's formula. */
+  screen?: { refDist: number; pixelRatio: number }
+  /** Per point, truthy = highlighted: within the threshold these always beat non-highlighted points. */
+  prefer?: ArrayLike<number>
+}
+
 /**
  * Index of the visible point nearest to (px, py) within `radius` pixels, or -1.
- * `sizes` (pixel diameters) widen a point's hit area by half its size, so big points are easier
- * to hit; the best score is distance minus that bonus, ties go to the nearer point to the camera.
+ * `sizes` widen a point's hit area by half its drawn diameter, so big points are easier to hit
+ * (pixel diameters, or raw sizes converted via `opts.screen`); the best score is distance minus
+ * that bonus, ties go to the nearer point to the camera. With `opts.prefer`, highlighted points
+ * in range win over any non-highlighted point.
  */
 export function pickNearest(
   proj: ProjectedPoints,
@@ -77,20 +102,33 @@ export function pickNearest(
   py: number,
   radius: number,
   sizes?: ArrayLike<number>,
+  opts: PickOptions = {},
 ): number {
   let best = -1
+  let bestTier = 2
   let bestScore = Infinity
   let bestDepth = Infinity
   const n = proj.x.length
+  const { screen, prefer } = opts
   for (let i = 0; i < n; i++) {
     if (!proj.visible[i]) continue
     const d = Math.hypot(proj.x[i]! - px, proj.y[i]! - py)
-    const bonus = sizes ? sizes[i]! * 0.5 : 0
-    if (d > radius + bonus) continue
-    const score = d - bonus
     const depth = proj.depth[i]!
-    if (score < bestScore - 1e-6 || (Math.abs(score - bestScore) <= 1e-6 && depth < bestDepth)) {
+    let bonus = 0
+    if (sizes) {
+      const px1 = screen ? pointPixelSize(sizes[i]!, depth, screen.refDist, screen.pixelRatio) / screen.pixelRatio : sizes[i]!
+      bonus = px1 * 0.5
+    }
+    if (d > radius + bonus) continue
+    const tier = prefer && !prefer[i] ? 1 : 0
+    const score = d - bonus
+    const better =
+      tier !== bestTier
+        ? tier < bestTier
+        : score < bestScore - 1e-6 || (Math.abs(score - bestScore) <= 1e-6 && depth < bestDepth)
+    if (better) {
       best = i
+      bestTier = tier
       bestScore = score
       bestDepth = depth
     }

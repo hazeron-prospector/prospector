@@ -17,8 +17,8 @@ export const SIZE_EXPLORED = 6
 export const SIZE_SURVEYED = 7
 export const SIZE_UNEXPLORED = 4
 export const SIZE_DIM = 3
-export const SIZE_HIGHLIGHT_MIN = 9
-export const SIZE_HIGHLIGHT_MAX = 16
+export const SIZE_HIGHLIGHT_MIN = 6
+export const SIZE_HIGHLIGHT_MAX = 10
 
 /** Unexplored systems get their star color multiplied by this. */
 export const UNEXPLORED_DIM = 0.35
@@ -116,7 +116,14 @@ export interface MapData {
   indexOfSystem: Map<string, number>
   wormholes: WormholeLines
   sectors: SectorCube[]
+  /** Extents of every system position. */
   bounds: { center: Vec3; radius: number }
+  /**
+   * Where the initial/reset camera looks: the dense core. Equals `bounds` unless far outlier
+   * systems stretch the extents (the sample has a small group ~1500 pc from the other ~1000
+   * systems); outliers stay on the map, reachable by panning.
+   */
+  frame: { center: Vec3; radius: number }
 }
 
 function hasCoords(s: System): s is System & { x: number; y: number; z: number } {
@@ -183,6 +190,7 @@ export function buildMapData(map: StarMap, highlight?: ReadonlyMap<string, numbe
     wormholes: buildWormholes(pts),
     sectors: buildSectors(map),
     bounds: computeBounds(positions),
+    frame: computeFrame(positions),
   }
 }
 
@@ -274,4 +282,27 @@ function computeBounds(p: Float32Array): { center: Vec3; radius: number } {
     r2 = Math.max(r2, (p[i]! - center[0]) ** 2 + (p[i + 1]! - center[1]) ** 2 + (p[i + 2]! - center[2]) ** 2)
   }
   return { center, radius: Math.max(Math.sqrt(r2), 1) }
+}
+
+/** A system is an outlier when it is farther than this many times the 90th-percentile distance from the median. */
+export const FRAME_OUTLIER_FACTOR = 3
+
+/** Bounds of the dense core: systems within `FRAME_OUTLIER_FACTOR` x p90 distance of the per-axis median. */
+export function computeFrame(p: Float32Array): { center: Vec3; radius: number } {
+  const n = p.length / 3
+  if (n === 0) return computeBounds(p)
+  const median = (k: number): number => {
+    const v = new Float32Array(n)
+    for (let i = 0; i < n; i++) v[i] = p[i * 3 + k]!
+    v.sort()
+    return v[n >> 1]!
+  }
+  const m: Vec3 = [median(0), median(1), median(2)]
+  const dist = new Float32Array(n)
+  for (let i = 0; i < n; i++) dist[i] = Math.hypot(p[i * 3]! - m[0], p[i * 3 + 1]! - m[1], p[i * 3 + 2]! - m[2])
+  const p90 = Float32Array.from(dist).sort()[Math.min(n - 1, Math.floor(n * 0.9))]!
+  const limit = Math.max(p90 * FRAME_OUTLIER_FACTOR, 1)
+  const core: number[] = []
+  for (let i = 0; i < n; i++) if (dist[i]! <= limit) core.push(p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!)
+  return computeBounds(Float32Array.from(core))
 }

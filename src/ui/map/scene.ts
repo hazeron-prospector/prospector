@@ -9,7 +9,17 @@ import { buildMapData, SIZE_EXPLORED, UNEXPLORED_DIM, type MapData, type Vec3 } 
 import type { StarMap } from '@/data/types'
 import { cubeEdges } from './cube'
 import { flyDestination, flyPose, frameDistance, type CameraPose } from './fly'
-import { pickNearest, projectPoint, projectPoints, type ProjectedPoints } from './picking'
+import {
+  ATTENUATION_MAX,
+  ATTENUATION_MIN,
+  ATTENUATION_POWER,
+  POINT_PX_MAX,
+  POINT_PX_MIN,
+  pickNearest,
+  projectPoint,
+  projectPoints,
+  type ProjectedPoints,
+} from './picking'
 
 export interface Layers {
   wormholes: boolean
@@ -31,6 +41,9 @@ const PICK_RADIUS_PX = 9
 const CLICK_SLOP_PX = 5
 const FOV = 50
 
+const glsl = (n: number): string => (Number.isInteger(n) ? n.toFixed(1) : String(n))
+
+// The size formula is shared with hit testing (pointPixelSize in picking.ts).
 const VERT = /* glsl */ `
 attribute vec3 aColor;
 attribute float aSize;
@@ -44,8 +57,8 @@ void main() {
   vRing = aRing;
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * mv;
-  float att = clamp(pow(uRefDist / max(-mv.z, 0.001), 0.6), 0.5, 3.0);
-  gl_PointSize = clamp(aSize * uPixelRatio * att, 1.0, 96.0);
+  float att = clamp(pow(uRefDist / max(-mv.z, 0.001), ${glsl(ATTENUATION_POWER)}), ${glsl(ATTENUATION_MIN)}, ${glsl(ATTENUATION_MAX)});
+  gl_PointSize = clamp(aSize * uPixelRatio * att, ${glsl(POINT_PX_MIN)}, ${glsl(POINT_PX_MAX)});
 }
 `
 
@@ -138,6 +151,10 @@ export class MapScene {
   private selected = -1
   private hovered = -1
   private sizes: Float32Array
+  /** 1 for highlighted points while a highlight is active (hit-test preference). */
+  private preferred?: Uint8Array
+  private refDist = 1
+  private pixelRatio = 1
   private projected?: ProjectedPoints
   private projectedStale = true
   private width = 1
@@ -179,8 +196,11 @@ export class MapScene {
     const d = this.data
     this.sizes = d.sizes.slice()
     this.applyStyle()
+    this.updatePreferred()
 
-    const refDist = frameDistance(d.bounds.radius, FOV, 1.6)
+    const refDist = frameDistance(d.frame.radius, FOV, 1.6)
+    this.refDist = refDist
+    this.pixelRatio = pixelRatio
     this.camera = new THREE.PerspectiveCamera(FOV, 1, Math.max(0.05, d.bounds.radius / 5000), d.bounds.radius * 40)
     this.pointsMat = pointsMaterial(refDist, pixelRatio, true)
     this.pointsGeo = pointsGeometry(d.positions, d.colors, this.sizes, d.rings)
@@ -281,7 +301,7 @@ export class MapScene {
   }
 
   resetView(animate = true): void {
-    const { center, radius } = this.data.bounds
+    const { center, radius } = this.data.frame
     const dist = frameDistance(radius, FOV, this.camera.aspect)
     const to: CameraPose = {
       target: center,
@@ -343,6 +363,18 @@ export class MapScene {
     this.sizes.set(d.sizes)
   }
 
+  private updatePreferred(): void {
+    const h = this.highlight
+    if (!h) {
+      this.preferred = undefined
+      return
+    }
+    const d = this.data
+    const m = new Uint8Array(d.count)
+    for (let i = 0; i < d.count; i++) m[i] = h.has(d.systemIds[i]!) ? 1 : 0
+    this.preferred = m
+  }
+
   /** Recompute highlight/status styling and update attributes in place. */
   private refreshStyle(): void {
     const fresh = buildMapData(this.map, this.highlight)
@@ -352,6 +384,7 @@ export class MapScene {
     d.rings.set(fresh.rings)
     this.applyStyle()
     this.sizes.set(d.sizes)
+    this.updatePreferred()
     for (const name of ['aColor', 'aSize', 'aRing']) {
       this.pointsGeo.getAttribute(name)!.needsUpdate = true
     }
@@ -393,7 +426,10 @@ export class MapScene {
       this.projected = projectPoints(this.data.positions, this.viewProj.elements, this.width, this.height, this.projected)
       this.projectedStale = false
     }
-    return pickNearest(this.projected, x, y, PICK_RADIUS_PX, this.sizes)
+    return pickNearest(this.projected, x, y, PICK_RADIUS_PX, this.sizes, {
+      screen: { refDist: this.refDist, pixelRatio: this.pixelRatio },
+      ...(this.preferred && { prefer: this.preferred }),
+    })
   }
 
   private readonly onPointerMove = (e: PointerEvent): void => {

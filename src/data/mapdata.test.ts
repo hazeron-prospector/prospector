@@ -187,6 +187,18 @@ describe('sectors and bounds', () => {
     expect(s.systemCount).toBe(1)
   })
 
+  it('frames the dense core, ignoring far outliers (bounds still cover everything)', () => {
+    const pts = [[0, 0, 0], [10, 0, 0], [0, 10, 0], [10, 10, 0], [5, 5, 5], [5, 5, -5], [4, 6, 0], [6, 4, 0], [5, 5, 0], [3, 3, 0], [1000, 0, 0]]
+    const d = buildMapData(mapOf(pts.map((p, i) => sys(`S${i}`, { x: p[0]!, y: p[1]!, z: p[2]! }))))
+    expect(d.frame.center[0]).toBeCloseTo(5)
+    expect(d.frame.radius).toBeLessThan(15)
+    expect(d.bounds.radius).toBeGreaterThan(400)
+  })
+  it('frame equals bounds without outliers', () => {
+    const d = buildMapData(mapOf([sys('A', { x: 0, y: 0, z: 0 }), sys('B', { x: 10, y: 0, z: 0 }), sys('C', { x: 5, y: 5, z: 0 })]))
+    expect(d.frame).toEqual(d.bounds)
+    expect(buildMapData(mapOf([])).frame.radius).toBeGreaterThan(0)
+  })
   it('computes bounds over points; sane defaults when empty', () => {
     const d = buildMapData(mapOf([sys('A', { x: 0, y: 0, z: 0 }), sys('B', { x: 10, y: 0, z: 0 })]))
     expect(d.bounds.center).toEqual([5, 0, 0])
@@ -212,6 +224,21 @@ describe.skipIf(!existsSync(samplePath))('full sample map data', () => {
     expect(d.wormholes.positions.length).toBe((d.wormholes.linkCount + d.wormholes.stubCount) * 6)
     expect(d.wormholes.linkCount).toBeGreaterThan(0)
     expect(Number.isFinite(d.bounds.radius)).toBe(true)
+    // bounds match the system position extents exactly (not wormhole stubs or sector cubes)
+    const ext = [0, 1, 2].map((k) => {
+      const v = map.systems.filter((s) => s.x !== undefined).map((s) => [s.x!, s.y!, s.z!][k]!)
+      return [Math.min(...v), Math.max(...v)] as const
+    })
+    ext.forEach(([lo, hi], k) => expect(d.bounds.center[k]).toBeCloseTo((lo + hi) / 2, 3))
+    const half = Math.max(...ext.map(([lo, hi]) => (hi - lo) / 2))
+    expect(d.bounds.radius).toBeGreaterThanOrEqual(half)
+    expect(d.bounds.radius).toBeLessThanOrEqual(Math.hypot(...ext.map(([lo, hi]) => (hi - lo) / 2)) + 1e-3)
+    // the frame hugs the dense core: far outliers do not shrink the main cluster to a blob
+    expect(d.frame.radius).toBeLessThan(d.bounds.radius / 4)
+    const inside = [...Array(d.count).keys()].filter(
+      (i) => Math.hypot(...[0, 1, 2].map((k) => d.positions[i * 3 + k]! - d.frame.center[k]!)) <= d.frame.radius * 1.001,
+    ).length
+    expect(inside / d.count).toBeGreaterThan(0.95)
     // every system lies inside its sector cube (sector coordinate is the cube center / 10)
     const cube = new Map(d.sectors.map((s) => [s.sectorId, s]))
     for (const s of map.systems) {
