@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { qualityRgb } from './color'
@@ -209,9 +209,9 @@ describe('sectors and bounds', () => {
   })
 })
 
-const samplePath = path.resolve(import.meta.dirname, '../../../sample/starmap.xml')
-describe.skipIf(!existsSync(samplePath))('full sample map data', () => {
-  const map = parseStarMap(readFileSync(samplePath, 'utf8'))
+const mockPath = path.resolve(import.meta.dirname, '../../fixtures/mock-starmap.xml')
+describe('mock starmap map data', () => {
+  const map = parseStarMap(readFileSync(mockPath, 'utf8'))
 
   it('prepares all systems, sectors and wormholes consistently', () => {
     const d = buildMapData(map)
@@ -235,10 +235,11 @@ describe.skipIf(!existsSync(samplePath))('full sample map data', () => {
     expect(d.bounds.radius).toBeLessThanOrEqual(Math.hypot(...ext.map(([lo, hi]) => (hi - lo) / 2)) + 1e-3)
     // the frame hugs the dense core: far outliers do not shrink the main cluster to a blob
     expect(d.frame.radius).toBeLessThan(d.bounds.radius / 4)
+    const outliers = map.systems.filter((s) => s.sectorId === map.sectors.at(-1)!.sectorId).length
     const inside = [...Array(d.count).keys()].filter(
       (i) => Math.hypot(...[0, 1, 2].map((k) => d.positions[i * 3 + k]! - d.frame.center[k]!)) <= d.frame.radius * 1.001,
     ).length
-    expect(inside / d.count).toBeGreaterThan(0.95)
+    expect(inside).toBe(d.count - outliers) // exactly the distant 10-system cluster is cut
     // every system lies inside its sector cube (sector coordinate is the cube center / 10)
     const cube = new Map(d.sectors.map((s) => [s.sectorId, s]))
     for (const s of map.systems) {
