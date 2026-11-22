@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compressAu, layoutOrrery, localOrbitRadius, spacedRadii, ORRERY_EXTENT, OUTER_RING } from './orrery'
+import { arcPoint, compressAu, layoutOrrery, nearestArc, localOrbitRadius, spacedRadii, ORRERY_EXTENT, OUTER_RING } from './orrery'
 import { parseOrbit } from './strings'
 import type { Planet, Star, System } from './types'
 
@@ -122,5 +122,43 @@ describe('orbit zones (W17)', () => {
       ]),
     )
     expect(o.orbits.map((c) => c.zone).sort()).toEqual(['Habitable', 'Outer'])
+  })
+})
+
+describe('ringworld rings (R5)', () => {
+  const arcs = [3, 1, 2].map((n) => planet(`R Arc ${n}`, `Orbiting R at 83,400m ${n * 100}`, `Ringworld Arc ${n}`))
+  const s = sys([star('R')], [...arcs, planet('R I', 'Orbiting R at 1au 10')])
+  const o = layoutOrrery(s)
+
+  it('groups arcs of one orbit into one ring, ordered by arc number', () => {
+    expect(o.rings).toHaveLength(1)
+    const ring = o.rings[0]!
+    expect(ring.id).toBe('R Arc 1')
+    expect(ring.arcs.map((a) => a.id)).toEqual(['R Arc 1', 'R Arc 2', 'R Arc 3'])
+    expect([ring.cx, ring.cy]).toEqual([0, 0])
+    expect(ring.r).toBeGreaterThan(0)
+    expect(ring.arcs.map((a) => Math.round(a.deg))).toEqual([100, 200, 300])
+  })
+  it('flags arc bodies but keeps them in the body list', () => {
+    expect(o.bodies).toHaveLength(4)
+    expect(o.bodies.filter((b) => b.ringworld).map((b) => b.id).sort()).toEqual(['R Arc 1', 'R Arc 2', 'R Arc 3'])
+  })
+  it('has no rings without ringworld arcs', () => {
+    expect(layoutOrrery(sys([star('A')], [planet('A I', 'Orbiting A at 1au 10')])).rings).toEqual([])
+  })
+  it('carries highlight to the arc', () => {
+    expect(layoutOrrery(s, new Set(['R Arc 2'])).rings[0]!.arcs.map((a) => a.highlighted)).toEqual([false, true, false])
+  })
+  it('picks the nearest arc by angle, wrapping around 0', () => {
+    const ring = o.rings[0]!
+    const at = (deg: number) => arcPoint(ring, deg)
+    expect(nearestArc(ring, at(190).x, at(190).y).id).toBe('R Arc 2')
+    expect(nearestArc(ring, at(110).x, at(110).y).id).toBe('R Arc 1')
+    // 350 deg is 50 away from arc 3 (300) and 110 away from arc 1 (100)
+    expect(nearestArc(ring, at(350).x, at(350).y).id).toBe('R Arc 3')
+    expect(nearestArc(ring, at(20).x, at(20).y).id).toBe('R Arc 1') // 80 from arc 1, 80 from arc 3 wrapped: first wins ties
+  })
+  it('stays inside the view for the mock-style crowded case', () => {
+    for (const b of o.bodies) expect(Math.abs(b.x) + b.r).toBeLessThanOrEqual(ORRERY_EXTENT)
   })
 })

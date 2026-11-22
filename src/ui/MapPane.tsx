@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, useCallback, useMemo, type ReactNode } from 'react'
 import { summarizeMarkers } from '@/data/markers'
-import type { ResourceRow } from '@/data/rows'
+import { systemHasRingworld, type ResourceRow } from '@/data/rows'
 import { bestDepositsBySystem, buildSystemSummaries, hoverResources } from '@/data/systemSummary'
 import type { StarMap } from '@/data/types'
 import { ProspectPanel } from './ProspectPanel'
@@ -56,6 +56,7 @@ export function MapPane({ map, highlight, selectedSystemId, onSelectSystem, flyT
         eod: s.eod,
         resources: hoverResources(sum?.topResources ?? [], matches?.get(id)),
         habitableCount: sum?.habitableCount ?? 0,
+        ringworld: systemHasRingworld(s),
         empires: [...new Set(s.cities.map((c) => c.empire).filter((e): e is string => !!e))],
         markers: summarizeMarkers(s),
       }

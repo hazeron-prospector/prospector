@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, MapPin, X } from 'lucide-react'
+import { systemHasRingworld } from '@/data/rows'
 import type { Planet, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { Censored, OrbitText } from './Censored'
@@ -19,6 +20,7 @@ import {
   type BodySortKey,
 } from './bodyResources'
 import { qualityStyle } from './quality'
+import { RingworldBadge } from './RingworldBadge'
 import { SystemPreview } from './SystemPreview'
 import { useBodyHighlights } from './useBodyHighlights'
 import { cn } from '@/lib/utils'
@@ -302,6 +304,7 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
       <header className="border-b px-4 py-3">
         <h1 className="text-lg font-semibold text-primary">
           <Censored kind="system">{system.name}</Censored>
+          {systemHasRingworld(system) && <RingworldBadge className="ml-2 align-middle" />}
         </h1>
         <div className="mt-1 text-sm">
           {system.catalog && <Field label="Catalog">

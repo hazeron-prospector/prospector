@@ -1,11 +1,12 @@
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { ExternalLink, MapPin, X } from 'lucide-react'
-import type { ResourceRow } from '@/data/rows'
+import { isRingworldBody, systemHasRingworld, type ResourceRow } from '@/data/rows'
 import type { Planet, Star, System } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { topResources, type PeekTarget, type TopResource } from './nav'
 import { Censored, OrbitText } from './Censored'
 import { QualityCell } from './QualityCell'
+import { RingworldBadge } from './RingworldBadge'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
 import { SystemPreview } from './SystemPreview'
@@ -145,6 +146,9 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold text-primary">{view.title}</h2>
           <p className="truncate text-xs text-muted-foreground">{view.subtitle}</p>
+          {(target.kind === 'system' ? systemHasRingworld(system) : system.planets.some((p) => p.planetId === target.bodyId && isRingworldBody(p.bodyType))) && (
+            <RingworldBadge className="mt-1" />
+          )}
           {target.kind === 'body' && (
             <p className="truncate text-xs text-muted-foreground">
               in <Censored kind="system">{system.name}</Censored>

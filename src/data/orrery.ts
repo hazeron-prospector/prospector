@@ -3,6 +3,7 @@
  * Abstract viewBox of 200 x 200 centered on the primary star: x right, y down. An orbit angle
  * of 0 deg points right and angles run counter-clockwise on screen.
  */
+import { isRingworldBody } from './rows'
 import { isHabitableWorld } from './systemSummary'
 import type { Orbit, Planet, Star, System } from './types'
 
@@ -47,6 +48,8 @@ export interface OrreryBody {
   color: string
   habitable: boolean
   highlighted: boolean
+  /** Ringworld arc (R5): drawn as part of an OrreryRing instead of as a dot. */
+  ringworld: boolean
   /** The body (or star) this one orbits, when placed relative to it. */
   parentId?: string
   /** False when the orbit was missing or unresolved and the body sits on the outer ring. */
@@ -61,10 +64,66 @@ export interface OrreryCircle {
   zone?: string
 }
 
+export interface OrreryArc {
+  id: string
+  name: string
+  bodyType: string
+  /** Angle on the ring: 0 deg points right, counter-clockwise on screen. */
+  deg: number
+  highlighted: boolean
+}
+
+/** A system's ringworld arcs sharing one orbit, drawn as one thick ring (R5). */
+export interface OrreryRing {
+  /** Id of the first arc ("Ringworld Arc 1" first); clicking the ring opens the nearest arc. */
+  id: string
+  cx: number
+  cy: number
+  r: number
+  /** Arcs by arc number. */
+  arcs: OrreryArc[]
+}
+
 export interface Orrery {
   stars: OrreryStar[]
   bodies: OrreryBody[]
   orbits: OrreryCircle[]
+  rings: OrreryRing[]
+}
+
+const arcNumber = (bodyType: string) => Number(/(\d+)\s*$/.exec(bodyType)?.[1] ?? Infinity)
+
+/** Group placed ringworld arcs by host and orbit radius. Runs on final (fitted) positions. */
+function buildRings(stars: readonly OrreryStar[], bodies: readonly OrreryBody[]): OrreryRing[] {
+  const groups = new Map<string, { cx: number; cy: number; r: number; arcs: (OrreryArc & { n: number })[] }>()
+  for (const b of bodies) {
+    if (!b.ringworld) continue
+    const host = b.parentId === undefined ? undefined : stars.find((s) => s.id === b.parentId)
+    const cx = host?.x ?? 0
+    const cy = host?.y ?? 0
+    const r = Math.hypot(b.x - cx, b.y - cy)
+    const key = `${host?.id ?? ''}|${r.toFixed(2)}`
+    const deg = ((Math.atan2(-(b.y - cy), b.x - cx) * 180) / Math.PI + 360) % 360
+    const g = groups.get(key) ?? { cx, cy, r, arcs: [] }
+    g.arcs.push({ id: b.id, name: b.name, bodyType: b.bodyType, deg, highlighted: b.highlighted, n: arcNumber(b.bodyType) })
+    groups.set(key, g)
+  }
+  return [...groups.values()].map((g) => {
+    const arcs = g.arcs.sort((a, b) => a.n - b.n).map(({ n: _n, ...a }) => a)
+    return { id: arcs[0]!.id, cx: g.cx, cy: g.cy, r: g.r, arcs }
+  })
+}
+
+/** The arc of `ring` closest in angle to the point (x, y) in orrery units. */
+export function nearestArc(ring: OrreryRing, x: number, y: number): OrreryArc {
+  const a = ((Math.atan2(-(y - ring.cy), x - ring.cx) * 180) / Math.PI + 360) % 360
+  const diff = (d: number) => Math.abs(((d - a + 540) % 360) - 180)
+  return ring.arcs.reduce((best, arc) => (diff(arc.deg) < diff(best.deg) ? arc : best))
+}
+
+/** Position on `ring` at an arc's angle. */
+export function arcPoint(ring: OrreryRing, deg: number): { x: number; y: number } {
+  return polar(ring.cx, ring.cy, ring.r, deg)
 }
 
 /**
@@ -212,6 +271,7 @@ export function layoutOrrery(system: System, highlighted?: ReadonlySet<string>):
       r,
       color: BODY_COLORS[p.bodyType] ?? FALLBACK_BODY_COLOR,
       habitable: isHabitableWorld(p),
+      ringworld: isRingworldBody(p.bodyType),
       highlighted: isHi(p.planetId),
       parentId,
       placed,
@@ -314,7 +374,9 @@ export function layoutOrrery(system: System, highlighted?: ReadonlySet<string>):
     placePlanet(p, x, y, undefined, false)
   })
 
-  return fitToView({ stars: outStars, bodies: outBodies, orbits })
+  const fitted = fitToView({ stars: outStars, bodies: outBodies, orbits, rings: [] })
+  fitted.rings = buildRings(fitted.stars, fitted.bodies)
+  return fitted
 }
 
 /** Uniformly shrink positions (not dot sizes) so every dot lies inside the view; angles are kept. */

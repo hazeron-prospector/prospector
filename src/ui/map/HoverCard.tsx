@@ -13,6 +13,8 @@ export interface HoverInfo {
   /** Up to 3, matching deposits of an active filter first (`match`). */
   resources: HoverResource[]
   habitableCount: number
+  /** System has a ringworld (R5). */
+  ringworld?: boolean
   empires: string[]
   /** Capped city and spacecraft lists (W16); names are raw and rendered through the label seam. */
   markers: MarkerSummary
@@ -67,6 +69,7 @@ export function HoverCard({
         <span className={`font-medium ${name.className ?? ''}`}>{name.text}</span>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{info.eod}</span>
       </div>
+      {info.ringworld && <div className="mt-0.5 font-medium text-amber-300">Ringworld</div>}
       {info.resources.length > 0 && (
         <ul className="mt-1 space-y-0.5">
           {info.resources.map((r) => (
