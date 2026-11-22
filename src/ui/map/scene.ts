@@ -125,7 +125,7 @@ function label(className: string): HTMLDivElement {
   return el
 }
 
-const SECTOR_LABEL = 'text-[10px] uppercase tracking-wider text-sky-300/45'
+const SECTOR_LABEL = 'text-[10px] uppercase tracking-wider text-sky-200/75'
 const SELECT_LABEL =
   'rounded-sm border border-ring/60 bg-popover/95 px-1.5 py-0.5 text-xs font-medium text-accent-foreground shadow-md'
 
@@ -239,7 +239,7 @@ export class MapScene {
     gg.setAttribute('position', new THREE.BufferAttribute(gp, 3))
     this.gridLines = new THREE.LineSegments(
       gg,
-      new THREE.LineBasicMaterial({ color: 0x5b7490, transparent: true, opacity: 0.22, depthWrite: false }),
+      new THREE.LineBasicMaterial({ color: 0x6f8fb0, transparent: true, opacity: 0.38, depthWrite: false }),
     )
     this.gridLines.frustumCulled = false
     this.gridLines.renderOrder = 0
