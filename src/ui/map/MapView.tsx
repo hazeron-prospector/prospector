@@ -46,7 +46,7 @@ export interface MapViewProps {
 
 const PLAIN: LabelFormat = (name) => ({ text: name })
 
-const DEFAULT_LAYERS: Layers = { wormholes: true, sectors: true, status: true, starColor: false, cities: true, spacecraft: true }
+const DEFAULT_LAYERS: Layers = { wormholes: true, sectors: true, status: true, starColor: false, cities: true, spacecraft: true, ringworlds: true }
 
 export default function MapView({ map, highlight, selectedSystemId, onSelectSystem, flyToRequest, getHoverInfo, labelFormat = PLAIN }: MapViewProps) {
   const hostRef = useRef<HTMLDivElement>(null)

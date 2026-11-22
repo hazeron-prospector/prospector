@@ -6,7 +6,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { LabelKind } from '@/data/censor'
-import { buildMarkers, type MarkerSet } from '@/data/markers'
+import { buildMarkers, buildRingworldMarkers, type MarkerSet } from '@/data/markers'
 import { buildMapData, WORMHOLE_OPACITY, type MapData, type StyleOptions, type Vec3 } from '@/data/mapdata'
 import type { StarMap } from '@/data/types'
 import { cubeEdges } from './cube'
@@ -34,6 +34,8 @@ export interface Layers {
   cities: boolean
   /** Spacecraft glyph beside systems that have spacecraft (W16). */
   spacecraft: boolean
+  /** Animated ring marker around ringworld systems (R4). Drives the continuous render loop. */
+  ringworlds: boolean
 }
 
 export interface SceneOptions {
@@ -145,6 +147,45 @@ void main() {
 }
 `
 
+// Ringworld marker (R4): three bright arcs spinning on a ring, plus a twinkling glint, in screen
+// space around the system point. uTime stays 0 for reduced motion, which leaves a still ring.
+const RING_VERT = /* glsl */ `
+uniform float uPixelRatio;
+uniform float uRefDist;
+uniform float uSize;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_Position = projectionMatrix * mv;
+  float att = clamp(pow(uRefDist / max(-mv.z, 0.001), ${glsl(ATTENUATION_POWER)}), 0.7, 1.3);
+  gl_PointSize = uSize * uPixelRatio * att;
+}
+`
+
+const RING_FRAG = /* glsl */ `
+uniform float uTime;
+uniform vec3 uColor;
+void main() {
+  vec2 p = gl_PointCoord * 2.0 - 1.0;
+  float d = length(p);
+  if (d > 1.0) discard;
+  float ang = atan(p.y, p.x);
+  float band = smoothstep(0.56, 0.64, d) * (1.0 - smoothstep(0.74, 0.84, d));
+  float arcs = 0.35 + 0.65 * smoothstep(-0.25, 0.45, sin(ang * 3.0 - uTime * 0.9));
+  float da = abs(mod(ang - (uTime * 0.9 + 0.8) + 3.14159265, 6.2831853) - 3.14159265);
+  float tw = 0.6 + 0.4 * sin(uTime * 3.7);
+  float glint = exp(-da * da * 40.0) * tw * (1.0 - smoothstep(0.5, 0.98, abs(d - 0.7) * 3.0));
+  float halo = exp(-da * da * 6.0) * 0.25 * band;
+  float a = band * arcs + glint + halo;
+  vec3 col = mix(uColor, vec3(1.0), clamp(glint * 1.2, 0.0, 1.0));
+  if (a < 0.02) discard;
+  gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
+}
+`
+
+const RING_COLOR = [1, 0.82, 0.38] as const
+const RING_SIZE_PX = 30
+const RING_PAUSE_QUERY = '(prefers-reduced-motion: reduce)'
+
 interface MarkerStyle {
   shape: 0 | 1
   /** CSS px right and up from the system point. */
@@ -237,6 +278,11 @@ export class MapScene {
   private readonly markers: THREE.Points
   private readonly cityMarkers: THREE.Points
   private readonly spacecraftMarkers: THREE.Points
+  private readonly ringMarkers: THREE.Points
+  private readonly ringMat: THREE.ShaderMaterial
+  private readonly ringCount: number
+  private readonly reducedMotion: MediaQueryList | undefined
+  private readonly ringObserver: MutationObserver | undefined
   private readonly sectorLabels: { el: HTMLDivElement; pos: Vec3; name: string }[] = []
   private readonly selectLabel = label(SELECT_LABEL)
 
@@ -311,6 +357,30 @@ export class MapScene {
     this.spacecraftMarkers = markerPoints(mk.spacecraft, SPACECRAFT_STYLE, refDist, pixelRatio)
     this.scene.add(this.cityMarkers, this.spacecraftMarkers)
 
+    // Ringworld marker (R4): one point per ringworld system.
+    const rw = buildRingworldMarkers(this.map)
+    this.ringCount = rw.count
+    const rg = new THREE.BufferGeometry()
+    rg.setAttribute('position', new THREE.BufferAttribute(rw.positions, 3))
+    this.ringMat = new THREE.ShaderMaterial({
+      vertexShader: RING_VERT,
+      fragmentShader: RING_FRAG,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      uniforms: {
+        uPixelRatio: { value: pixelRatio },
+        uRefDist: { value: refDist },
+        uSize: { value: RING_SIZE_PX },
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color(...RING_COLOR) },
+      },
+    })
+    this.ringMarkers = new THREE.Points(rg, this.ringMat)
+    this.ringMarkers.frustumCulled = false
+    this.ringMarkers.renderOrder = 2.5
+    this.scene.add(this.ringMarkers)
+
     // Wormholes.
     const wg = new THREE.BufferGeometry()
     wg.setAttribute('position', new THREE.BufferAttribute(d.wormholes.positions, 3))
@@ -372,6 +442,14 @@ export class MapScene {
 
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(container)
+    // The ring animation pauses with the tab and with an inactive (inert) pane; these wake it up.
+    document.addEventListener('visibilitychange', this.invalidate)
+    this.reducedMotion = typeof matchMedia === 'function' ? matchMedia(RING_PAUSE_QUERY) : undefined
+    this.reducedMotion?.addEventListener('change', this.invalidate)
+    if (typeof MutationObserver === 'function') {
+      this.ringObserver = new MutationObserver(this.invalidate)
+      this.ringObserver.observe(document.body, { attributes: true, attributeFilter: ['inert'], subtree: true })
+    }
     this.resize()
     this.resetView(false)
     this.setLayers(this.layers)
@@ -393,6 +471,7 @@ export class MapScene {
     this.gridLines.visible = layers.sectors
     this.cityMarkers.visible = layers.cities
     this.spacecraftMarkers.visible = layers.spacecraft
+    this.ringMarkers.visible = layers.ringworlds && this.ringCount > 0
     for (const s of this.sectorLabels) s.el.style.display = layers.sectors ? '' : 'none'
     if (statusChanged) this.refreshStyle()
     this.invalidate()
@@ -478,8 +557,11 @@ export class MapScene {
     canvas.removeEventListener('pointerdown', this.onPointerDown)
     canvas.removeEventListener('pointerup', this.onPointerUp)
     this.controls.removeEventListener('change', this.invalidate)
+    document.removeEventListener('visibilitychange', this.invalidate)
+    this.reducedMotion?.removeEventListener('change', this.invalidate)
+    this.ringObserver?.disconnect()
     this.controls.dispose()
-    for (const o of [this.points, this.wormholeLines, this.gridLines, this.markers, this.cityMarkers, this.spacecraftMarkers]) {
+    for (const o of [this.points, this.wormholeLines, this.gridLines, this.markers, this.cityMarkers, this.spacecraftMarkers, this.ringMarkers]) {
       o.geometry.dispose()
       ;(o.material as THREE.Material).dispose()
     }
@@ -643,11 +725,28 @@ export class MapScene {
     }
     // With damping, update() returns true while inertia is still moving the camera.
     if (this.controls.update()) again = true
+    // Continuous loop only for the ringworld animation: toggle on, a ringworld exists, motion
+    // allowed, tab visible and pane active. Otherwise rendering stays on demand.
+    if (this.ringAnimating()) {
+      this.ringMat.uniforms.uTime!.value = (now / 1000) % 3600
+      again = true
+    } else this.ringMat.uniforms.uTime!.value = 0
     this.render()
     if (again) {
       this.projectedStale = true
       if (!this.frameId) this.frameId = requestAnimationFrame(this.frame)
     }
+  }
+
+  /** True while the ring marker should keep the render loop running. */
+  private ringAnimating(): boolean {
+    return (
+      this.layers.ringworlds &&
+      this.ringCount > 0 &&
+      !this.reducedMotion?.matches &&
+      !document.hidden &&
+      !this.container.closest('[inert]')
+    )
   }
 
   private render(): void {

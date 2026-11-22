@@ -3,6 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   buildMarkers,
+  buildRingworldMarkers,
   describeSpacecraft,
   isOwn,
   MARKER_CAP,
@@ -143,5 +144,32 @@ describe('mock starmap markers', () => {
     expect(m.cities.count).toBeGreaterThan(0)
     expect(m.spacecraft.count).toBeGreaterThan(0)
     expect(new Set(Array.from({ length: m.spacecraft.count }, (_, i) => m.spacecraft.colors[i * 3]!)).size).toBe(2)
+  })
+})
+
+describe('buildRingworldMarkers', () => {
+  const arc = (id: string, n: number) =>
+    ({ planetId: id, name: id, bodyType: `Ringworld Arc ${n}`, orbit: { raw: '' }, zone: 'Habitable' }) as System['planets'][number]
+  const planet = (id: string) => ({ planetId: id, name: id, bodyType: 'Planet', orbit: { raw: '' }, zone: 'Inner' }) as System['planets'][number]
+  it('lists one marker per located ringworld system', () => {
+    const map = mapOf([
+      sys('A', { x: 1, y: 2, z: 3, planets: [arc('a1', 1), arc('a2', 2), planet('p')] }),
+      sys('B', { x: 4, y: 5, z: 6, planets: [planet('q')] }),
+      sys('C', { planets: [arc('c1', 1)] }), // Deep Space: no coordinates
+      sys('D', { x: 7, y: 8, z: 9, planets: [arc('d1', 4)] }),
+    ])
+    const m = buildRingworldMarkers(map)
+    expect(m.count).toBe(2)
+    expect(m.systemIds).toEqual(['A', 'D'])
+    close(m.positions, [1, 2, 3, 7, 8, 9])
+  })
+  it('is empty without ringworlds', () => {
+    const m = buildRingworldMarkers(mapOf([sys('A', { x: 1, y: 2, z: 3, planets: [planet('p')] })]))
+    expect(m.count).toBe(0)
+    expect(m.positions).toHaveLength(0)
+  })
+  it('finds the three mock ringworld systems', () => {
+    const xml = readFileSync(path.resolve(import.meta.dirname, '../../fixtures/mock-starmap.xml'), 'utf8')
+    expect(buildRingworldMarkers(parseStarMap(xml)).count).toBe(3)
   })
 })

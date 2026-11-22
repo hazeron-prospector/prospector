@@ -44,6 +44,7 @@ const LAYER_ROWS: [keyof Layers, string][] = [
   ['starColor', 'Star color'],
   ['cities', 'Cities'],
   ['spacecraft', 'Spacecraft'],
+  ['ringworlds', 'Highlight ringworlds'],
 ]
 
 export function Legend({ layers, onLayersChange, highlightActive, matchCount }: LegendProps) {

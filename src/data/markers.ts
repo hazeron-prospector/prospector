@@ -5,6 +5,7 @@
  * Deep Space systems (no coordinates) never get markers.
  */
 import type { RGB } from './mapdata'
+import { systemHasRingworld } from './rows'
 import type { City, Spacecraft, StarMap, System } from './types'
 
 /** Own empire (stance "Empire") versus every other empire. */
@@ -112,4 +113,22 @@ const craftLine = (c: Spacecraft): SpacecraftLine => ({
 /** Compact, capped lists for the map hover card. Names are raw: render them through the label seam. */
 export function summarizeMarkers(s: System, cap = MARKER_CAP): MarkerSummary {
   return { cities: capped(s.cities, cityLine, cap), spacecraft: capped(s.spacecraft, craftLine, cap) }
+}
+
+export interface RingworldMarkers {
+  count: number
+  /** xyz of each ringworld system. */
+  positions: Float32Array
+  systemIds: string[]
+}
+
+/**
+ * Ringworld systems that can carry a map marker (BLUEPRINT R4): a ringworld arc among the bodies
+ * and coordinates (Deep Space has none). The marker is one point per system, not per arc.
+ */
+export function buildRingworldMarkers(map: StarMap): RingworldMarkers {
+  const rows = map.systems.filter((s): s is Located => s.x !== undefined && s.y !== undefined && s.z !== undefined && systemHasRingworld(s))
+  const positions = new Float32Array(rows.length * 3)
+  rows.forEach((s, i) => positions.set([s.x, s.y, s.z], i * 3))
+  return { count: rows.length, positions, systemIds: rows.map((s) => s.systemId) }
 }
