@@ -9,15 +9,16 @@ import { PlanetsView } from './PlanetsView'
 import { ResourcesView } from './ResourcesView'
 import { SystemDetail } from './SystemDetail'
 import { SystemsView } from './SystemsView'
+import { MapPane } from './MapPane'
 import { PeekPanel } from './PeekPanel'
 import { CommandPalette } from './CommandPalette'
-import { isPaletteShortcut, type Peek } from './nav'
+import { buildHighlight, isPaletteShortcut, type Peek } from './nav'
 import { buildSearchIndex } from '@/data/search'
 import { NavProvider, type Nav } from './state/NavContext'
 import { ResourceFilterProvider, useResourceFilter } from './state/ResourceFilterContext'
 import type { MapLoader } from './useMapLoader'
 
-type Tab = 'resources' | 'planets' | 'systems'
+type Tab = 'resources' | 'planets' | 'systems' | 'map'
 
 /** Header, tabs and views. Remounted (key) when a new map is loaded so view state resets. */
 export function AppShell({ map, loader }: { map: StarMap; loader: MapLoader }) {
@@ -36,7 +37,8 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const [stack, setStack] = useState<string[]>([])
   const [peek, setPeek] = useState<Peek | undefined>()
   const fileInput = useRef<HTMLInputElement>(null)
-  const { allRows, patch, setQuickFilter } = useResourceFilter()
+  const { allRows, patch, setQuickFilter, filter, filteredResourceRows } = useResourceFilter()
+  const [fly, setFly] = useState<{ systemId: string; nonce: number }>()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const searchIndex = useMemo(() => buildSearchIndex(map), [map])
   useEffect(() => {
@@ -72,6 +74,13 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   }, [allRows])
   const sectorNames = useMemo(() => new Map(map.sectors.map((s) => [s.sectorId, s.name])), [map])
 
+  // Systems holding the selected resources, with their best quality; undefined = nothing selected.
+  const mapVisited = visited.has('map')
+  const highlight = useMemo(
+    () => (mapVisited ? buildHighlight(filteredResourceRows, filter.resources) : undefined),
+    [mapVisited, filteredResourceRows, filter.resources],
+  )
+
   const nav = useMemo<Nav>(
     () => ({
       peek,
@@ -88,6 +97,16 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
       openFullPage: (systemId) => {
         setPeek(undefined)
         open(systemId)
+      },
+      showOnMap: (systemId) => {
+        if (systemById.get(systemId)?.x === undefined) return
+        setTab('map')
+        setVisited((v) => new Set(v).add('map'))
+        setStack([])
+        setPeek((p) =>
+          p?.target.systemId === systemId ? p : { target: { kind: 'system', systemId }, rowKey: systemId },
+        )
+        setFly((f) => ({ systemId, nonce: (f?.nonce ?? 0) + 1 }))
       },
       canShowOnMap: (systemId) => systemById.get(systemId)?.x !== undefined,
     }),
@@ -122,6 +141,7 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
             <TabsTrigger value="resources">Resources</TabsTrigger>
             <TabsTrigger value="planets">Planets</TabsTrigger>
             <TabsTrigger value="systems">Systems</TabsTrigger>
+            <TabsTrigger value="map">Map</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="ml-auto flex items-center gap-2">
@@ -163,6 +183,16 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
         {pane('resources', <ResourcesView />)}
         {pane('planets', <PlanetsView rows={bodyRows} />)}
         {pane('systems', <SystemsView rows={systemRows} />)}
+        {pane(
+          'map',
+          <MapPane
+            map={map}
+            highlight={highlight}
+            selectedSystemId={peek?.target.systemId}
+            onSelectSystem={(id) => nav.peekSystem(id, id)}
+            flyToRequest={fly}
+          />,
+        )}
         {current && (
           <SystemDetail
             key={current.systemId}
