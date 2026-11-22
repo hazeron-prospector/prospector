@@ -42,11 +42,11 @@ interface Props extends PaletteActions {
 export function CommandPalette({ open, onOpenChange, ...rest }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader className="sr-only">
-        <DialogTitle>Search</DialogTitle>
-        <DialogDescription>Search systems, bodies, resources and sectors</DialogDescription>
-      </DialogHeader>
       <DialogContent className="top-[20%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-xl" showCloseButton={false}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Search</DialogTitle>
+          <DialogDescription>Search systems, bodies, resources and sectors</DialogDescription>
+        </DialogHeader>
         <PaletteBody close={() => onOpenChange(false)} {...rest} />
       </DialogContent>
     </Dialog>

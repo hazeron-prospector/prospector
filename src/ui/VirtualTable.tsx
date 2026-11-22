@@ -73,9 +73,27 @@ export function VirtualTable<T>({
 
   // Up/Down steps the selection while focus is in this table, or in the peek panel / on the page
   // body while this table holds a selection. Never inside text controls; never in hidden tabs.
+  // Row index to move DOM focus to once its element is rendered (set when stepping from inside
+  // the table, so Enter acts on the newly selected row). Expires so it cannot steal focus later.
+  const pendingFocus = useRef<{ index: number; until: number } | null>(null)
   const latest = useRef({ rows, selectedIndex, onRowClick })
   useEffect(() => {
     latest.current = { rows, selectedIndex, onRowClick }
+  })
+  useEffect(() => {
+    const p = pendingFocus.current
+    if (!p) return
+    if (performance.now() > p.until) {
+      pendingFocus.current = null
+      return
+    }
+    // The element may not exist until the virtualizer re-renders after the scroll; this effect
+    // runs on every render, so it retries until the row appears.
+    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-index="${p.index}"]`)
+    if (el) {
+      pendingFocus.current = null
+      el.focus({ preventScroll: true })
+    }
   })
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -94,6 +112,7 @@ export function VirtualTable<T>({
       if (next < 0) return
       e.preventDefault()
       root.scrollTop = scrollTopFor(next, root.scrollTop, root.clientHeight, rowHeight, headerH)
+      if (inTable) pendingFocus.current = { index: next, until: performance.now() + 500 }
       click(rs[next]!)
     }
     document.addEventListener('keydown', onKey)
@@ -138,6 +157,7 @@ export function VirtualTable<T>({
               <div
                 key={rowKey(row)}
                 role="row"
+                data-index={v.index}
                 aria-selected={selectedKey !== undefined && v.index === selectedIndex ? true : undefined}
                 tabIndex={onRowClick ? 0 : undefined}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
