@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { StarMap } from '@/data/types'
+import type { ResourceRow } from '@/data/rows'
 import { toBodyRows, toResourceRows, toSystemRows } from '@/data/rows'
 import { Button } from '@/ui/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/ui/ui/tabs'
@@ -7,19 +8,28 @@ import { PlanetsView } from './PlanetsView'
 import { ResourcesView } from './ResourcesView'
 import { SystemDetail } from './SystemDetail'
 import { SystemsView } from './SystemsView'
+import { ResourceFilterProvider } from './state/ResourceFilterContext'
 import type { MapLoader } from './useMapLoader'
 
 type Tab = 'resources' | 'planets' | 'systems'
 
 /** Header, tabs and views. Remounted (key) when a new map is loaded so view state resets. */
 export function AppShell({ map, loader }: { map: StarMap; loader: MapLoader }) {
+  const resourceRows = useMemo(() => toResourceRows(map), [map])
+  return (
+    <ResourceFilterProvider rows={resourceRows}>
+      <Shell map={map} loader={loader} resourceRows={resourceRows} />
+    </ResourceFilterProvider>
+  )
+}
+
+function Shell({ map, loader, resourceRows }: { map: StarMap; loader: MapLoader; resourceRows: ResourceRow[] }) {
   const [tab, setTab] = useState<Tab>('resources')
   const [visited, setVisited] = useState<Set<Tab>>(new Set(['resources']))
   // Detail history stack: last entry is the open system.
   const [stack, setStack] = useState<string[]>([])
   const fileInput = useRef<HTMLInputElement>(null)
 
-  const resourceRows = useMemo(() => toResourceRows(map), [map])
   const bodyRows = useMemo(() => toBodyRows(map), [map])
   const systemRows = useMemo(() => toSystemRows(map), [map])
   const systemById = useMemo(() => new Map(map.systems.map((s) => [s.systemId, s])), [map])

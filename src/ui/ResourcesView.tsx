@@ -1,12 +1,5 @@
-import { useMemo, useState } from 'react'
-import {
-  DEFAULT_RESOURCE_FILTER,
-  DEFAULT_RESOURCE_SORT,
-  filterResourceRows,
-  sortRows,
-  type ResourceFilter,
-  type Sort,
-} from '@/data/filter'
+import { useMemo } from 'react'
+import { DEFAULT_RESOURCE_FILTER, sortRows, filterResourceRows } from '@/data/filter'
 import type { ResourceRow } from '@/data/rows'
 import type { Sphere } from '@/data/types'
 import { distinct } from './distinct'
@@ -17,6 +10,7 @@ import { QualityCell } from './QualityCell'
 import { Segmented } from './Segmented'
 import { InhabitedCell } from './InhabitedCell'
 import { INHABITED_OPTIONS } from './segmentedOptions'
+import { useResourceFilter } from './state/ResourceFilterContext'
 import { VirtualTable, type Column } from './VirtualTable'
 
 const SPHERES: Sphere[] = ['geosphere', 'hydrosphere', 'atmosphere', 'biosphere', 'star']
@@ -76,9 +70,7 @@ export function ResourcesView({
   rows: readonly ResourceRow[]
   onOpenSystem: (systemId: string) => void
 }) {
-  const [filter, setFilter] = useState<ResourceFilter>(DEFAULT_RESOURCE_FILTER)
-  const [sort, setSort] = useState<Sort<ResourceRow>>(DEFAULT_RESOURCE_SORT)
-  const patch = (p: Partial<ResourceFilter>) => setFilter((f) => ({ ...f, ...p }))
+  const { filter, patch, setFilter, sort, setSort } = useResourceFilter()
 
   const options = useMemo(
     () => ({
