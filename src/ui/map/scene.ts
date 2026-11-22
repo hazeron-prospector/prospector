@@ -449,7 +449,7 @@ export class MapScene {
     if (i === undefined) return
     const p = this.data.positions
     this.startFly(
-      flyDestination(this.currentPose(), [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!], this.data.bounds.radius),
+      flyDestination(this.currentPose(), [p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!], this.data.frame.radius),
       FLY_DURATION_MS,
       systemId,
     )

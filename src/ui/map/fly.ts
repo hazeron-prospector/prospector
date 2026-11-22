@@ -29,12 +29,13 @@ export function flyPose(from: CameraPose, to: CameraPose, elapsedMs: number, dur
  * Where to fly to look at `systemPos`: same viewing direction as now, at a distance that is the
  * current one, capped to a close-up distance (so a far-out camera zooms in, a near one stays).
  */
-export function flyDestination(current: CameraPose, systemPos: Vec3, boundsRadius: number): CameraPose {
+export function flyDestination(current: CameraPose, systemPos: Vec3, frameRadius: number): CameraPose {
   const dx = current.position[0] - current.target[0]
   const dy = current.position[1] - current.target[1]
   const dz = current.position[2] - current.target[2]
   const dist = Math.hypot(dx, dy, dz)
-  const close = Math.max(15, boundsRadius * 0.2)
+  // Use the dense-core frame radius, not full bounds: a far outlier cluster would make "close" farther than the current view.
+  const close = Math.max(15, frameRadius * 0.2)
   const want = Math.min(dist > 1e-6 ? dist : close, close)
   const [ux, uy, uz]: Vec3 = dist > 1e-6 ? [dx / dist, dy / dist, dz / dist] : [0, 0.4, 1]
   const len = Math.hypot(ux, uy, uz)
