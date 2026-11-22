@@ -481,7 +481,10 @@ export class MapScene {
   }
 
   private readonly onPointerMove = (e: PointerEvent): void => {
-    if (e.buttons !== 0) return // dragging the camera
+    if (e.buttons !== 0) {
+      this.setHovered(-1) // dragging the camera: drop the hover card
+      return
+    }
     const { x, y } = this.pointerPos(e)
     this.setHovered(this.pickAt(x, y))
     if (this.hovered >= 0) this.onHover?.(this.data.systemIds[this.hovered]!, x, y)
