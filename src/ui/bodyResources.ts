@@ -44,3 +44,29 @@ export function highQualitySummary(rows: readonly BodyResourceRow[], minBestQual
   if (high.length > 0) return { items: high, dimmed: false }
   return sorted.length > 0 ? { items: [sorted[0]!], dimmed: true } : { items: [], dimmed: false }
 }
+
+export type BodySortKey = 'name' | 'sphere' | 'best' | 'z1' | 'z2' | 'z3' | 'z4'
+export type BodySortDir = 'asc' | 'desc'
+
+/** Direction a column starts in when first clicked: text ascending, quality descending. */
+export const defaultDir = (key: BodySortKey): BodySortDir => (key === 'name' || key === 'sphere' ? 'asc' : 'desc')
+
+/** Stable sort of body resource rows; missing zone values go last in either direction. Ties by name. */
+export function sortBodyResources(rows: readonly BodyResourceRow[], key: BodySortKey, dir: BodySortDir): BodyResourceRow[] {
+  const sign = dir === 'asc' ? 1 : -1
+  const val = (r: BodyResourceRow): string | number | undefined =>
+    key === 'name' ? r.name : key === 'sphere' ? r.sphere : key === 'best' ? r.best : r.zones[Number(key[1]) - 1]?.quality
+  return [...rows].sort((x, y) => {
+    const a = val(x)
+    const b = val(y)
+    if (a === undefined || b === undefined) return a === b ? x.name.localeCompare(y.name) : a === undefined ? 1 : -1
+    const c = typeof a === 'string' ? a.localeCompare(b as string) : a - (b as number)
+    return sign * c || x.name.localeCompare(y.name)
+  })
+}
+
+/** Keep rows whose resource name contains `query` (case-insensitive); blank query keeps all. */
+export function filterBodyResources(rows: readonly BodyResourceRow[], query: string): BodyResourceRow[] {
+  const q = query.trim().toLowerCase()
+  return q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : [...rows]
+}

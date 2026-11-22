@@ -33,3 +33,45 @@ describe('highQualitySummary', () => {
     expect(highQualitySummary([], 100)).toEqual({ items: [], dimmed: false })
   })
 })
+
+import { defaultDir, filterBodyResources, sortBodyResources } from './bodyResources'
+
+describe('sortBodyResources / filterBodyResources (W19)', () => {
+  const z = (...qs: number[]) => qs.map((quality) => ({ quality, abundance: 1 }))
+  const rows: BodyResourceRow[] = [
+    { name: 'Iron', sphere: 'geosphere', best: 120, zones: z(100, 120) },
+    { name: 'Water', sphere: 'hydrosphere', best: 90, zones: z(90, 10, 50) },
+    { name: 'Gold', sphere: 'geosphere', best: 120, zones: z(120) },
+  ]
+  const names = (rs: BodyResourceRow[]) => rs.map((r) => r.name)
+  it('sorts best quality desc with name tiebreak', () => {
+    expect(names(sortBodyResources(rows, 'best', 'desc'))).toEqual(['Gold', 'Iron', 'Water'])
+    expect(names(sortBodyResources(rows, 'best', 'asc'))).toEqual(['Water', 'Gold', 'Iron'])
+  })
+  it('sorts by name and sphere', () => {
+    expect(names(sortBodyResources(rows, 'name', 'asc'))).toEqual(['Gold', 'Iron', 'Water'])
+    expect(names(sortBodyResources(rows, 'name', 'desc'))).toEqual(['Water', 'Iron', 'Gold'])
+    expect(names(sortBodyResources(rows, 'sphere', 'desc'))).toEqual(['Water', 'Gold', 'Iron'])
+  })
+  it('sorts by zone with missing zones last in both directions', () => {
+    expect(names(sortBodyResources(rows, 'z2', 'desc'))).toEqual(['Iron', 'Water', 'Gold'])
+    expect(names(sortBodyResources(rows, 'z2', 'asc'))).toEqual(['Water', 'Iron', 'Gold'])
+    expect(names(sortBodyResources(rows, 'z3', 'desc'))).toEqual(['Water', 'Gold', 'Iron'])
+  })
+  it('does not mutate input', () => {
+    const copy = [...rows]
+    sortBodyResources(rows, 'name', 'desc')
+    expect(rows).toEqual(copy)
+  })
+  it('filters by case-insensitive substring; blank keeps all', () => {
+    expect(names(filterBodyResources(rows, 'OLD'))).toEqual(['Gold'])
+    expect(filterBodyResources(rows, '  ')).toHaveLength(3)
+    expect(filterBodyResources(rows, 'zzz')).toEqual([])
+  })
+  it('default direction: text asc, numbers desc', () => {
+    expect(defaultDir('name')).toBe('asc')
+    expect(defaultDir('sphere')).toBe('asc')
+    expect(defaultDir('best')).toBe('desc')
+    expect(defaultDir('z1')).toBe('desc')
+  })
+})

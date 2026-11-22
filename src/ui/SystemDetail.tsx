@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
-import { ArrowLeft, ChevronRight, MapPin, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, MapPin, X } from 'lucide-react'
 import type { Planet, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { Censored, OrbitText } from './Censored'
@@ -8,7 +8,16 @@ import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
 import { useResourceFilter } from './state/ResourceFilterContext'
-import { highQualitySummary, planetResourceRows, type BodyResourceRow } from './bodyResources'
+import {
+  defaultDir,
+  filterBodyResources,
+  highQualitySummary,
+  planetResourceRows,
+  sortBodyResources,
+  type BodyResourceRow,
+  type BodySortDir,
+  type BodySortKey,
+} from './bodyResources'
 import { qualityStyle } from './quality'
 import { SystemPreview } from './SystemPreview'
 import { useBodyHighlights } from './useBodyHighlights'
@@ -73,35 +82,72 @@ function StarBlock({ star, flash }: { star: Star; flash: boolean }) {
 }
 
 function ResourceTable({ rows }: { rows: BodyResourceRow[] }) {
+  const [sort, setSort] = useState<{ key: BodySortKey; dir: BodySortDir }>({ key: 'best', dir: 'desc' })
+  const [query, setQuery] = useState('')
+  const shown = useMemo(() => sortBodyResources(filterBodyResources(rows, query), sort.key, sort.dir), [rows, query, sort])
   if (rows.length === 0) return <div className="text-xs text-muted-foreground">No resources</div>
+  const header = (key: BodySortKey, label: string) => {
+    const active = sort.key === key
+    return (
+      <th key={key} className="pr-3 font-medium" aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+        <button
+          type="button"
+          onClick={() => setSort(active ? { key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: defaultDir(key) })}
+          className={cn('inline-flex items-center gap-0.5 rounded-sm outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring', active && 'text-foreground')}
+        >
+          {label}
+          {active && (sort.dir === 'asc' ? <ArrowUp aria-hidden className="size-3" /> : <ArrowDown aria-hidden className="size-3" />)}
+        </button>
+      </th>
+    )
+  }
   return (
-    <table className="w-full max-w-3xl text-xs">
-      <thead className="text-left text-muted-foreground">
-        <tr>
-          <th className="py-0.5 pr-3 font-medium">Sphere</th>
-          <th className="pr-3 font-medium">Resource</th>
-          {[1, 2, 3, 4].map((n) => (
-            <th key={n} className="pr-3 font-medium">{`Z${n} q/ab`}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={`${row.sphere}|${row.name}`} className="border-t border-border/40">
-            <td className="py-0.5 pr-3 text-muted-foreground">{row.sphere}</td>
-            <td className="pr-3 text-sm">
-              <ResourceIcon name={row.name} sphere={row.sphere} className="mr-1.5" />
-              {row.name}
-            </td>
-            {[0, 1, 2, 3].map((i) => (
-              <td key={i} className="pr-3 tabular-nums">
-                {row.zones[i] && <QualityCell q={row.zones[i].quality} a={row.zones[i].abundance} />}
-              </td>
-            ))}
+    <div>
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Filter resources"
+        aria-label="Filter resources by name"
+        className="mb-1 h-6 w-40 rounded-md border bg-transparent px-2 text-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <table className="w-full max-w-3xl text-xs">
+        <thead className="text-left text-muted-foreground">
+          <tr>
+            {header('sphere', 'Sphere')}
+            {header('name', 'Resource')}
+            {header('best', 'Best Q')}
+            {[1, 2, 3, 4].map((n) => header(`z${n}` as BodySortKey, `Z${n} q/ab`))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {shown.map((row) => (
+            <tr key={`${row.sphere}|${row.name}`} className="border-t border-border/40">
+              <td className="py-0.5 pr-3 text-muted-foreground">{row.sphere}</td>
+              <td className="pr-3 text-sm">
+                <ResourceIcon name={row.name} sphere={row.sphere} className="mr-1.5" />
+                {row.name}
+              </td>
+              <td className="pr-3 tabular-nums">
+                <QualityCell q={row.best} />
+              </td>
+              {[0, 1, 2, 3].map((i) => (
+                <td key={i} className="pr-3 tabular-nums">
+                  {row.zones[i] && <QualityCell q={row.zones[i].quality} a={row.zones[i].abundance} />}
+                </td>
+              ))}
+            </tr>
+          ))}
+          {shown.length === 0 && (
+            <tr>
+              <td colSpan={7} className="py-1 text-muted-foreground">
+                No resources match
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
