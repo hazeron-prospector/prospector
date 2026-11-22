@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import type { ResourceRow } from '@/data/rows'
 import type { StarMap } from '@/data/types'
 import { toBodyRows, toResourceRows, toSystemRows } from '@/data/rows'
 import { Button } from '@/ui/ui/button'
@@ -7,7 +8,10 @@ import { PlanetsView } from './PlanetsView'
 import { ResourcesView } from './ResourcesView'
 import { SystemDetail } from './SystemDetail'
 import { SystemsView } from './SystemsView'
-import { ResourceFilterProvider } from './state/ResourceFilterContext'
+import { PeekPanel } from './PeekPanel'
+import type { Peek } from './nav'
+import { NavProvider, type Nav } from './state/NavContext'
+import { ResourceFilterProvider, useResourceFilter } from './state/ResourceFilterContext'
 import type { MapLoader } from './useMapLoader'
 
 type Tab = 'resources' | 'planets' | 'systems'
@@ -27,7 +31,9 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const [visited, setVisited] = useState<Set<Tab>>(new Set(['resources']))
   // Detail history stack: last entry is the open system.
   const [stack, setStack] = useState<string[]>([])
+  const [peek, setPeek] = useState<Peek | undefined>()
   const fileInput = useRef<HTMLInputElement>(null)
+  const { allRows } = useResourceFilter()
 
   const bodyRows = useMemo(() => toBodyRows(map), [map])
   const systemRows = useMemo(() => toSystemRows(map), [map])
@@ -41,6 +47,38 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
     setVisited((v) => new Set(v).add(t as Tab))
     setStack([])
   }
+  const rowsBySystem = useMemo(() => {
+    const m = new Map<string, ResourceRow[]>()
+    for (const r of allRows) {
+      const list = m.get(r.systemId)
+      if (list) list.push(r)
+      else m.set(r.systemId, [r])
+    }
+    return m
+  }, [allRows])
+  const sectorNames = useMemo(() => new Map(map.sectors.map((s) => [s.sectorId, s.name])), [map])
+
+  const nav = useMemo<Nav>(
+    () => ({
+      peek,
+      selectedKey: peek?.rowKey,
+      peekSystem: (systemId, rowKey) => {
+        setStack([])
+        setPeek({ target: { kind: 'system', systemId }, ...(rowKey !== undefined && { rowKey }) })
+      },
+      peekBody: (systemId, bodyId, rowKey) => {
+        setStack([])
+        setPeek({ target: { kind: 'body', systemId, bodyId }, ...(rowKey !== undefined && { rowKey }) })
+      },
+      closePeek: () => setPeek(undefined),
+      openFullPage: (systemId) => {
+        setPeek(undefined)
+        open(systemId)
+      },
+      canShowOnMap: (systemId) => systemById.get(systemId)?.x !== undefined,
+    }),
+    [peek, open, systemById],
+  )
   const current = stack.length ? systemById.get(stack[stack.length - 1]!) : undefined
 
   const pane = (t: Tab, node: React.ReactNode) =>
@@ -102,10 +140,12 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
           </Button>
         </div>
       )}
-      <main className="relative flex min-h-0 flex-1 flex-col">
-        {pane('resources', <ResourcesView onOpenSystem={open} />)}
-        {pane('planets', <PlanetsView rows={bodyRows} onOpenSystem={open} />)}
-        {pane('systems', <SystemsView rows={systemRows} onOpenSystem={open} />)}
+      <NavProvider value={nav}>
+      <main className="flex min-h-0 flex-1">
+       <div className="relative flex min-w-0 flex-1 flex-col">
+        {pane('resources', <ResourcesView />)}
+        {pane('planets', <PlanetsView rows={bodyRows} />)}
+        {pane('systems', <SystemsView rows={systemRows} />)}
         {current && (
           <SystemDetail
             key={current.systemId}
@@ -118,7 +158,17 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
             onOpenSystem={open}
           />
         )}
+       </div>
+        {peek && (
+          <PeekPanel
+            target={peek.target}
+            systemById={systemById}
+            sectorNameOf={(id) => sectorNames.get(id) ?? id}
+            rowsBySystem={rowsBySystem}
+          />
+        )}
       </main>
+      </NavProvider>
       <footer className="border-t px-3 py-0.5 text-xs text-muted-foreground">
         <a href="NOTICE.txt" target="_blank" rel="noreferrer" className="underline">
           Resource icons © Hazeron Freehold LLC

@@ -16,6 +16,7 @@ import { Segmented } from './Segmented'
 import { Highlight } from './Highlight'
 import { QuickFilter } from './QuickFilter'
 import { quickFilterBodies } from './quickFilter'
+import { useNav } from './state/NavContext'
 import { useResourceFilter } from './state/ResourceFilterContext'
 import { InhabitedCell } from './InhabitedCell'
 import { INHABITED_OPTIONS, TRI_OPTIONS } from './segmentedOptions'
@@ -66,13 +67,8 @@ function RangeInputs({ label, value, onChange }: { label: string; value: Range; 
   )
 }
 
-export function PlanetsView({
-  rows,
-  onOpenSystem,
-}: {
-  rows: readonly BodyRow[]
-  onOpenSystem: (systemId: string) => void
-}) {
+export function PlanetsView({ rows }: { rows: readonly BodyRow[] }) {
+  const nav = useNav()
   const [filter, setFilter] = useState<BodyFilter>(DEFAULT_BODY_FILTER)
   const [sort, setSort] = useState<Sort<BodyRow>>({ key: 'systemName', dir: 'asc' })
   const patch = (p: Partial<BodyFilter>) => setFilter((f) => ({ ...f, ...p }))
@@ -118,7 +114,8 @@ export function PlanetsView({
         rowKey={(r) => r.id}
         sort={sort}
         onSort={setSort}
-        onRowClick={(r) => onOpenSystem(r.systemId)}
+        onRowClick={(r) => nav.peekBody(r.systemId, r.id, r.id)}
+        selectedKey={nav.selectedKey}
       />
     </div>
   )

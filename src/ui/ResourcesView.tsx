@@ -20,6 +20,7 @@ import { QualityCell } from './QualityCell'
 import { Segmented } from './Segmented'
 import { InhabitedCell } from './InhabitedCell'
 import { INHABITED_OPTIONS } from './segmentedOptions'
+import { useNav } from './state/NavContext'
 import { useResourceFilter } from './state/ResourceFilterContext'
 import { VirtualTable, type Column } from './VirtualTable'
 
@@ -109,7 +110,8 @@ const makeRollupColumns = (q: string): Column<SystemRollupRow>[] => [
   },
 ]
 
-export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: string) => void }) {
+export function ResourcesView() {
+  const nav = useNav()
   const { allRows: rows, filter, patch, setFilter, reset, filteredResourceRows, sort, setSort, rollup, setRollup, rollupSort, setRollupSort, quickFilter, setQuickFilter } =
     useResourceFilter()
   const quick = quickFilter.resources
@@ -182,7 +184,8 @@ export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: strin
           rowKey={(r) => r.id}
           sort={rollupSort}
           onSort={setRollupSort}
-          onRowClick={(r) => onOpenSystem(r.systemId)}
+          onRowClick={(r) => nav.peekSystem(r.systemId, r.id)}
+          selectedKey={nav.selectedKey}
           empty={emptyNode}
         />
       ) : (
@@ -192,7 +195,8 @@ export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: strin
           rowKey={(r) => r.id}
           sort={sort}
           onSort={setSort}
-          onRowClick={(r) => onOpenSystem(r.systemId)}
+          onRowClick={(r) => nav.peekBody(r.systemId, r.bodyId, r.id)}
+          selectedKey={nav.selectedKey}
           empty={emptyNode}
         />
       )}

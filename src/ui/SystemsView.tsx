@@ -5,6 +5,7 @@ import type { Eod } from '@/data/types'
 import { Highlight } from './Highlight'
 import { QuickFilter } from './QuickFilter'
 import { quickFilterSystems } from './quickFilter'
+import { useNav } from './state/NavContext'
 import { useResourceFilter } from './state/ResourceFilterContext'
 import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
@@ -46,13 +47,8 @@ const makeColumns = (q: string): Column<SystemRow>[] => [
   { id: 'wh', header: 'Wormholes', width: 85, align: 'right', sortKey: 'wormholeCount', firstDir: 'desc', cell: (r) => r.wormholeCount },
 ]
 
-export function SystemsView({
-  rows,
-  onOpenSystem,
-}: {
-  rows: readonly SystemRow[]
-  onOpenSystem: (systemId: string) => void
-}) {
+export function SystemsView({ rows }: { rows: readonly SystemRow[] }) {
+  const nav = useNav()
   const [filter, setFilter] = useState<SystemFilter>(DEFAULT_SYSTEM_FILTER)
   const [sort, setSort] = useState<Sort<SystemRow>>({ key: 'name', dir: 'asc' })
   const sorted = useMemo(() => sortRows(rows, sort.key, sort.dir), [rows, sort])
@@ -76,7 +72,8 @@ export function SystemsView({
         rowKey={(r) => r.id}
         sort={sort}
         onSort={setSort}
-        onRowClick={(r) => onOpenSystem(r.id)}
+        onRowClick={(r) => nav.peekSystem(r.id, r.id)}
+        selectedKey={nav.selectedKey}
       />
     </div>
   )
