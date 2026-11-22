@@ -1,9 +1,10 @@
 import { useMemo, type ReactNode } from 'react'
-import { ArrowLeft, X } from 'lucide-react'
+import { ArrowLeft, MapPin, X } from 'lucide-react'
 import type { Planet, Resource, Sphere, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
+import { useNav } from './state/NavContext'
 
 interface Props {
   map: StarMap
@@ -152,6 +153,8 @@ function WormholeRow({ w, systemById, onOpenSystem }: { w: Wormhole; systemById:
 }
 
 export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClose, onOpenSystem }: Props) {
+  const nav = useNav()
+  const mapOk = nav.canShowOnMap(system.systemId)
   const sectorName = map.sectors.find((s) => s.sectorId === system.sectorId)?.name ?? system.sectorId
   const empires = useMemo(() => [...new Set(system.cities.map((c) => c.empire).filter((e): e is string => !!e))], [system])
   const groups = useMemo(() => {
@@ -170,6 +173,17 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
         <Button variant="outline" size="xs" onClick={onBack}>
           <ArrowLeft /> {canGoBack ? 'Back' : 'Back to list'}
         </Button>
+        {nav.showOnMap && (
+          <Button
+            variant="outline"
+            size="xs"
+            disabled={!mapOk}
+            title={mapOk ? 'Show on map' : 'Deep Space systems have no map position'}
+            onClick={() => nav.showOnMap?.(system.systemId)}
+          >
+            <MapPin /> Show on map
+          </Button>
+        )}
         <span className="ml-auto" />
         <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close detail">
           <X />

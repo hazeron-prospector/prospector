@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { DEFAULT_SYSTEM_FILTER, filterSystemRows, sortRows, type Sort, type SystemFilter } from '@/data/filter'
 import type { SystemRow } from '@/data/rows'
 import type { Eod } from '@/data/types'
+import { mapColumn } from './ShowOnMapButton'
 import { Highlight } from './Highlight'
 import { QuickFilter } from './QuickFilter'
 import { quickFilterSystems } from './quickFilter'
@@ -14,6 +15,7 @@ import { VirtualTable, type Column } from './VirtualTable'
 const STATUSES: Eod[] = ['Surveyed', 'Explored', 'Unexplored']
 
 const makeColumns = (q: string): Column<SystemRow>[] => [
+  mapColumn((r) => r.id),
   { id: 'name', header: 'Name', width: 170, sortKey: 'name', cell: (r) => <Highlight text={r.name} q={q} /> },
   { id: 'catalog', header: 'Catalog', width: 140, sortKey: 'catalog', cell: (r) => (r.catalog ? <Highlight text={r.catalog} q={q} /> : '') },
   { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => <Highlight text={r.sectorName} q={q} /> },

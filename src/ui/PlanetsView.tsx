@@ -13,6 +13,7 @@ import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
 import { NumberInput } from './NumberInput'
 import { Segmented } from './Segmented'
+import { mapColumn } from './ShowOnMapButton'
 import { Highlight } from './Highlight'
 import { QuickFilter } from './QuickFilter'
 import { quickFilterBodies } from './quickFilter'
@@ -28,6 +29,7 @@ const num = (n: number | undefined, digits = 0) =>
 const tri = (b: boolean | undefined) => (b ? 'yes' : 'no')
 
 const makeColumns = (q: string): Column<BodyRow>[] => [
+  mapColumn((r) => r.systemId),
   { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
   { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} /> },
   { id: 'type', header: 'Type', width: 85, sortKey: 'bodyType', cell: (r) => r.bodyType },

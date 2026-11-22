@@ -5,6 +5,7 @@ import type { ResourceRow } from '@/data/rows'
 import type { Sphere } from '@/data/types'
 import { CATEGORIES } from '@/data/catalog'
 import { distinct } from './distinct'
+import { mapColumn } from './ShowOnMapButton'
 import { Highlight } from './Highlight'
 import { QuickFilter } from './QuickFilter'
 import { quickFilterResources } from './quickFilter'
@@ -40,6 +41,7 @@ function zoneCol(n: 1 | 2 | 3 | 4): Column<ResourceRow> {
 }
 
 const makeColumns = (q: string): Column<ResourceRow>[] => [
+  mapColumn((r) => r.systemId),
   { id: 'resource', header: 'Resource', width: 150, sortKey: 'resource', cell: (r) => (
       <span className="inline-flex items-center gap-1.5">
         <ResourceIcon name={r.resource} sphere={r.sphere} />
@@ -81,6 +83,7 @@ const makeColumns = (q: string): Column<ResourceRow>[] => [
 ]
 
 const makeRollupColumns = (q: string): Column<SystemRollupRow>[] => [
+  mapColumn((r) => r.systemId),
   { id: 'system', header: 'System', width: 160, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
   { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => r.sectorName },
   { id: 'best', header: 'Best Q', width: 70, sortKey: 'bestQuality', firstDir: 'desc', cell: (r) => <QualityCell q={r.bestQuality} /> },
