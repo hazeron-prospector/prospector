@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import { qualityHsl } from '@/data/color'
-import { starColor } from '@/data/mapdata'
+import { HABITABLE_COLOR, NEUTRAL_COLOR, starColor, UNEXPLORED_DIM } from '@/data/mapdata'
 import { Checkbox } from '@/ui/ui/checkbox'
 import type { Layers } from './scene'
 
@@ -16,6 +16,8 @@ export interface LegendProps {
 
 const css = (c: [number, number, number]): string =>
   `rgb(${Math.round(c[0] * 255)} ${Math.round(c[1] * 255)} ${Math.round(c[2] * 255)})`
+
+const dim = (c: [number, number, number]): [number, number, number] => [c[0] * UNEXPLORED_DIM, c[1] * UNEXPLORED_DIM, c[2] * UNEXPLORED_DIM]
 
 const QUALITY_GRADIENT = `linear-gradient(to right, ${[1, 64, 128, 192, 255]
   .map((q) => {
@@ -38,6 +40,7 @@ const LAYER_ROWS: [keyof Layers, string][] = [
   ['wormholes', 'Wormholes'],
   ['sectors', 'Sector grid'],
   ['status', 'Explored status'],
+  ['starColor', 'Star color'],
 ]
 
 export function Legend({ layers, onLayersChange, highlightActive, matchCount }: LegendProps) {
@@ -81,15 +84,21 @@ export function Legend({ layers, onLayersChange, highlightActive, matchCount }: 
               </>
             ) : (
               <>
-                <div className="text-muted-foreground">Star color</div>
-                {STAR_KEY.map(([short, long, type]) => (
-                  <Swatch key={short} color={css(starColor(type))} text={long} />
-                ))}
+                {layers.starColor ? (
+                  <>
+                    <div className="text-muted-foreground">Star color</div>
+                    {STAR_KEY.map(([short, long, type]) => (
+                      <Swatch key={short} color={css(starColor(type))} text={long} />
+                    ))}
+                  </>
+                ) : (
+                  <Swatch color={css(HABITABLE_COLOR)} text="Habitable world" />
+                )}
                 {layers.status && (
                   <>
-                    <Swatch color={css(starColor('G'))} text="Explored" />
-                    <Swatch color={css(starColor('G').map((c) => c * 0.35) as [number, number, number])} text="Unexplored (dim)" />
-                    <Swatch color={css(starColor('G'))} text="Surveyed (ring)" ring />
+                    <Swatch color={css(layers.starColor ? starColor('G') : NEUTRAL_COLOR)} text="Explored" />
+                    <Swatch color={css(dim(layers.starColor ? starColor('G') : NEUTRAL_COLOR))} text="Unexplored (dim)" />
+                    <Swatch color={css(layers.starColor ? starColor('G') : NEUTRAL_COLOR)} text="Surveyed (ring)" ring />
                   </>
                 )}
               </>

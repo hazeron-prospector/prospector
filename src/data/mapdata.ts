@@ -8,6 +8,7 @@
  * unchanged; the renderer chooses which one is "up".
  */
 import { qualityHsl, qualityRgb } from './color'
+import { isHabitableWorld } from './systemSummary'
 import type { Star, StarMap, System, WormholePolarity } from './types'
 
 export const SECTOR_SIZE = 10
@@ -20,8 +21,12 @@ export const SIZE_DIM = 3
 export const SIZE_HIGHLIGHT_MIN = 6
 export const SIZE_HIGHLIGHT_MAX = 10
 
-/** Unexplored systems get their star color multiplied by this. */
+/** Unexplored systems get their base color (neutral or star color) multiplied by this. */
 export const UNEXPLORED_DIM = 0.35
+/** Default system color (W13): Explored and Surveyed systems without a habitable world. */
+export const NEUTRAL_COLOR: [number, number, number] = [0.78, 0.82, 0.88]
+/** Systems with at least one habitable world (W3, W13). */
+export const HABITABLE_COLOR: [number, number, number] = [0.3, 0.9, 0.45]
 /** Non-matching systems while a resource highlight is active. */
 export const DIM_GREY: [number, number, number] = [0.27, 0.29, 0.33]
 
@@ -134,12 +139,28 @@ function primaryStar(s: System): Star | undefined {
   return s.stars.find((st) => st.orbit.raw === 'Primary') ?? s.stars[0]
 }
 
+export interface StyleOptions {
+  /** Color systems by their primary star instead of the neutral / habitable scheme (default false). */
+  starColor?: boolean
+  /** Explored-status styling: dim Unexplored, ring Surveyed (default true). */
+  status?: boolean
+}
+
+/** True when the system has at least one habitable world (W3). */
+export function hasHabitableWorld(s: System): boolean {
+  return s.planets.some(isHabitableWorld)
+}
+
 /**
  * Build typed arrays for the scene.
  * `highlight`: systemId -> best matching quality; `undefined` means no resource is selected
- * (star colors and explored status); a Map (even empty) means a highlight is active.
+ * (default styling); a Map (even empty) means a highlight is active and overrides `style`.
+ * Default styling (W13): Unexplored dim, Explored/Surveyed neutral, habitable worlds green;
+ * `style.starColor` restores the old star-color styling.
  */
-export function buildMapData(map: StarMap, highlight?: ReadonlyMap<string, number>): MapData {
+export function buildMapData(map: StarMap, highlight?: ReadonlyMap<string, number>, style: StyleOptions = {}): MapData {
+  const useStarColor = style.starColor ?? false
+  const useStatus = style.status ?? true
   const pts = map.systems.filter(hasCoords)
   const n = pts.length
   const positions = new Float32Array(n * 3)
@@ -165,14 +186,18 @@ export function buildMapData(map: StarMap, highlight?: ReadonlyMap<string, numbe
         size = SIZE_HIGHLIGHT_MIN + (SIZE_HIGHLIGHT_MAX - SIZE_HIGHLIGHT_MIN) * qualityHsl(q).t
       }
     } else {
-      const base = starColor(primaryStar(s)?.type ?? '')
-      if (s.eod === 'Unexplored') {
+      const base = useStarColor
+        ? starColor(primaryStar(s)?.type ?? '')
+        : hasHabitableWorld(s)
+          ? HABITABLE_COLOR
+          : NEUTRAL_COLOR
+      if (useStatus && s.eod === 'Unexplored') {
         rgb = [base[0] * UNEXPLORED_DIM, base[1] * UNEXPLORED_DIM, base[2] * UNEXPLORED_DIM]
         size = SIZE_UNEXPLORED
       } else {
         rgb = base
-        size = s.eod === 'Surveyed' ? SIZE_SURVEYED : SIZE_EXPLORED
-        if (s.eod === 'Surveyed') rings[i] = 1
+        size = useStatus && s.eod === 'Surveyed' ? SIZE_SURVEYED : SIZE_EXPLORED
+        if (useStatus && s.eod === 'Surveyed') rings[i] = 1
       }
     }
     colors.set(rgb, i * 3)

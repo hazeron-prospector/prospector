@@ -5,7 +5,7 @@
  */
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { buildMapData, SIZE_EXPLORED, UNEXPLORED_DIM, type MapData, type Vec3 } from '@/data/mapdata'
+import { buildMapData, type MapData, type StyleOptions, type Vec3 } from '@/data/mapdata'
 import type { StarMap } from '@/data/types'
 import { cubeEdges } from './cube'
 import { centerPose, CENTER_DURATION_MS, FLY_DURATION_MS, flyDestination, flyPose, frameDistance, type CameraPose } from './fly'
@@ -26,6 +26,8 @@ export interface Layers {
   sectors: boolean
   /** Explored-status styling (V6): dim Unexplored, ring Surveyed. Only applies without a highlight. */
   status: boolean
+  /** Color systems by star type instead of neutral / habitable green (W13). Off by default. */
+  starColor: boolean
 }
 
 export interface SceneOptions {
@@ -139,7 +141,6 @@ export class MapScene {
   private readonly resizeObserver: ResizeObserver
   private readonly map: StarMap
   private readonly data: MapData
-  private readonly eodOf = new Map<string, string>()
   private readonly nameOf = new Map<string, string>()
 
   private readonly pointsGeo: THREE.BufferGeometry
@@ -199,14 +200,12 @@ export class MapScene {
     container.appendChild(this.labelLayer)
 
     for (const s of this.map.systems) {
-      this.eodOf.set(s.systemId, s.eod)
       this.nameOf.set(s.systemId, s.name)
     }
 
-    this.data = buildMapData(this.map, this.highlight)
+    this.data = buildMapData(this.map, this.highlight, this.styleOptions())
     const d = this.data
     this.sizes = d.sizes.slice()
-    this.applyStyle()
     this.updatePreferred()
 
     const refDist = frameDistance(d.frame.radius, FOV, 1.6)
@@ -296,7 +295,7 @@ export class MapScene {
   }
 
   setLayers(layers: Layers): void {
-    const statusChanged = layers.status !== this.layers.status
+    const statusChanged = layers.status !== this.layers.status || layers.starColor !== this.layers.starColor
     this.layers = layers
     this.wormholeLines.visible = layers.wormholes
     this.gridLines.visible = layers.sectors
@@ -397,18 +396,8 @@ export class MapScene {
 
   // ---- styling ----------------------------------------------------------------------------
 
-  /** Apply the status toggle to this.data's color/size/ring arrays (no-op with a highlight). */
-  private applyStyle(): void {
-    if (this.highlight || this.layers.status) return
-    const d = this.data
-    for (let i = 0; i < d.count; i++) {
-      if (this.eodOf.get(d.systemIds[i]!) === 'Unexplored') {
-        for (let k = 0; k < 3; k++) d.colors[i * 3 + k] = Math.min(1, d.colors[i * 3 + k]! / UNEXPLORED_DIM)
-      }
-      d.sizes[i] = SIZE_EXPLORED
-      d.rings[i] = 0
-    }
-    this.sizes.set(d.sizes)
+  private styleOptions(): StyleOptions {
+    return { starColor: this.layers.starColor, status: this.layers.status }
   }
 
   private updatePreferred(): void {
@@ -425,12 +414,11 @@ export class MapScene {
 
   /** Recompute highlight/status styling and update attributes in place. */
   private refreshStyle(): void {
-    const fresh = buildMapData(this.map, this.highlight)
+    const fresh = buildMapData(this.map, this.highlight, this.styleOptions())
     const d = this.data
     d.colors.set(fresh.colors)
     d.sizes.set(fresh.sizes)
     d.rings.set(fresh.rings)
-    this.applyStyle()
     this.sizes.set(d.sizes)
     this.updatePreferred()
     for (const name of ['aColor', 'aSize', 'aRing']) {

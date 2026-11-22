@@ -9,12 +9,15 @@ import {
   SIZE_HIGHLIGHT_MAX,
   SIZE_HIGHLIGHT_MIN,
   SIZE_EXPLORED,
+  HABITABLE_COLOR,
+  NEUTRAL_COLOR,
+  UNEXPLORED_DIM,
   STUB_MAX_LENGTH,
   starColor,
   WORMHOLE_COLORS,
 } from './mapdata'
 import { parseStarMap } from './parse'
-import type { Eod, StarMap, System, Wormhole } from './types'
+import type { Eod, Planet, StarMap, System, Wormhole } from './types'
 
 function sys(id: string, o: Partial<System> & { type?: string } = {}): System {
   const { type, ...rest } = o
@@ -68,16 +71,60 @@ describe('buildMapData points', () => {
     expect(d.rings).toHaveLength(3)
   })
 
-  it('no highlight: star color, Unexplored dimmed, Surveyed ringed', () => {
+  it('default styling: neutral color, Unexplored dimmed, Surveyed ringed, no star color', () => {
     const d = buildMapData(map)
-    const g = starColor('G Yellow')
-    close(d.colors.subarray(0, 3), g)
-    const dim = Array.from(d.colors.subarray(3, 6))
-    expect(dim[0]).toBeLessThan(g[0]!)
-    expect(dim[1]).toBeLessThan(g[1]!)
+    close(d.colors.subarray(0, 3), NEUTRAL_COLOR) // Explored
+    close(d.colors.subarray(3, 6), NEUTRAL_COLOR.map((c) => c * UNEXPLORED_DIM)) // Unexplored
+    close(d.colors.subarray(6, 9), NEUTRAL_COLOR) // Surveyed
     expect(d.sizes[1]).toBeLessThan(d.sizes[0]!)
     expect(d.sizes[0]).toBeCloseTo(SIZE_EXPLORED)
     expect(Array.from(d.rings)).toEqual([0, 0, 1])
+  })
+
+  it('default styling ignores star type', () => {
+    const m = mapOf([sys('A', { x: 0, y: 0, z: 0, type: 'M Red' }), sys('B', { x: 1, y: 0, z: 0, type: 'O Blue' })])
+    const d = buildMapData(m)
+    close(d.colors.subarray(0, 3), NEUTRAL_COLOR)
+    close(d.colors.subarray(3, 6), NEUTRAL_COLOR)
+  })
+
+  it('systems with a habitable world are green; Unexplored ones stay dim', () => {
+    const habitable = { zone: 'Habitable', atmosphere: { atmosphereType: 'Standard', resources: [] } } as unknown as Planet
+    const barren = { zone: 'Inner', atmosphere: { atmosphereType: 'Standard', resources: [] } } as unknown as Planet
+    const m = mapOf([
+      sys('A', { x: 0, y: 0, z: 0, planets: [barren, habitable] }),
+      sys('B', { x: 1, y: 0, z: 0, planets: [barren] }),
+      sys('C', { x: 2, y: 0, z: 0, eod: 'Surveyed', planets: [habitable] }),
+    ])
+    const d = buildMapData(m)
+    close(d.colors.subarray(0, 3), HABITABLE_COLOR)
+    close(d.colors.subarray(3, 6), NEUTRAL_COLOR)
+    close(d.colors.subarray(6, 9), HABITABLE_COLOR)
+    expect(d.rings[2]).toBe(1)
+    // star color mode ignores habitability
+    close(buildMapData(m, undefined, { starColor: true }).colors.subarray(0, 3), starColor('G Yellow'))
+  })
+
+  it('starColor option restores star-color styling with dim Unexplored and ringed Surveyed', () => {
+    const d = buildMapData(map, undefined, { starColor: true })
+    const g = starColor('G Yellow')
+    close(d.colors.subarray(0, 3), g)
+    close(d.colors.subarray(3, 6), g.map((c) => c * UNEXPLORED_DIM))
+    expect(Array.from(d.rings)).toEqual([0, 0, 1])
+  })
+
+  it('status off: no dim, no ring, uniform size', () => {
+    const d = buildMapData(map, undefined, { status: false })
+    close(d.colors.subarray(3, 6), NEUTRAL_COLOR)
+    expect(Array.from(d.rings)).toEqual([0, 0, 0])
+    expect(Array.from(d.sizes)).toEqual([SIZE_EXPLORED, SIZE_EXPLORED, SIZE_EXPLORED])
+  })
+
+  it('resource highlight overrides habitable and star color', () => {
+    const habitable = { zone: 'Habitable', atmosphere: { atmosphereType: 'Standard', resources: [] } } as unknown as Planet
+    const m = mapOf([sys('A', { x: 0, y: 0, z: 0, planets: [habitable] })])
+    close(buildMapData(m, new Map([['A', 255]]), { starColor: true }).colors.subarray(0, 3), qualityRgb(255))
+    expect(buildMapData(m, new Map()).sizes[0]).toBe(SIZE_DIM)
   })
 
   it('highlight: matching systems use the quality scale and are larger; others dim grey and small', () => {
