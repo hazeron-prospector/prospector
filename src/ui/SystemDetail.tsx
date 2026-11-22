@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, MapPin, X } from 'lucide-react'
-import type { Planet, Resource, Sphere, Star, StarMap, System, Wormhole } from '@/data/types'
+import { flushSync } from 'react-dom'
+import { ArrowLeft, ChevronRight, MapPin, X } from 'lucide-react'
+import type { Planet, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { Censored, OrbitText } from './Censored'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
+import { useResourceFilter } from './state/ResourceFilterContext'
+import { highQualitySummary, planetResourceRows, type BodyResourceRow } from './bodyResources'
+import { qualityStyle } from './quality'
 import { SystemPreview } from './SystemPreview'
 import { useBodyHighlights } from './useBodyHighlights'
 import { cn } from '@/lib/utils'
@@ -22,6 +26,7 @@ interface Props {
 
 const bodyAnchor = (id: string) => `body-${id}`
 const FLASH = 'ring-2 ring-primary'
+const EMPTY_IDS: ReadonlySet<string> = new Set()
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -67,14 +72,7 @@ function StarBlock({ star, flash }: { star: Star; flash: boolean }) {
   )
 }
 
-function ResourceTable({ planet }: { planet: Planet }) {
-  const spheres: [Sphere, Resource[] | undefined][] = [
-    ['geosphere', planet.geosphere?.resources],
-    ['hydrosphere', planet.hydrosphere?.resources],
-    ['atmosphere', planet.atmosphere?.resources],
-    ['biosphere', planet.biosphere?.resources],
-  ]
-  const rows = spheres.flatMap(([sphere, rs]) => (rs ?? []).map((r) => ({ sphere, r })))
+function ResourceTable({ rows }: { rows: BodyResourceRow[] }) {
   if (rows.length === 0) return <div className="text-xs text-muted-foreground">No resources</div>
   return (
     <table className="w-full max-w-3xl text-xs">
@@ -88,16 +86,16 @@ function ResourceTable({ planet }: { planet: Planet }) {
         </tr>
       </thead>
       <tbody>
-        {rows.map(({ sphere, r }) => (
-          <tr key={`${sphere}|${r.name}`} className="border-t border-border/40">
-            <td className="py-0.5 pr-3 text-muted-foreground">{sphere}</td>
+        {rows.map((row) => (
+          <tr key={`${row.sphere}|${row.name}`} className="border-t border-border/40">
+            <td className="py-0.5 pr-3 text-muted-foreground">{row.sphere}</td>
             <td className="pr-3 text-sm">
-              <ResourceIcon name={r.name} sphere={sphere} className="mr-1.5" />
-              {r.name}
+              <ResourceIcon name={row.name} sphere={row.sphere} className="mr-1.5" />
+              {row.name}
             </td>
             {[0, 1, 2, 3].map((i) => (
               <td key={i} className="pr-3 tabular-nums">
-                {r.zones[i] && <QualityCell q={r.zones[i].quality} a={r.zones[i].abundance} />}
+                {row.zones[i] && <QualityCell q={row.zones[i].quality} a={row.zones[i].abundance} />}
               </td>
             ))}
           </tr>
@@ -107,7 +105,10 @@ function ResourceTable({ planet }: { planet: Planet }) {
   )
 }
 
-function BodyBlock({ planet, flash }: { planet: Planet; flash: boolean }) {
+function BodyBlock({ planet, flash, open, onToggle }: { planet: Planet; flash: boolean; open: boolean; onToggle: () => void }) {
+  const { filter } = useResourceFilter()
+  const rows = useMemo(() => planetResourceRows(planet), [planet])
+  const summary = useMemo(() => highQualitySummary(rows, filter.minBestQuality), [rows, filter.minBestQuality])
   const g = planet.geosphere
   const h = planet.hydrosphere
   const a = planet.atmosphere
@@ -120,14 +121,43 @@ function BodyBlock({ planet, flash }: { planet: Planet; flash: boolean }) {
   ]
   return (
     <div id={bodyAnchor(planet.planetId)} className={cn('mb-3 scroll-mt-14 rounded-md border bg-card/40 p-2 transition-shadow', flash && FLASH)}>
-      <div className="mb-1">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`${bodyAnchor(planet.planetId)}-detail`}
+        onClick={onToggle}
+        className="flex w-full flex-wrap items-center gap-x-1 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <ChevronRight aria-hidden className={cn('size-3.5 shrink-0 text-muted-foreground transition-transform', open && 'rotate-90')} />
         <span className="font-medium">
           <Censored kind="system">{planet.name}</Censored>
-        </span>{' '}
-        <span className="text-muted-foreground">
-          {planet.bodyType} · {planet.zone} zone · <OrbitText orbit={planet.orbit} />
         </span>
-      </div>
+        <span className="text-muted-foreground">
+          {open ? (
+            <>
+              {planet.bodyType} · {planet.zone} zone · <OrbitText orbit={planet.orbit} />
+            </>
+          ) : (
+            <>
+              {planet.bodyType} · {planet.zone} zone
+            </>
+          )}
+        </span>
+        {!open && summary.items.length > 0 && (
+          <span className={cn('ml-2 inline-flex flex-wrap items-center gap-x-2 text-xs', summary.dimmed && 'opacity-50')}>
+            {summary.items.map((r) => (
+              <span key={`${r.sphere}|${r.name}`} className="inline-flex items-center gap-1">
+                <ResourceIcon name={r.name} sphere={r.sphere} size={16} />
+                <span className="rounded-sm px-1 tabular-nums" style={qualityStyle(r.best)}>
+                  {r.best}
+                </span>
+              </span>
+            ))}
+          </span>
+        )}
+      </button>
+      {open && (
+      <div id={`${bodyAnchor(planet.planetId)}-detail`} className="mt-1">
       <div className="mb-2 grid gap-y-0.5 text-xs md:grid-cols-[6.5rem_1fr]">
         {lines
           .filter(([, v]) => v)
@@ -138,7 +168,9 @@ function BodyBlock({ planet, flash }: { planet: Planet; flash: boolean }) {
             </div>
           ))}
       </div>
-      <ResourceTable planet={planet} />
+      <ResourceTable rows={rows} />
+      </div>
+      )}
     </div>
   )
 }
@@ -181,7 +213,16 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
   const [flashId, setFlashId] = useState<string>()
   const flashTimer = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(flashTimer.current), [])
+  const [expandedState, setExpanded] = useState<{ systemId: string; ids: ReadonlySet<string> }>({ systemId: system.systemId, ids: new Set() })
+  const expanded = expandedState.systemId === system.systemId ? expandedState.ids : EMPTY_IDS
+  const update = (fn: (ids: Set<string>) => void) =>
+    setExpanded((cur) => {
+      const ids = new Set(cur.systemId === system.systemId ? cur.ids : [])
+      fn(ids)
+      return { systemId: system.systemId, ids }
+    })
   const goToBody = (id: string) => {
+    flushSync(() => update((ids) => ids.add(id)))
     document.getElementById(bodyAnchor(id))?.scrollIntoView({ block: 'center', behavior: 'smooth' })
     setFlashId(id)
     window.clearTimeout(flashTimer.current)
@@ -249,6 +290,16 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
         ))}
       </Section>
       <Section title={`Bodies (${system.planets.length})`}>
+        {system.planets.length > 1 && (
+          <div className="mb-2 flex gap-2">
+            <Button variant="outline" size="xs" onClick={() => update((ids) => system.planets.forEach((p) => ids.add(p.planetId)))}>
+              Expand all
+            </Button>
+            <Button variant="outline" size="xs" onClick={() => update((ids) => ids.clear())}>
+              Collapse all
+            </Button>
+          </div>
+        )}
         {system.planets.length === 0 && (
           <div className="text-muted-foreground">
             {system.eod === 'Unexplored' ? 'System not yet surveyed.' : 'None'}
@@ -261,7 +312,13 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
             </h3>
             <div className="ml-2 border-l pl-3">
               {planets.map((p) => (
-                <BodyBlock key={p.planetId} planet={p} flash={flashId === p.planetId} />
+                <BodyBlock
+                  key={p.planetId}
+                  planet={p}
+                  flash={flashId === p.planetId}
+                  open={expanded.has(p.planetId)}
+                  onToggle={() => update((ids) => (ids.delete(p.planetId) ? undefined : ids.add(p.planetId)))}
+                />
               ))}
             </div>
           </div>
