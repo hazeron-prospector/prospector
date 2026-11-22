@@ -28,6 +28,8 @@ interface Props<T> {
   onRowClick?: (row: T) => void
   /** rowKey of the highlighted row. */
   selectedKey?: string
+  /** Extra classes for a whole row (e.g. a text color). */
+  rowClassName?: (row: T) => string | undefined
   rowHeight?: number
   /** Shown instead of the default message when there are no rows. */
   empty?: ReactNode
@@ -42,6 +44,7 @@ export function VirtualTable<T>({
   onSort,
   onRowClick,
   selectedKey,
+  rowClassName,
   rowHeight = 24,
   empty,
 }: Props<T>) {
@@ -165,6 +168,7 @@ export function VirtualTable<T>({
                 className={cn(
                   'absolute left-0 grid w-full items-center border-b border-border/40 text-sm',
                   onRowClick && 'cursor-pointer hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none',
+                  rowClassName?.(row),
                   v.index === selectedIndex && 'bg-primary/15 shadow-[inset_3px_0_0_var(--primary)] hover:bg-primary/20',
                 )}
                 style={{
