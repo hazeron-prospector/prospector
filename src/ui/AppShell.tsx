@@ -110,6 +110,11 @@ export function AppShell({ map, loader }: { map: StarMap; loader: MapLoader }) {
           />
         )}
       </main>
+      <footer className="border-t px-3 py-0.5 text-xs text-muted-foreground">
+        <a href="NOTICE.txt" target="_blank" rel="noreferrer" className="underline">
+          Resource icons © Hazeron Freehold LLC
+        </a>
+      </footer>
     </div>
   )
 }
