@@ -23,6 +23,8 @@ export interface ResourceFilter {
   /** Stars have no orbital zone, so an active zone filter excludes them. */
   orbitalZones: string[]
   spheres: Sphere[]
+  /** Bay categories; a row matches when it has any selected category. */
+  categories: string[]
   inhabited: InhabitedMode
 }
 
@@ -51,6 +53,7 @@ export const DEFAULT_RESOURCE_FILTER: ResourceFilter = {
   bodyTypes: [],
   orbitalZones: [],
   spheres: [],
+  categories: [],
   inhabited: 'any',
 }
 
@@ -74,6 +77,10 @@ export const DEFAULT_RESOURCE_SORT: Sort<ResourceRow> = { key: 'bestQuality', di
 
 function inList<T>(list: readonly T[], v: T | undefined): boolean {
   return list.length === 0 || (v !== undefined && list.includes(v))
+}
+
+function anyOf(selected: readonly string[], have: readonly string[]): boolean {
+  return selected.length === 0 || selected.some((c) => have.includes(c))
 }
 
 function inRange(r: Range, v: number | undefined): boolean {
@@ -101,6 +108,7 @@ export function filterResourceRows(rows: readonly ResourceRow[], f: ResourceFilt
       inList(f.bodyTypes, r.bodyType) &&
       inList(f.orbitalZones, r.orbitalZone) &&
       inList(f.spheres, r.sphere) &&
+      anyOf(f.categories, r.categories) &&
       inhabitedOk(f.inhabited, r.inhabited),
   )
 }

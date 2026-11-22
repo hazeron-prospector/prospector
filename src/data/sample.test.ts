@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { resourceInfo } from './catalog'
 import { parseStarMap } from './parse'
 import { toBodyRows, toResourceRows, toSystemRows } from './rows'
 import type { StarMap } from './types'
@@ -41,6 +42,19 @@ describe.skipIf(!existsSync(samplePath))('full sample starmap', () => {
     expect(new Set(rows.map((r) => r.resource)).size).toBe(61)
     expect(new Set(rows.map((r) => r.id)).size).toBe(rows.length)
     expect(rows.every((r) => r.bestQuality >= 1 && r.bestQuality <= 255)).toBe(true)
+  })
+
+  it('every resource gets a known icon or the placeholder path (no crash)', () => {
+    const rows = toResourceRows(map)
+    const noIcon = new Set<string>()
+    for (const r of rows) {
+      const info = resourceInfo(r.resource, r.sphere)
+      expect(info.categories.length).toBeGreaterThan(0)
+      if (info.icon === undefined) noIcon.add(r.resource)
+      else expect(existsSync(path.resolve(import.meta.dirname, '../../public', info.icon))).toBe(true)
+    }
+    console.log(`resources without icon (placeholder): ${[...noIcon].sort().join(', ')}`)
+    expect(resourceInfo('Water in the Environment').icon).toBe('icons/c_Water.png')
   })
 
   it('counts bodies by resource zones 1/2/3/4', () => {

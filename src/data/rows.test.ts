@@ -42,6 +42,9 @@ describe('toResourceRows', () => {
     expect(find('PA1', 'Air').sphere).toBe('atmosphere')
     expect(find('PA1', 'Fruit').sphere).toBe('biosphere')
     expect(find('PA4', 'Ice').bodyType).toBe('Ring')
+    expect(find('PA1', 'Fruit').categories).toEqual(['Surface Only'])
+    expect(find('PA1', 'Stone').categories).toEqual(['Prospector'])
+    expect(find('STA', 'Type G Preons').categories).toEqual(['Particle Collector'])
   })
   it('stars: bodyType Star, no orbital zone, quality in zone 1', () => {
     const s = find('STA', 'Type G Preons')

@@ -23,6 +23,7 @@ function rr(o: Partial<ResourceRow> & { id: string }): ResourceRow {
     bodyType: 'Planet',
     orbitalZone: 'Inner',
     sphere: 'geosphere',
+    categories: [],
     inhabited: false,
     inhabitingEmpires: [],
     ...o,
@@ -53,6 +54,17 @@ describe('filterResourceRows', () => {
     expect(f({ orbitalZones: ['Frigid', 'Inner'] })).toEqual(['1', '2', '3'])
   })
   it('spheres', () => expect(f({ spheres: ['atmosphere', 'star'] })).toEqual(['3', '4']))
+  it('categories match on any selected bay', () => {
+    const water = rr({ id: 'w', resource: 'Water', categories: ['Wildcatter', 'Siphon'] })
+    const ore = rr({ id: 'o', resource: 'Ore', categories: ['Prospector'] })
+    const run = (categories: string[]) =>
+      ids(filterResourceRows([water, ore], { ...DEFAULT_RESOURCE_FILTER, categories }))
+    expect(run([])).toEqual(['w', 'o'])
+    expect(run(['Siphon'])).toEqual(['w'])
+    expect(run(['Wildcatter'])).toEqual(['w'])
+    expect(run(['Prospector', 'Siphon'])).toEqual(['w', 'o'])
+    expect(run(['Particle Collector'])).toEqual([])
+  })
   it('inhabited any / hide / only', () => {
     expect(f({ inhabited: 'any' })).toHaveLength(4)
     expect(f({ inhabited: 'hide' })).toEqual(['1', '2', '4'])

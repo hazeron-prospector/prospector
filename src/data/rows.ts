@@ -1,4 +1,5 @@
 /** Flatten the StarMap into table rows. Pure; derived in memory, never persisted. */
+import { resourceInfo } from './catalog'
 import type { Eod, Planet, Resource, Sphere, StarMap, System } from './types'
 
 export interface ResourceRow {
@@ -25,6 +26,8 @@ export interface ResourceRow {
   /** Orbital zone without " Zone". Undefined for stars (they have no orbital zone). */
   orbitalZone?: string
   sphere: Sphere
+  /** Harvester-bay categories, 'Surface Only' or 'Unknown' (catalog.ts). */
+  categories: string[]
   /** System has at least one city (cities are per system, not per body). */
   inhabited: boolean
   inhabitingEmpires: string[]
@@ -127,6 +130,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
           bodyName: star.name,
           bodyType: 'Star',
           sphere: 'star',
+          categories: resourceInfo(r.name, 'star').categories,
         })
       }
     }
@@ -149,6 +153,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
             bodyType: p.bodyType,
             orbitalZone: p.zone,
             sphere,
+            categories: resourceInfo(r.name, sphere).categories,
           }
           opt(row, 'q1', r.zones[0]?.quality)
           opt(row, 'q2', r.zones[1]?.quality)
