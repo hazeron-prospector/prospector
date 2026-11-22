@@ -103,7 +103,7 @@ const unquote = (v) => (v && v.startsWith("'") ? v.slice(1, -1).replace(/''/g, "
 /** b_Commodity rows: id -> { name, iconPath? }. */
 export function parseCommodityRows(sql) {
   const rows = new Map()
-  const re = /^INSERT INTO b_Commodity \(([^)]*)\) VALUES \((.*)\);\s*$/gm
+  const re = /^INSERT INTO b_Commodity \(([^)]*)\)\s*VALUES \((.*)\);[ \t]*(?:--.*)?$/gm
   for (const m of sql.matchAll(re)) {
     const cols = m[1].split(',').map((c) => c.trim())
     const vals = splitTopLevel(m[2])
@@ -116,6 +116,11 @@ export function parseCommodityRows(sql) {
     rows.set(id, { name, ...(iconPath ? { iconPath } : {}) })
   }
   if (rows.size === 0) throw new Error('no b_Commodity rows found')
+  // The regex assumes single-line INSERTs; fail loudly if any statement was skipped.
+  const inserts = (sql.match(/INSERT INTO b_Commodity\b/g) ?? []).length
+  if (inserts !== rows.size) {
+    throw new Error(`b_Commodity: parsed ${rows.size} rows but found ${inserts} INSERT statements`)
+  }
   return rows
 }
 
