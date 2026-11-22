@@ -17,6 +17,7 @@ import { buildSearchIndex } from '@/data/search'
 import { NavProvider, type Nav } from './state/NavContext'
 import { ResourceFilterProvider, useResourceFilter } from './state/ResourceFilterContext'
 import { SettingsDialog } from './SettingsDialog'
+import { useLabelFormat } from './state/useCensor'
 import type { MapLoader } from './useMapLoader'
 
 type Tab = 'resources' | 'planets' | 'systems' | 'map'
@@ -42,6 +43,7 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const [fly, setFly] = useState<{ systemId: string; nonce: number }>()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const resourceNames = useMemo(() => [...new Set(allRows.map((r) => r.resource))].sort((a, b) => a.localeCompare(b)), [allRows])
+  const labelFormat = useLabelFormat()
   const searchIndex = useMemo(() => buildSearchIndex(map), [map])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -196,6 +198,7 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
             flyToRequest={fly}
             allRows={allRows}
             matchRows={highlight ? filteredResourceRows : undefined}
+            labelFormat={labelFormat}
           />,
         )}
         {current && (

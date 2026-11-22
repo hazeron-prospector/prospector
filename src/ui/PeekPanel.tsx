@@ -4,9 +4,11 @@ import type { ResourceRow } from '@/data/rows'
 import type { Planet, Star, System } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { topResources, type PeekTarget, type TopResource } from './nav'
+import { Censored, OrbitText } from './Censored'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
+import { useRenderName } from './state/useCensor'
 import { SystemPreview } from './SystemPreview'
 import { useBodyHighlights } from './useBodyHighlights'
 
@@ -29,7 +31,7 @@ function Resources({ items, empty }: { items: TopResource[]; empty: string }) {
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm">{r.name}</span>
             <span className="block truncate text-xs text-muted-foreground">
-              {r.sphere} · {r.bodyName}
+              {r.sphere} · <Censored kind="system">{r.bodyName}</Censored>
               {r.count > 1 ? ` · ${r.count} deposits` : ''}
             </span>
           </span>
@@ -42,7 +44,7 @@ function Resources({ items, empty }: { items: TopResource[]; empty: string }) {
 
 const yn = (b: boolean | undefined) => (b === undefined ? undefined : b ? 'yes' : 'no')
 
-function planetFacts(p: Planet): [string, string | undefined][] {
+function planetFacts(p: Planet): [string, ReactNode][] {
   const g = p.geosphere
   const h = p.hydrosphere
   const a = p.atmosphere
@@ -52,7 +54,7 @@ function planetFacts(p: Planet): [string, string | undefined][] {
   return [
     ['Type', p.bodyType],
     ['Orbital zone', p.zone],
-    ['Orbit', p.orbit.raw],
+    ['Orbit', <OrbitText orbit={p.orbit} />],
     ['Diameter', h?.diameterRaw ?? g?.diameterRaw],
     ['Gravity', h?.gravityRaw ?? g?.gravityRaw],
     ['Atmosphere', atm],
@@ -62,14 +64,14 @@ function planetFacts(p: Planet): [string, string | undefined][] {
   ]
 }
 
-function starFacts(s: Star): [string, string | undefined][] {
+function starFacts(s: Star): [string, ReactNode][] {
   return [
     ['Type', s.type],
     ['Size', s.size || undefined],
     ['Temperature', s.surfaceTempRaw],
     ['Diameter', s.diameterRaw],
     ['Habitable zone', s.habRaw],
-    ['Orbit', s.orbit.raw],
+    ['Orbit', <OrbitText orbit={s.orbit} />],
   ]
 }
 
@@ -86,6 +88,7 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
   const nav = useNav()
   const { closePeek } = nav
   const system = systemById.get(target.systemId)
+  const renderName = useRenderName()
   const quality = useBodyHighlights(target.systemId)
   const highlighted = useMemo(() => new Set(quality.keys()), [quality])
 
@@ -102,7 +105,19 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
     const sysRows = rowsBySystem.get(system.systemId) ?? []
     if (target.kind === 'system') {
       const empires = [...new Set(system.cities.map((c) => c.empire).filter((e): e is string => !!e))]
-      return { title: system.name, subtitle: system.catalog ? `Catalog ${system.catalog}` : 'System', top: topResources(sysRows), empires, facts: [] as [string, string | undefined][] }
+      return {
+        title: <Censored kind="system">{system.name}</Censored>,
+        subtitle: system.catalog ? (
+          <>
+            Catalog <Censored kind="system">{system.catalog}</Censored>
+          </>
+        ) : (
+          'System'
+        ),
+        top: topResources(sysRows),
+        empires,
+        facts: [] as [string, ReactNode][],
+      }
     }
     const planet = system.planets.find((p) => p.planetId === target.bodyId)
     const star = planet ? undefined : system.stars.find((s) => s.starId === target.bodyId)
@@ -110,7 +125,7 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
     if (!body) return undefined
     const rows = sysRows.filter((r) => r.bodyId === target.bodyId)
     return {
-      title: body.name,
+      title: <Censored kind="system">{body.name}</Censored>,
       subtitle: planet ? planet.bodyType : `Star · ${star!.type}`,
       top: topResources(rows),
       empires: [] as string[],
@@ -133,7 +148,9 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
           <h2 className="truncate text-sm font-semibold text-primary">{view.title}</h2>
           <p className="truncate text-xs text-muted-foreground">{view.subtitle}</p>
           {target.kind === 'body' && (
-            <p className="truncate text-xs text-muted-foreground">in {system.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              in <Censored kind="system">{system.name}</Censored>
+            </p>
           )}
         </div>
         <Button variant="ghost" size="icon-xs" onClick={closePeek} aria-label="Close peek panel" title="Close (Esc)">
@@ -165,15 +182,25 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
             bodyQuality={quality}
             emphasizedBodyId={target.kind === 'body' ? target.bodyId : undefined}
             onBodyClick={(id) => nav.peekBody(system.systemId, id)}
+            renderName={renderName}
           />
         )}
         <dl className="grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-xs">
           {target.kind === 'system' ? (
             <>
               <Row label="Status">{system.eodRaw ? `${system.eod} (reported as "${system.eodRaw}")` : system.eod}</Row>
-              <Row label="Sector">{sectorNameOf(system.sectorId)}</Row>
+              <Row label="Sector">
+                <Censored kind="sector">{sectorNameOf(system.sectorId)}</Censored>
+              </Row>
               <Row label="Stars">
-                {system.stars.length === 0 ? 'none' : system.stars.map((s) => `${s.name} (${s.type})`).join(', ')}
+                {system.stars.length === 0
+                  ? 'none'
+                  : system.stars.map((s, i) => (
+                      <span key={s.starId}>
+                        {i > 0 && ', '}
+                        <Censored kind="system">{s.name}</Censored> ({s.type})
+                      </span>
+                    ))}
               </Row>
               <Row label="Bodies">{system.planets.length}</Row>
               <Row label="Wormholes">{system.wormholes.length}</Row>

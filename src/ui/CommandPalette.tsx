@@ -4,8 +4,10 @@ import { search, type SearchHit, type SearchIndex } from '@/data/search'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/ui/ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/ui/ui/dialog'
 import { isSecondaryEnter } from './nav'
+import { Censored } from './Censored'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
+import { useCensor } from './state/useCensor'
 
 const GROUP_TITLE = { system: 'Systems', body: 'Bodies', resource: 'Resources', sector: 'Sectors' } as const
 const PER_GROUP = 6
@@ -56,6 +58,7 @@ export function CommandPalette({ open, onOpenChange, ...rest }: Props) {
 /** Mounted only while the dialog is open, so the query resets on every open. */
 function PaletteBody({ close, index, onResource, onSector }: PaletteActions & { close: () => void; index: SearchIndex }) {
   const nav = useNav()
+  const { on, text: censorText } = useCensor()
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState('')
   const deferred = useDeferredValue(query)
@@ -119,15 +122,25 @@ function PaletteBody({ close, index, onResource, onSector }: PaletteActions & { 
                   <span className="min-w-0 flex-1 truncate">
                     {e.kind === 'system' && h.matchedVia === 'catalog' && e.catalog ? (
                       <>
-                        {e.label} <span className="text-muted-foreground">catalog </span>
-                        <Marked text={e.catalog} indices={h.indices} />
+                        <Censored kind="system">{e.label}</Censored> <span className="text-muted-foreground">catalog </span>
+                        {on('system') ? <Censored kind="system">{e.catalog}</Censored> : <Marked text={e.catalog} indices={h.indices} />}
                       </>
-                    ) : (
+                    ) : e.kind === 'resource' ? (
                       <Marked text={e.label} indices={h.indices} />
+                    ) : (
+                      // Matching used the real name; the result shows only the scramble when censored.
+                      (() => {
+                        const kind = e.kind === 'sector' ? 'sector' : 'system'
+                        return on(kind) ? <Censored kind={kind}>{e.label}</Censored> : <Marked text={e.label} indices={h.indices} />
+                      })()
                     )}
                     <span className="ml-2 text-xs text-muted-foreground">
-                      {e.kind === 'system' && e.sectorName}
-                      {e.kind === 'body' && `${e.bodyType} in ${e.systemName}`}
+                      {e.kind === 'system' && <Censored kind="sector">{e.sectorName}</Censored>}
+                      {e.kind === 'body' && (
+                        <>
+                          {e.bodyType} in <Censored kind="system">{e.systemName}</Censored>
+                        </>
+                      )}
                       {e.kind === 'resource' && `${e.depositCount.toLocaleString()} deposits · best ${e.bestQuality}`}
                       {e.kind === 'sector' && `${e.systemCount.toLocaleString()} systems`}
                     </span>
@@ -138,7 +151,7 @@ function PaletteBody({ close, index, onResource, onSector }: PaletteActions & { 
                       tabIndex={-1}
                       disabled={!nav.canShowOnMap(sid)}
                       title={nav.canShowOnMap(sid) ? 'Show on map (Ctrl+Enter)' : 'Deep Space systems have no map position'}
-                      aria-label={`Show ${e.label} on map`}
+                      aria-label={`Show ${e.kind === 'resource' ? e.label : censorText(e.kind === 'sector' ? 'sector' : 'system', e.label)} on map`}
                       onClick={(ev) => {
                         ev.stopPropagation()
                         showOnMap(h)

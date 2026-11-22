@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, MapPin, X } from 'lucide-react'
 import type { Planet, Resource, Sphere, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
+import { Censored, OrbitText } from './Censored'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
+import { useRenderName } from './state/useCensor'
 import { SystemPreview } from './SystemPreview'
 import { useBodyHighlights } from './useBodyHighlights'
 import { cn } from '@/lib/utils'
@@ -44,7 +46,9 @@ function StarBlock({ star, flash }: { star: Star; flash: boolean }) {
   return (
     <div id={bodyAnchor(star.starId)} className={cn('mb-3 scroll-mt-14 rounded-md border bg-card/40 p-2 transition-shadow', flash && FLASH)}>
       <div className="mb-1">
-        <span className="font-medium">{star.name}</span> <span className="text-muted-foreground">{star.type}</span>
+        <span className="font-medium">
+          <Censored kind="system">{star.name}</Censored>
+        </span> <span className="text-muted-foreground">{star.type}</span>
       </div>
       <div className="mb-1 text-xs text-muted-foreground">
         {[star.size, star.spectralClass && `class ${star.spectralClass}`, star.surfaceTempRaw, star.diameterRaw, star.habRaw, star.shell]
@@ -118,9 +122,11 @@ function BodyBlock({ planet, flash }: { planet: Planet; flash: boolean }) {
   return (
     <div id={bodyAnchor(planet.planetId)} className={cn('mb-3 scroll-mt-14 rounded-md border bg-card/40 p-2 transition-shadow', flash && FLASH)}>
       <div className="mb-1">
-        <span className="font-medium">{planet.name}</span>{' '}
+        <span className="font-medium">
+          <Censored kind="system">{planet.name}</Censored>
+        </span>{' '}
         <span className="text-muted-foreground">
-          {planet.bodyType} · {planet.zone} zone · {planet.orbit.raw}
+          {planet.bodyType} · {planet.zone} zone · <OrbitText orbit={planet.orbit} />
         </span>
       </div>
       <div className="mb-2 grid gap-y-0.5 text-xs md:grid-cols-[6.5rem_1fr]">
@@ -140,12 +146,12 @@ function BodyBlock({ planet, flash }: { planet: Planet; flash: boolean }) {
 
 function WormholeRow({ w, systemById, onOpenSystem }: { w: Wormhole; systemById: ReadonlyMap<string, System>; onOpenSystem: (id: string) => void }) {
   const dest = w.destSystemId ? systemById.get(w.destSystemId) : undefined
-  const coords = `${w.destX}, ${w.destY}, ${w.destZ}`
+  const coords = <Censored kind="coords">{`${w.destX}, ${w.destY}, ${w.destZ}`}</Censored>
   return (
     <li className="flex items-baseline gap-3 py-0.5">
       {dest ? (
         <Button variant="link" size="xs" className="h-auto p-0 text-sm" onClick={() => onOpenSystem(dest.systemId)}>
-          {dest.name}
+          <Censored kind="system">{dest.name}</Censored>
         </Button>
       ) : (
         <span className="text-muted-foreground">{coords}</span>
@@ -171,6 +177,7 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
     }
     return [...m]
   }, [system])
+  const renderName = useRenderName()
   const quality = useBodyHighlights(system.systemId)
   const highlighted = useMemo(() => new Set(quality.keys()), [quality])
   const [flashId, setFlashId] = useState<string>()
@@ -182,7 +189,8 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
     window.clearTimeout(flashTimer.current)
     flashTimer.current = window.setTimeout(() => setFlashId(undefined), 1600)
   }
-  const coords = system.x === undefined ? 'Deep Space' : `${system.x}, ${system.y}, ${system.z}`
+  const coords =
+    system.x === undefined ? 'Deep Space' : <Censored kind="coords">{`${system.x}, ${system.y}, ${system.z}`}</Censored>
 
   return (
     <div className="absolute inset-0 z-20 overflow-auto bg-background">
@@ -207,10 +215,16 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
         </Button>
       </div>
       <header className="border-b px-4 py-3">
-        <h1 className="text-lg font-semibold text-primary">{system.name}</h1>
+        <h1 className="text-lg font-semibold text-primary">
+          <Censored kind="system">{system.name}</Censored>
+        </h1>
         <div className="mt-1 text-sm">
-          {system.catalog && <Field label="Catalog">{system.catalog}</Field>}
-          <Field label="Sector">{sectorName}</Field>
+          {system.catalog && <Field label="Catalog">
+              <Censored kind="system">{system.catalog}</Censored>
+            </Field>}
+          <Field label="Sector">
+            <Censored kind="sector">{sectorName}</Censored>
+          </Field>
           <Field label="Coordinates">
             <span className="tabular-nums">{coords}</span>
           </Field>
@@ -226,6 +240,7 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
             highlightedBodyIds={highlighted}
             bodyQuality={quality}
             onBodyClick={goToBody}
+            renderName={renderName}
           />
         </section>
       )}
@@ -243,7 +258,9 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
         )}
         {groups.map(([orbiting, planets]) => (
           <div key={orbiting} className="mb-2">
-            <h3 className="mb-1 text-xs text-muted-foreground">Orbiting {orbiting}</h3>
+            <h3 className="mb-1 text-xs text-muted-foreground">
+              Orbiting {orbiting === 'Primary' ? orbiting : <Censored kind="system">{orbiting}</Censored>}
+            </h3>
             <div className="ml-2 border-l pl-3">
               {planets.map((p) => (
                 <BodyBlock key={p.planetId} planet={p} flash={flashId === p.planetId} />

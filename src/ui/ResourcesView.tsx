@@ -6,6 +6,7 @@ import type { Sphere } from '@/data/types'
 import { CATEGORIES } from '@/data/catalog'
 import { distinct } from './distinct'
 import { mapColumn } from './ShowOnMapButton'
+import { Censored } from './Censored'
 import { Highlight } from './Highlight'
 import { QuickFilter } from './QuickFilter'
 import { quickFilterResources } from './quickFilter'
@@ -59,8 +60,8 @@ const makeColumns = (q: string): Column<ResourceRow>[] => [
     firstDir: 'desc',
     cell: (r) => <QualityCell q={r.bestQuality} />,
   },
-  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
-  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} /> },
+  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} kind="system" /> },
+  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} kind="system" /> },
   { id: 'type', header: 'Type', width: 85, sortKey: 'bodyType', cell: (r) => r.bodyType },
   {
     id: 'zone',
@@ -86,8 +87,8 @@ const makeColumns = (q: string): Column<ResourceRow>[] => [
 
 const makeRollupColumns = (q: string): Column<SystemRollupRow>[] => [
   mapColumn((r) => r.systemId),
-  { id: 'system', header: 'System', width: 160, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
-  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => r.sectorName },
+  { id: 'system', header: 'System', width: 160, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} kind="system" /> },
+  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => <Censored kind="sector">{r.sectorName}</Censored> },
   { id: 'best', header: 'Best Q', width: 70, sortKey: 'bestQuality', firstDir: 'desc', cell: (r) => <QualityCell q={r.bestQuality} /> },
   {
     id: 'resource',

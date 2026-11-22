@@ -30,8 +30,8 @@ const tri = (b: boolean | undefined) => (b ? 'yes' : 'no')
 
 const makeColumns = (q: string): Column<BodyRow>[] => [
   mapColumn((r) => r.systemId),
-  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
-  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} /> },
+  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} kind="system" /> },
+  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} kind="system" /> },
   { id: 'type', header: 'Type', width: 85, sortKey: 'bodyType', cell: (r) => r.bodyType },
   { id: 'zone', header: 'Orb. zone', width: 90, sortKey: 'orbitalZone', cell: (r) => r.orbitalZone },
   {

@@ -16,9 +16,9 @@ const STATUSES: Eod[] = ['Surveyed', 'Explored', 'Unexplored']
 
 const makeColumns = (q: string): Column<SystemRow>[] => [
   mapColumn((r) => r.id),
-  { id: 'name', header: 'Name', width: 170, sortKey: 'name', cell: (r) => <Highlight text={r.name} q={q} /> },
-  { id: 'catalog', header: 'Catalog', width: 140, sortKey: 'catalog', cell: (r) => (r.catalog ? <Highlight text={r.catalog} q={q} /> : '') },
-  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => <Highlight text={r.sectorName} q={q} /> },
+  { id: 'name', header: 'Name', width: 170, sortKey: 'name', cell: (r) => <Highlight text={r.name} q={q} kind="system" /> },
+  { id: 'catalog', header: 'Catalog', width: 140, sortKey: 'catalog', cell: (r) => (r.catalog ? <Highlight text={r.catalog} q={q} kind="system" /> : '') },
+  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => <Highlight text={r.sectorName} q={q} kind="sector" /> },
   {
     id: 'status',
     header: 'Status',
