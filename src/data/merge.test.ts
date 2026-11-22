@@ -125,7 +125,7 @@ describe('lists', () => {
       sys('A', 'Surveyed', {
         cities: [city('C1', 'ex1'), city('C2')],
         spacecraft: [craft('S1', 'ex1')],
-        wormholes: [wh('W1', false), wh(undefined, false, 5.01, 5, 5)],
+        wormholes: [wh('W1', false, 1, 1, 1), wh(undefined, false, 5.01, 5, 5)],
       }),
     ])
   const inc = (eod: Eod) =>
@@ -134,7 +134,7 @@ describe('lists', () => {
         sys('A', eod, {
           cities: [city('C1', 'inc1'), city('C3')],
           spacecraft: [craft('S1', 'inc1'), craft('S2')],
-          wormholes: [wh('W1', true), wh('W2', false), wh(undefined, true, 5.04, 5.0, 5)],
+          wormholes: [wh('W1', true, 1, 1, 1), wh('W2', false, 2, 2, 2), wh(undefined, true, 5.04, 5.0, 5)],
         }),
       ],
       { createDate: NEW },
@@ -237,7 +237,7 @@ describe('mock fixture merge', () => {
     const r = mergeStarMaps(mock, mock, OPTS)
     expect(r.map.systems).toHaveLength(mock.systems.length)
     expect(r.stats).toEqual({ added: 0, updated: mock.systems.length, kept: 0 })
-    expect(r.map.sectors).toEqual(mock.sectors)
+    expect(r.map.sectors.map(({ sourceDate: _d, ...x }) => x)).toEqual(mock.sectors)
     for (const [i, s] of r.map.systems.entries()) {
       expect(s.cities).toEqual(mock.systems[i]!.cities)
       expect(s.wormholes).toEqual(mock.systems[i]!.wormholes)
@@ -273,5 +273,40 @@ describe('mock fixture merge', () => {
 
     const replaced = mergeStarMaps(mock, copy, { mergeLists: false })
     expect(one(replaced, target.systemId).cities).toEqual(target.cities)
+  })
+})
+
+describe('wormhole dedupe across explored/unexplored', () => {
+  const A = (w: Wormhole[], d = OLD) => map([sys('A', 'Explored', { wormholes: w })], { createDate: d })
+  const unexplored = wh(undefined, false, 5, 6, 7)
+  const explored = wh('SYS9', true, 5, 6, 7)
+  it.each([
+    ['unexplored existing, explored incoming', A([unexplored]), A([explored], NEW)],
+    ['explored existing, unexplored incoming', A([explored]), A([unexplored], NEW)],
+    ['explored existing (newer), unexplored incoming', A([explored], NEW), A([unexplored])],
+    ['unexplored existing (newer), explored incoming', A([unexplored], NEW), A([explored])],
+  ])('%s -> one explored wormhole', (_n, ex, inc) => {
+    const w = one(mergeStarMaps(ex, inc, OPTS)).wormholes
+    expect(w).toHaveLength(1)
+    expect(w[0]!.explored).toBe(true)
+  })
+  it('keeps distinct destinations distinct', () => {
+    const w = one(mergeStarMaps(A([wh(undefined, false, 5, 6, 7)]), A([wh('SYS8', true, 9, 9, 9)], NEW), OPTS)).wormholes
+    expect(w).toHaveLength(2)
+  })
+})
+
+describe('per-sector source dates', () => {
+  const sec = (name: string) => ({ sectorId: '1', name, galaxy: 'G', x: 0, y: 0, z: 0 })
+  const m = (name: string, d: string) => map([], { sectors: [sec(name)], createDate: d })
+  it('A(Nov20) -> B(Nov10) -> C(Nov15): A sector survives C', () => {
+    const a = m('A', 'Thu Nov 20 10:00:00 2026 GMT')
+    const b = m('B', 'Tue Nov 10 10:00:00 2026 GMT')
+    const c = m('C', 'Sun Nov 15 10:00:00 2026 GMT')
+    const ab = mergeStarMaps(a, b, OPTS).map
+    expect(ab.sectors[0]!.name).toBe('A')
+    const abc = mergeStarMaps(ab, c, OPTS).map
+    expect(abc.sectors[0]!.name).toBe('A')
+    expect(abc.sectors[0]!.sourceDate).toBe(a.createDate)
   })
 })

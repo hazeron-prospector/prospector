@@ -10,7 +10,7 @@
  */
 
 /** Bump when the shape of StarMap changes; the IndexedDB cache discards older versions. */
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 export type Eod = 'Surveyed' | 'Explored' | 'Unexplored'
 export type WormholePolarity = 'positive' | 'negative' | 'neutral'
@@ -215,6 +215,8 @@ export interface Sector {
   x: number
   y: number
   z: number
+  /** Export date of the file this sector came from (stamped at merge). */
+  sourceDate?: string
 }
 
 export interface StarMap {

@@ -36,40 +36,47 @@ function incomingNotOlder(existing: string, incoming: string): boolean {
 
 /**
  * Winner's list stays intact (including its own repeats); loser items are added only when the winner
- * has nothing with the same key. `upgrade` lets a loser item replace the winner's first match.
+ * has nothing matching. An item may have several keys; it matches on any of them.
+ * `upgrade` lets a loser item replace the winner's first match.
  */
 function unionBy<T>(
   win: readonly T[],
   lose: readonly T[],
-  key: (t: T) => string,
+  keysOf: (t: T) => string[],
   upgrade?: (matches: T[], next: T) => boolean,
 ): T[] {
   const out = [...win]
-  const keys = new Map<string, number[]>()
-  out.forEach((t, i) => keys.set(key(t), [...(keys.get(key(t)) ?? []), i]))
+  const index = new Map<string, number[]>()
+  const add = (t: T, i: number) => {
+    for (const k of keysOf(t)) index.set(k, [...(index.get(k) ?? []), i])
+  }
+  out.forEach(add)
   for (const item of lose) {
-    const k = key(item)
-    const at = keys.get(k)
-    if (!at) {
-      keys.set(k, [out.length])
+    const at = [...new Set(keysOf(item).flatMap((k) => index.get(k) ?? []))].sort((x, y) => x - y)
+    if (at.length === 0) {
+      add(item, out.length)
       out.push(item)
     } else if (upgrade?.(at.map((i) => out[i]!), item)) {
       out[at[0]!] = item
+      add(item, at[0]!)
     }
   }
   return out
 }
 
 const r1 = (n: number) => Math.round(n * 10)
-const wormholeKey = (w: Wormhole) =>
-  w.destSystemId ? `id:${w.destSystemId}` : `xyz:${r1(w.destX)},${r1(w.destY)},${r1(w.destZ)}`
+/** Destination coordinates always match; destSystemId is an additional match. */
+const wormholeKeys = (w: Wormhole) => [
+  `xyz:${r1(w.destX)},${r1(w.destY)},${r1(w.destZ)}`,
+  ...(w.destSystemId ? [`id:${w.destSystemId}`] : []),
+]
 
 function unionLists(win: System, lose: System): Pick<System, 'cities' | 'spacecraft' | 'wormholes'> {
   return {
-    cities: unionBy(win.cities, lose.cities, (c) => c.cityId),
-    spacecraft: unionBy(win.spacecraft, lose.spacecraft, (c) => c.spacecraftId),
+    cities: unionBy(win.cities, lose.cities, (c) => [c.cityId]),
+    spacecraft: unionBy(win.spacecraft, lose.spacecraft, (c) => [c.spacecraftId]),
     // Explored wins over unexplored for the same destination.
-    wormholes: unionBy(win.wormholes, lose.wormholes, wormholeKey, (matches, next) => next.explored && matches.every((w) => !w.explored)),
+    wormholes: unionBy(win.wormholes, lose.wormholes, wormholeKeys, (matches, next) => next.explored && matches.every((w) => !w.explored)),
   }
 }
 
@@ -119,9 +126,13 @@ export function mergeStarMaps(
     systems.push(stamp(inc, incoming))
   }
 
-  const incSectorsWin = incomingNotOlder(existing.createDate, incoming.createDate)
-  const sectorById = new Map<string, Sector>(existing.sectors.map((s) => [s.sectorId, s]))
-  for (const s of incoming.sectors) if (incSectorsWin || !sectorById.has(s.sectorId)) sectorById.set(s.sectorId, s)
+  const sectorById = new Map<string, Sector>()
+  for (const sec of existing.sectors) sectorById.set(sec.sectorId, { ...sec, sourceDate: sec.sourceDate ?? existing.createDate })
+  for (const sec of incoming.sectors) {
+    const cur = sectorById.get(sec.sectorId)
+    const stamped = { ...sec, sourceDate: sec.sourceDate ?? incoming.createDate }
+    if (!cur || incomingNotOlder(cur.sourceDate!, stamped.sourceDate)) sectorById.set(sec.sectorId, stamped)
+  }
 
   return {
     map: {
