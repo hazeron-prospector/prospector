@@ -4,6 +4,9 @@ import type { ResourceRow } from '@/data/rows'
 import type { Sphere } from '@/data/types'
 import { CATEGORIES } from '@/data/catalog'
 import { distinct } from './distinct'
+import { Highlight } from './Highlight'
+import { QuickFilter } from './QuickFilter'
+import { quickFilterResources } from './quickFilter'
 import { FilterBar } from './FilterBar'
 import { FilterChips } from './FilterChips'
 import { countSystems, resultCountText, suggestLoosen } from './filterChips'
@@ -33,7 +36,7 @@ function zoneCol(n: 1 | 2 | 3 | 4): Column<ResourceRow> {
   }
 }
 
-const COLUMNS: Column<ResourceRow>[] = [
+const makeColumns = (q: string): Column<ResourceRow>[] => [
   { id: 'resource', header: 'Resource', width: 150, sortKey: 'resource', cell: (r) => (
       <span className="inline-flex items-center gap-1.5">
         <ResourceIcon name={r.resource} sphere={r.sphere} />
@@ -49,8 +52,8 @@ const COLUMNS: Column<ResourceRow>[] = [
     firstDir: 'desc',
     cell: (r) => <QualityCell q={r.bestQuality} />,
   },
-  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => r.systemName },
-  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => r.bodyName },
+  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
+  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} /> },
   { id: 'type', header: 'Type', width: 85, sortKey: 'bodyType', cell: (r) => r.bodyType },
   {
     id: 'zone',
@@ -87,7 +90,9 @@ export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: strin
     }),
     [rows],
   )
-  const shown = useMemo(() => sortRows(filteredResourceRows, sort.key, sort.dir), [filteredResourceRows, sort])
+  const quickRows = useMemo(() => quickFilterResources(filteredResourceRows, quick), [filteredResourceRows, quick])
+  const shown = useMemo(() => sortRows(quickRows, sort.key, sort.dir), [quickRows, sort])
+  const columns = useMemo(() => makeColumns(quick.trim()), [quick])
   const systems = useMemo(() => countSystems(shown), [shown])
   const chipState = useMemo(() => ({ filter, quick }), [filter, quick])
   const suggestion = useMemo(
@@ -98,6 +103,7 @@ export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: strin
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <FilterBar shown={shown.length} total={rows.length} countText={resultCountText(shown.length, systems)}>
+        <QuickFilter value={quick} onChange={(v) => setQuickFilter('resources', v)} placeholder="Filter by system or body name" />
         <ResourcePicker rows={rows} value={filter.resources} onChange={(resources) => patch({ resources })} />
         <MultiSelect label="Category" options={options.categories} value={filter.categories} onChange={(categories) => patch({ categories })} />
         <NumberInput label="Min Q" value={filter.minBestQuality} onChange={(minBestQuality) => patch({ minBestQuality })} />
@@ -116,7 +122,7 @@ export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: strin
       />
       <VirtualTable
         rows={shown}
-        columns={COLUMNS}
+        columns={columns}
         rowKey={(r) => r.id}
         sort={sort}
         onSort={setSort}

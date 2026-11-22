@@ -2,15 +2,19 @@ import { useMemo, useState } from 'react'
 import { DEFAULT_SYSTEM_FILTER, filterSystemRows, sortRows, type Sort, type SystemFilter } from '@/data/filter'
 import type { SystemRow } from '@/data/rows'
 import type { Eod } from '@/data/types'
+import { Highlight } from './Highlight'
+import { QuickFilter } from './QuickFilter'
+import { quickFilterSystems } from './quickFilter'
+import { useResourceFilter } from './state/ResourceFilterContext'
 import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
 import { VirtualTable, type Column } from './VirtualTable'
 
 const STATUSES: Eod[] = ['Surveyed', 'Explored', 'Unexplored']
 
-const COLUMNS: Column<SystemRow>[] = [
-  { id: 'name', header: 'Name', width: 170, sortKey: 'name', cell: (r) => r.name },
-  { id: 'catalog', header: 'Catalog', width: 140, sortKey: 'catalog', cell: (r) => r.catalog ?? '' },
+const makeColumns = (q: string): Column<SystemRow>[] => [
+  { id: 'name', header: 'Name', width: 170, sortKey: 'name', cell: (r) => <Highlight text={r.name} q={q} /> },
+  { id: 'catalog', header: 'Catalog', width: 140, sortKey: 'catalog', cell: (r) => (r.catalog ? <Highlight text={r.catalog} q={q} /> : '') },
   { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => r.sectorName },
   {
     id: 'status',
@@ -52,15 +56,23 @@ export function SystemsView({
   const [filter, setFilter] = useState<SystemFilter>(DEFAULT_SYSTEM_FILTER)
   const [sort, setSort] = useState<Sort<SystemRow>>({ key: 'name', dir: 'asc' })
   const sorted = useMemo(() => sortRows(rows, sort.key, sort.dir), [rows, sort])
-  const shown = useMemo(() => filterSystemRows(sorted, filter), [sorted, filter])
+  const { quickFilter, setQuickFilter } = useResourceFilter()
+  const quick = quickFilter.systems
+  const shown = useMemo(() => quickFilterSystems(filterSystemRows(sorted, filter), quick), [sorted, filter, quick])
+  const columns = useMemo(() => makeColumns(quick.trim()), [quick])
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <FilterBar shown={shown.length} total={rows.length} onReset={() => setFilter(DEFAULT_SYSTEM_FILTER)}>
+      <FilterBar shown={shown.length} total={rows.length} onReset={() => {
+          setFilter(DEFAULT_SYSTEM_FILTER)
+          setQuickFilter('systems', '')
+        }}
+      >
+        <QuickFilter value={quick} onChange={(v) => setQuickFilter('systems', v)} placeholder="Filter by system or catalog name" />
         <MultiSelect label="Status" options={STATUSES} value={filter.eod} onChange={(eod) => setFilter({ eod })} />
       </FilterBar>
       <VirtualTable
         rows={shown}
-        columns={COLUMNS}
+        columns={columns}
         rowKey={(r) => r.id}
         sort={sort}
         onSort={setSort}

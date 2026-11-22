@@ -13,6 +13,10 @@ import { FilterBar } from './FilterBar'
 import { MultiSelect } from './MultiSelect'
 import { NumberInput } from './NumberInput'
 import { Segmented } from './Segmented'
+import { Highlight } from './Highlight'
+import { QuickFilter } from './QuickFilter'
+import { quickFilterBodies } from './quickFilter'
+import { useResourceFilter } from './state/ResourceFilterContext'
 import { InhabitedCell } from './InhabitedCell'
 import { INHABITED_OPTIONS, TRI_OPTIONS } from './segmentedOptions'
 import { VirtualTable, type Column } from './VirtualTable'
@@ -22,9 +26,9 @@ const num = (n: number | undefined, digits = 0) =>
 // <biosphere> is exported only when life exists, so missing means none known.
 const tri = (b: boolean | undefined) => (b ? 'yes' : 'no')
 
-const COLUMNS: Column<BodyRow>[] = [
-  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => r.systemName },
-  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => r.bodyName },
+const makeColumns = (q: string): Column<BodyRow>[] => [
+  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
+  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} /> },
   { id: 'type', header: 'Type', width: 85, sortKey: 'bodyType', cell: (r) => r.bodyType },
   { id: 'zone', header: 'Orb. zone', width: 90, sortKey: 'orbitalZone', cell: (r) => r.orbitalZone },
   {
@@ -83,11 +87,19 @@ export function PlanetsView({
     [rows],
   )
   const sorted = useMemo(() => sortRows(rows, sort.key, sort.dir), [rows, sort])
-  const shown = useMemo(() => filterBodyRows(sorted, filter), [sorted, filter])
+  const { quickFilter, setQuickFilter } = useResourceFilter()
+  const quick = quickFilter.planets
+  const shown = useMemo(() => quickFilterBodies(filterBodyRows(sorted, filter), quick), [sorted, filter, quick])
+  const columns = useMemo(() => makeColumns(quick.trim()), [quick])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <FilterBar shown={shown.length} total={rows.length} onReset={() => setFilter(DEFAULT_BODY_FILTER)}>
+      <FilterBar shown={shown.length} total={rows.length} onReset={() => {
+          setFilter(DEFAULT_BODY_FILTER)
+          setQuickFilter('planets', '')
+        }}
+      >
+        <QuickFilter value={quick} onChange={(v) => setQuickFilter('planets', v)} placeholder="Filter by system or body name" />
         <MultiSelect label="Body type" options={options.bodyTypes} value={filter.bodyTypes} onChange={(bodyTypes) => patch({ bodyTypes })} />
         <MultiSelect label="Orbital zone" options={options.zones} value={filter.orbitalZones} onChange={(orbitalZones) => patch({ orbitalZones })} />
         <MultiSelect label="Atmosphere" options={options.atmospheres} value={filter.atmosphereTypes} onChange={(atmosphereTypes) => patch({ atmosphereTypes })} />
@@ -102,7 +114,7 @@ export function PlanetsView({
       </FilterBar>
       <VirtualTable
         rows={shown}
-        columns={COLUMNS}
+        columns={columns}
         rowKey={(r) => r.id}
         sort={sort}
         onSort={setSort}
