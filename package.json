@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "gen:gamedata": "node scripts/gen-gamedata.mjs ../shores-of-hazeron",
+    "check:gamedata": "node scripts/gen-gamedata.mjs ../shores-of-hazeron --check",
+    "gen:mock": "node scripts/gen-mock-starmap.mjs",
     "test": "vitest run",
     "preview": "vite preview"
   },
