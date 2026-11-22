@@ -21,6 +21,15 @@ export function LoadDialog({
 }) {
   const [mode, setMode] = useState<Mode>('add')
   const [mergeLists, setMergeLists] = useState(true)
+  // Each opening starts from the defaults (Add, merge lists on); adjusted during render.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      setMode('add')
+      setMergeLists(true)
+    }
+  }
   const [picked, setPicked] = useState<File>()
   const [over, setOver] = useState(false)
   const input = useRef<HTMLInputElement>(null)

@@ -45,6 +45,8 @@ export function useMapLoader(): MapLoader {
   const [offered, setOffered] = useState<{ file: File; id: number }>()
   const offerId = useRef(0)
   const mapRef = useRef<StarMap | undefined>(undefined)
+  /** Set once any file load starts, so a late boot restore cannot overwrite it. */
+  const loadStarted = useRef(false)
   useEffect(() => {
     mapRef.current = map
   }, [map])
@@ -53,7 +55,7 @@ export function useMapLoader(): MapLoader {
     let live = true
     loadMap()
       .then((m) => {
-        if (live) {
+        if (live && !loadStarted.current && !mapRef.current) {
           setMap(m)
           setGeneration((g) => g + 1)
         }
@@ -68,6 +70,7 @@ export function useMapLoader(): MapLoader {
   }, [])
 
   const loadFile = useCallback((file: File, options: LoadOptions = {}) => {
+    loadStarted.current = true
     setError(undefined)
     setNotice(undefined)
     setParsing(true)
