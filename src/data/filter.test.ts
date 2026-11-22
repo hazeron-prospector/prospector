@@ -28,6 +28,8 @@ function rr(o: Partial<ResourceRow> & { id: string }): ResourceRow {
     inhabitingEmpires: [],
     bodyHabitable: false,
     systemHabitable: false,
+    isRingworld: false,
+    hasRingworld: false,
     ...o,
   }
 }
@@ -93,6 +95,8 @@ describe('filterBodyRows', () => {
       orbitalZone: 'Inner',
       inhabited: false,
       inhabitingEmpires: [],
+      isRingworld: false,
+      hasRingworld: false,
       ...o,
     }
   }
@@ -152,7 +156,7 @@ describe('filterBodyRows', () => {
 describe('filterSystemRows', () => {
   const mk = (id: string, eod: SystemRow['eod']): SystemRow => ({
     id, name: id, sectorId: 's', sectorName: 'S', eod, starTypes: [], starTypesText: '',
-    planetCount: 0, cityCount: 0, inhabited: false, inhabitingEmpires: [], wormholeCount: 0,
+    planetCount: 0, cityCount: 0, inhabited: false, inhabitingEmpires: [], wormholeCount: 0, hasRingworld: false,
   })
   const rows = [mk('a', 'Surveyed'), mk('b', 'Explored'), mk('c', 'Unexplored')]
   it('status filter', () => {

@@ -9,6 +9,7 @@ import type { StarMap } from './types'
 
 // Synthetic export produced by scripts/gen-mock-starmap.mjs (BLUEPRINT section 22).
 // Expected numbers below come from that generator; regenerate both together.
+const ARC_TYPES = Array.from({ length: 8 }, (_, i) => `Ringworld Arc ${i + 1}`)
 const mockPath = path.resolve(import.meta.dirname, '../../fixtures/mock-starmap.xml')
 
 describe('mock starmap', () => {
@@ -46,10 +47,10 @@ describe('mock starmap', () => {
   }
 
   it('has the expected structure counts', () => {
-    expect(map.sectors).toHaveLength(9)
-    expect(map.systems).toHaveLength(164)
-    expect(map.systems.flatMap((s) => s.stars)).toHaveLength(159)
-    expect(planets()).toHaveLength(730)
+    expect(map.sectors).toHaveLength(10)
+    expect(map.systems).toHaveLength(167)
+    expect(map.systems.flatMap((s) => s.stars)).toHaveLength(162)
+    expect(planets()).toHaveLength(748)
     expect(wormholes()).toHaveLength(145)
     expect(wormholes().filter((w) => w.destSystemId === undefined)).toHaveLength(36)
     expect(map.galaxyName).toBe('Mockverse')
@@ -57,7 +58,7 @@ describe('mock starmap', () => {
   })
 
   it('covers every system state', () => {
-    expect(count(map.systems.map((s) => s.eod))).toEqual({ Surveyed: 64, Explored: 54, Unexplored: 46 })
+    expect(count(map.systems.map((s) => s.eod))).toEqual({ Surveyed: 66, Explored: 55, Unexplored: 46 })
     expect(map.systems.filter((s) => s.x === undefined)).toHaveLength(9)
     expect(map.systems.filter((s) => s.x === undefined).every((s) => s.name === 'Deep Space')).toBe(true)
     expect(map.systems.filter((s) => s.catalog !== undefined)).toHaveLength(55)
@@ -71,12 +72,12 @@ describe('mock starmap', () => {
     expect(count(wormholes().map((w) => w.polarity))).toEqual({ positive: 41, negative: 55, neutral: 49 })
     expect(count(wormholes().map((w) => String(w.explored)))).toEqual({ true: 89, false: 56 })
     const cities = map.systems.flatMap((s) => s.cities)
-    expect(cities).toHaveLength(7)
+    expect(cities).toHaveLength(8)
     expect(new Set(cities.map((c) => c.empire))).toEqual(
       new Set(['Mock Empire', 'Test Dominion', 'Placeholder Union', undefined]),
     )
     const habitable = planets().filter((p) => p.atmosphere?.atmosphereType === 'Standard' && p.zone === 'Habitable')
-    expect(habitable).toHaveLength(4)
+    expect(habitable).toHaveLength(7) // 4 regular + 3 ringworld arcs
   })
 
   it('covers spacecraft variety', () => {
@@ -99,7 +100,7 @@ describe('mock starmap', () => {
 
   it('has the expected resource rows and distinct names', () => {
     const rows = toResourceRows(map)
-    expect(rows).toHaveLength(2827)
+    expect(rows).toHaveLength(2914)
     expect(new Set(rows.map((r) => r.resource)).size).toBe(54)
     expect(new Set(rows.map((r) => r.id)).size).toBe(rows.length)
     expect(rows.every((r) => r.bestQuality >= 1 && r.bestQuality <= 255)).toBe(true)
@@ -131,21 +132,41 @@ describe('mock starmap', () => {
 
   it('counts bodies by resource zones 1/2/3/4', () => {
     const zoned = (n: number) => planets().filter((p) => p.geosphere?.resourceZones === n).length
-    expect([zoned(1), zoned(2), zoned(3), zoned(4)]).toEqual([400, 88, 153, 89])
+    expect([zoned(1), zoned(2), zoned(3), zoned(4)]).toEqual([407, 89, 160, 92])
   })
 
   it('has the documented body types and orbital zones', () => {
     expect(new Set(planets().map((p) => p.bodyType))).toEqual(
-      new Set(['Moon', 'Planet', 'Gas Giant', 'Planetoid', 'Titan', 'Ring']),
+      new Set(['Moon', 'Planet', 'Gas Giant', 'Planetoid', 'Titan', 'Ring', ...ARC_TYPES]),
     )
     expect(new Set(planets().map((p) => p.zone))).toEqual(
       new Set(['Inferno', 'Inner', 'Habitable', 'Outer', 'Frigid', 'Penumbral']),
     )
   })
 
+  it('has three synthetic ringworld systems (R1)', () => {
+    const rw = map.systems.filter((s) => s.planets.some((p) => p.bodyType.startsWith('Ringworld')))
+    expect(rw.map((s) => [s.name, s.eod, s.planets.length])).toEqual([
+      ['Halo Prime', 'Surveyed', 6],
+      ['Annulus Reach', 'Explored', 4],
+      ['Orbital Garland', 'Surveyed', 8],
+    ])
+    // arcs of one system share one orbit radius and carry resources
+    for (const s of rw) {
+      expect(new Set(s.planets.map((p) => p.orbit.distance)).size).toBe(1)
+      expect(s.planets.every((p) => p.orbit.unit === 'm' && p.geosphere?.radiusM !== undefined)).toBe(true)
+      expect(s.planets.some((p) => (p.geosphere?.resources.length ?? 0) > 0)).toBe(true)
+    }
+    const rows = toSystemRows(map)
+    expect(rows.filter((r) => r.hasRingworld)).toHaveLength(3)
+    expect(toBodyRows(map).filter((r) => r.isRingworld)).toHaveLength(18)
+    expect(toResourceRows(map).filter((r) => r.hasRingworld).length).toBeGreaterThan(0)
+    expect(toResourceRows(map).filter((r) => r.isRingworld).every((r) => r.hasRingworld)).toBe(true)
+  })
+
   it('derives body and system rows', () => {
-    expect(toBodyRows(map)).toHaveLength(730)
-    expect(toSystemRows(map)).toHaveLength(164)
+    expect(toBodyRows(map)).toHaveLength(748)
+    expect(toSystemRows(map)).toHaveLength(167)
   })
 
   it('parses every display string it can (no silent misses)', () => {

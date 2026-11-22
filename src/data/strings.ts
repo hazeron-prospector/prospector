@@ -17,7 +17,7 @@ export function parseNumber(s: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined
 }
 
-/** "15,600m Diameter", "0.23au Diameter", "54700m Radius<br>15200m Width". */
+/** "15,600m Diameter", "0.23au Diameter", "54700m Radius<br>15200m Width", "83400m Radius" (ringworld arc). */
 export function parseDiameter(s: string | undefined): Dimensions | undefined {
   if (!s) return undefined
   const ring = new RegExp(`^(${NUM})m Radius\\s*<br\\s*/?>\\s*(${NUM})m Width$`).exec(s.trim())
@@ -26,6 +26,13 @@ export function parseDiameter(s: string | undefined): Dimensions | undefined {
     const widthM = parseNumber(ring[2])
     if (radiusM === undefined || widthM === undefined) return undefined
     return { radiusM, widthM }
+  }
+  // Ringworld arc: "83400m Radius" (the exporter formats the double with %1, so no separators and,
+  // from 1e6 on, an exponent such as "1e+06").
+  const arc = /^(\d[\d,]*(?:\.\d+)?(?:e\+?\d+)?)m Radius$/i.exec(s.trim())
+  if (arc) {
+    const radiusM = Number(arc[1].replace(/,/g, ''))
+    return Number.isFinite(radiusM) ? { radiusM } : undefined
   }
   const m = new RegExp(`^(${NUM})(m|au) Diameter$`).exec(s.trim())
   if (!m) return undefined

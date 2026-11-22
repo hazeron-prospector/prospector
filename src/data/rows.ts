@@ -3,6 +3,16 @@ import { resourceInfo } from './catalog'
 import { isHabitableWorld } from './systemSummary'
 import type { Eod, Planet, Resource, Sphere, StarMap, System } from './types'
 
+/** Ringworld sections are exported as planets with bodyType "Ringworld Arc N" (BLUEPRINT R1). */
+export function isRingworldBody(bodyType: string): boolean {
+  return bodyType.startsWith('Ringworld')
+}
+
+/** Folds "Ringworld Arc 3" to "Ringworld Arc" (body type filter options); other types unchanged. */
+export function foldBodyType(bodyType: string): string {
+  return isRingworldBody(bodyType) ? 'Ringworld Arc' : bodyType
+}
+
 export interface ResourceRow {
   /** `${bodyId}|${sphere}|${resource}`; unique and stable across runs. */
   id: string
@@ -36,6 +46,10 @@ export interface ResourceRow {
   bodyHabitable: boolean
   /** System has at least one habitable world (W3). */
   systemHabitable: boolean
+  /** Body is a ringworld arc (R1). */
+  isRingworld: boolean
+  /** System has at least one ringworld arc (R1). */
+  hasRingworld: boolean
 }
 
 export interface BodyRow {
@@ -63,6 +77,8 @@ export interface BodyRow {
   resourceZones?: number
   inhabited: boolean
   inhabitingEmpires: string[]
+  isRingworld: boolean
+  hasRingworld: boolean
 }
 
 export interface SystemRow {
@@ -81,6 +97,7 @@ export interface SystemRow {
   inhabited: boolean
   inhabitingEmpires: string[]
   wormholeCount: number
+  hasRingworld: boolean
   x?: number
   y?: number
   z?: number
@@ -92,6 +109,10 @@ interface Ctx {
 
 function context(map: StarMap): Ctx {
   return { sectorNames: new Map(map.sectors.map((s) => [s.sectorId, s.name])) }
+}
+
+export function systemHasRingworld(sys: Pick<System, 'planets'>): boolean {
+  return sys.planets.some((p) => isRingworldBody(p.bodyType))
 }
 
 function empiresOf(sys: System): string[] {
@@ -122,6 +143,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
       inhabited: sys.cities.length > 0,
       inhabitingEmpires: empiresOf(sys),
       systemHabitable: sys.planets.some(isHabitableWorld),
+      hasRingworld: systemHasRingworld(sys),
     }
     for (const star of sys.stars) {
       for (const r of star.resources) {
@@ -136,6 +158,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
           bodyName: star.name,
           bodyType: 'Star',
           bodyHabitable: false,
+          isRingworld: false,
           sphere: 'star',
           categories: resourceInfo(r.name, 'star').categories,
         })
@@ -159,6 +182,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
             bodyName: p.name,
             bodyType: p.bodyType,
             bodyHabitable: isHabitableWorld(p),
+            isRingworld: isRingworldBody(p.bodyType),
             orbitalZone: p.zone,
             sphere,
             categories: resourceInfo(r.name, sphere).categories,
@@ -179,7 +203,7 @@ export function toResourceRows(map: StarMap): ResourceRow[] {
   return rows
 }
 
-function bodyRow(p: Planet, sys: System, sectorName: string): BodyRow {
+function bodyRow(p: Planet, sys: System, sectorName: string, hasRingworld: boolean): BodyRow {
   const g = p.geosphere
   const h = p.hydrosphere
   const row: BodyRow = {
@@ -192,6 +216,8 @@ function bodyRow(p: Planet, sys: System, sectorName: string): BodyRow {
     orbitalZone: p.zone,
     inhabited: sys.cities.length > 0,
     inhabitingEmpires: empiresOf(sys),
+    isRingworld: isRingworldBody(p.bodyType),
+    hasRingworld,
   }
   opt(row, 'orbitingName', p.orbit.orbitingName)
   opt(row, 'diameterM', h?.diameterM ?? g?.diameterM)
@@ -213,7 +239,8 @@ export function toBodyRows(map: StarMap): BodyRow[] {
   const rows: BodyRow[] = []
   for (const sys of map.systems) {
     const sectorName = sectorNames.get(sys.sectorId) ?? ''
-    for (const p of sys.planets) rows.push(bodyRow(p, sys, sectorName))
+    const ring = systemHasRingworld(sys)
+    for (const p of sys.planets) rows.push(bodyRow(p, sys, sectorName, ring))
   }
   return rows
 }
@@ -235,6 +262,7 @@ export function toSystemRows(map: StarMap): SystemRow[] {
       inhabited: sys.cities.length > 0,
       inhabitingEmpires: empiresOf(sys),
       wormholeCount: sys.wormholes.length,
+      hasRingworld: systemHasRingworld(sys),
     }
     opt(row, 'catalog', sys.catalog)
     opt(row, 'x', sys.x)

@@ -8576,5 +8576,239 @@
         <star starId="STR00163" name="Nuglaex" type="K Orange" orbit="Primary" size="V Main Sequence" spectralClass="9" surfaceTempK="4,144°K" hab="Habitable Zone at 0.49au" shell="Photosphere" diameter="0.192au Diameter"/>
       </system>
     </sector>
+    <sector sectorId="SEC00010" name="Ringfall Sector" x="43" y="10" z="-3">
+      <system systemId="SYS00165" name="Halo Prime" x="434.1" y="104.0" z="-26.9" eod="Surveyed">
+        <city cityId="CTY00008" name="Halo Hold" empire="Test Dominion" empireId="12" stance="Friend"/>
+        <star starId="STR00164" name="Halo Prime" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="4" surfaceTempK="6,088°K" hab="Habitable Zone at 1.17au" shell="Photosphere" diameter="0.154au Diameter">
+          <resource name="Type K Preons" quality="189" abundance="8"/>
+        </star>
+        <planet planetId="PLN00731" name="Halo Prime Arc 1" bodyType="Ringworld Arc 1" orbit="Orbiting Halo Prime at 83,400m 0°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="11.04m/s² Sea Level Gravity" resourceZones="3">
+            <resource name="Minerals" qualityZone1="83" abundanceZone1="92" qualityZone2="233" abundanceZone2="89" qualityZone3="97" abundanceZone3="5"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="35% Surface Water">
+            <resource name="Flomentum" qualityZone1="170" abundanceZone1="52"/>
+            <resource name="Water in the Environment" qualityZone1="36" abundanceZone1="26"/>
+          </hydrosphere>
+          <atmosphere composition="Standard, 69% Density">
+            <resource name="Antiflux Particles" qualityZone1="252" abundanceZone1="18"/>
+            <resource name="Hydrogen" qualityZone1="25" abundanceZone1="48"/>
+          </atmosphere>
+          <biosphere fauna="yes" flora="yes">
+            <resource name="Fruit" qualityZone1="28" abundanceZone1="96" qualityZone2="81" abundanceZone2="70" qualityZone3="206" abundanceZone3="58"/>
+            <resource name="Grain" qualityZone1="53" abundanceZone1="44" qualityZone2="11" abundanceZone2="16" qualityZone3="147" abundanceZone3="83"/>
+          </biosphere>
+        </planet>
+        <planet planetId="PLN00732" name="Halo Prime Arc 2" bodyType="Ringworld Arc 2" orbit="Orbiting Halo Prime at 83,400m 60°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="9.99m/s² Sea Level Gravity" resourceZones="3">
+            <resource name="Coal" qualityZone1="187" abundanceZone1="85" qualityZone2="94" abundanceZone2="48" qualityZone3="241" abundanceZone3="8"/>
+            <resource name="Ore" qualityZone1="254" abundanceZone1="98" qualityZone2="138" abundanceZone2="5" qualityZone3="48" abundanceZone3="22"/>
+            <resource name="Viathol" qualityZone1="139" abundanceZone1="25" qualityZone2="207" abundanceZone2="28" qualityZone3="253" abundanceZone3="42"/>
+            <resource name="Vulcanite" qualityZone1="15" abundanceZone1="18" qualityZone2="196" abundanceZone2="45" qualityZone3="203" abundanceZone3="52"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="94% Surface Water">
+            <resource name="Myrathane" qualityZone1="93" abundanceZone1="64"/>
+            <resource name="Water in the Environment" qualityZone1="135" abundanceZone1="100"/>
+          </hydrosphere>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+        <planet planetId="PLN00733" name="Halo Prime Arc 3" bodyType="Ringworld Arc 3" orbit="Orbiting Halo Prime at 83,400m 120°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="10.78m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Stone" qualityZone1="156" abundanceZone1="7"/>
+            <resource name="Viathol" qualityZone1="61" abundanceZone1="11"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="No Surface Liquid"/>
+          <atmosphere composition="Toxic, 43% Density">
+            <resource name="Antiflux Particles" qualityZone1="200" abundanceZone1="61"/>
+            <resource name="Cryozine" qualityZone1="169" abundanceZone1="1"/>
+          </atmosphere>
+        </planet>
+        <planet planetId="PLN00734" name="Halo Prime Arc 4" bodyType="Ringworld Arc 4" orbit="Orbiting Halo Prime at 83,400m 180°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="10.75m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Eludium" qualityZone1="166" abundanceZone1="26"/>
+            <resource name="Lumenite" qualityZone1="73" abundanceZone1="83"/>
+            <resource name="Ore" qualityZone1="112" abundanceZone1="30"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="No Surface Liquid"/>
+          <atmosphere composition="Exotic, 91% Density">
+            <resource name="Cryozine" qualityZone1="32" abundanceZone1="83"/>
+            <resource name="Ioplasma" qualityZone1="192" abundanceZone1="94"/>
+          </atmosphere>
+        </planet>
+        <planet planetId="PLN00735" name="Halo Prime Arc 5" bodyType="Ringworld Arc 5" orbit="Orbiting Halo Prime at 83,400m 240°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="9.05m/s² Sea Level Gravity" resourceZones="4">
+            <resource name="Lumenite" qualityZone1="140" abundanceZone1="12" qualityZone2="113" abundanceZone2="17" qualityZone3="215" abundanceZone3="82" qualityZone4="158" abundanceZone4="60"/>
+            <resource name="Oil" qualityZone1="81" abundanceZone1="80" qualityZone2="218" abundanceZone2="51" qualityZone3="169" abundanceZone3="95" qualityZone4="80" abundanceZone4="10"/>
+            <resource name="Vulcanite" qualityZone1="77" abundanceZone1="65" qualityZone2="202" abundanceZone2="54" qualityZone3="34" abundanceZone3="56" qualityZone4="248" abundanceZone4="60"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="No Surface Liquid"/>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+        <planet planetId="PLN00736" name="Halo Prime Arc 6" bodyType="Ringworld Arc 6" orbit="Orbiting Halo Prime at 83,400m 300°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="10.46m/s² Sea Level Gravity" resourceZones="2">
+            <resource name="Adamantite" qualityZone1="238" abundanceZone1="97" qualityZone2="148" abundanceZone2="100"/>
+            <resource name="Bolite" qualityZone1="215" abundanceZone1="37" qualityZone2="165" abundanceZone2="8"/>
+            <resource name="Viathol" qualityZone1="232" abundanceZone1="85" qualityZone2="149" abundanceZone2="57"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="42% Surface Water">
+            <resource name="Flomentum" qualityZone1="122" abundanceZone1="49"/>
+            <resource name="Oil" qualityZone1="98" abundanceZone1="4"/>
+          </hydrosphere>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+      </system>
+      <system systemId="SYS00166" name="Annulus Reach" x="428.7" y="98.5" z="-26.4" eod="Explored">
+        <star starId="STR00165" name="Annulus Reach" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="1" surfaceTempK="6,048°K" hab="Habitable Zone at 1.53au" shell="Photosphere" diameter="0.241au Diameter">
+          <resource name="Type G Preons" quality="95" abundance="11"/>
+        </star>
+        <planet planetId="PLN00737" name="Annulus Reach Arc 1" bodyType="Ringworld Arc 1" orbit="Orbiting Annulus Reach at 54,700m 0°" zone="Habitable Zone">
+          <geosphere diameter="54700m Radius" gravity="8.89m/s² Sea Level Gravity" resourceZones="3">
+            <resource name="Eludium" qualityZone1="113" abundanceZone1="47" qualityZone2="175" abundanceZone2="66" qualityZone3="188" abundanceZone3="88"/>
+            <resource name="Gems" qualityZone1="156" abundanceZone1="70" qualityZone2="231" abundanceZone2="80" qualityZone3="15" abundanceZone3="39"/>
+            <resource name="Minerals" qualityZone1="77" abundanceZone1="59" qualityZone2="109" abundanceZone2="54" qualityZone3="236" abundanceZone3="2"/>
+            <resource name="Phlogiston" qualityZone1="183" abundanceZone1="38" qualityZone2="150" abundanceZone2="2" qualityZone3="24" abundanceZone3="64"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="72% Surface Water">
+            <resource name="Myrathane" qualityZone1="201" abundanceZone1="12"/>
+          </hydrosphere>
+          <atmosphere composition="Standard, 59% Density">
+            <resource name="Hydrogen" qualityZone1="219" abundanceZone1="90"/>
+          </atmosphere>
+          <biosphere fauna="no" flora="yes">
+            <resource name="Fruit" qualityZone1="12" abundanceZone1="6" qualityZone2="238" abundanceZone2="89" qualityZone3="14" abundanceZone3="23"/>
+            <resource name="Grain" qualityZone1="76" abundanceZone1="92" qualityZone2="89" abundanceZone2="56" qualityZone3="46" abundanceZone3="85"/>
+            <resource name="Vegetation Density" qualityZone1="9" abundanceZone1="84" qualityZone2="189" abundanceZone2="80" qualityZone3="220" abundanceZone3="84"/>
+          </biosphere>
+        </planet>
+        <planet planetId="PLN00738" name="Annulus Reach Arc 2" bodyType="Ringworld Arc 2" orbit="Orbiting Annulus Reach at 54,700m 90°" zone="Habitable Zone">
+          <geosphere diameter="54700m Radius" gravity="10.11m/s² Sea Level Gravity" resourceZones="3">
+            <resource name="Coal" qualityZone1="39" abundanceZone1="38" qualityZone2="92" abundanceZone2="56" qualityZone3="217" abundanceZone3="63"/>
+            <resource name="Crystals" qualityZone1="221" abundanceZone1="97" qualityZone2="182" abundanceZone2="82" qualityZone3="203" abundanceZone3="20"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="No Surface Liquid"/>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+        <planet planetId="PLN00739" name="Annulus Reach Arc 3" bodyType="Ringworld Arc 3" orbit="Orbiting Annulus Reach at 54,700m 180°" zone="Habitable Zone">
+          <geosphere diameter="54700m Radius" gravity="9.54m/s² Sea Level Gravity" resourceZones="3">
+            <resource name="Gems" qualityZone1="61" abundanceZone1="77" qualityZone2="86" abundanceZone2="8" qualityZone3="6" abundanceZone3="15"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="80% Surface Water">
+            <resource name="Flomentum" qualityZone1="207" abundanceZone1="33"/>
+          </hydrosphere>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+        <planet planetId="PLN00740" name="Annulus Reach Arc 4" bodyType="Ringworld Arc 4" orbit="Orbiting Annulus Reach at 54,700m 270°" zone="Habitable Zone">
+          <geosphere diameter="54700m Radius" gravity="10.07m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Eludium" qualityZone1="69" abundanceZone1="32"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="98% Surface Water">
+            <resource name="Water in the Environment" qualityZone1="226" abundanceZone1="93"/>
+          </hydrosphere>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+      </system>
+      <system systemId="SYS00167" name="Orbital Garland" x="432.9" y="103.3" z="-30.3" eod="Surveyed">
+        <star starId="STR00166" name="Orbital Garland" type="G Yellow" orbit="Primary" size="V Main Sequence" spectralClass="8" surfaceTempK="5,618°K" hab="Habitable Zone at 1.56au" shell="Photosphere" diameter="0.2au Diameter">
+          <resource name="Type B Preons" quality="139" abundance="5"/>
+          <resource name="Type F Preons" quality="22" abundance="6"/>
+        </star>
+        <planet planetId="PLN00741" name="Orbital Garland Arc 1" bodyType="Ringworld Arc 1" orbit="Orbiting Orbital Garland at 120,300m 0°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="10.99m/s² Sea Level Gravity" resourceZones="3">
+            <resource name="Crystals" qualityZone1="5" abundanceZone1="5" qualityZone2="194" abundanceZone2="81" qualityZone3="235" abundanceZone3="77"/>
+            <resource name="Eludium" qualityZone1="250" abundanceZone1="2" qualityZone2="194" abundanceZone2="41" qualityZone3="134" abundanceZone3="99"/>
+            <resource name="Natural Gas" qualityZone1="115" abundanceZone1="37" qualityZone2="42" abundanceZone2="35" qualityZone3="15" abundanceZone3="27"/>
+            <resource name="Stone" qualityZone1="250" abundanceZone1="7" qualityZone2="152" abundanceZone2="6" qualityZone3="102" abundanceZone3="49"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="49% Surface Water">
+            <resource name="Oil" qualityZone1="174" abundanceZone1="86"/>
+          </hydrosphere>
+          <atmosphere composition="Standard, 79% Density">
+            <resource name="Antiflux Particles" qualityZone1="29" abundanceZone1="91"/>
+            <resource name="Hydrogen" qualityZone1="144" abundanceZone1="41"/>
+          </atmosphere>
+          <biosphere fauna="no" flora="yes">
+            <resource name="Fruit" qualityZone1="209" abundanceZone1="7" qualityZone2="166" abundanceZone2="94" qualityZone3="31" abundanceZone3="42"/>
+            <resource name="Grain" qualityZone1="48" abundanceZone1="22" qualityZone2="125" abundanceZone2="11" qualityZone3="243" abundanceZone3="30"/>
+            <resource name="Vegetation Density" qualityZone1="56" abundanceZone1="38" qualityZone2="147" abundanceZone2="100" qualityZone3="197" abundanceZone3="6"/>
+          </biosphere>
+        </planet>
+        <planet planetId="PLN00742" name="Orbital Garland Arc 2" bodyType="Ringworld Arc 2" orbit="Orbiting Orbital Garland at 120,300m 45°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="10.27m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Adamantite" qualityZone1="185" abundanceZone1="72"/>
+            <resource name="Coal" qualityZone1="171" abundanceZone1="29"/>
+            <resource name="Eludium" qualityZone1="16" abundanceZone1="98"/>
+            <resource name="Polytaride" qualityZone1="252" abundanceZone1="58"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="46% Surface Water">
+            <resource name="Magmex" qualityZone1="25" abundanceZone1="70"/>
+          </hydrosphere>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+        <planet planetId="PLN00743" name="Orbital Garland Arc 3" bodyType="Ringworld Arc 3" orbit="Orbiting Orbital Garland at 120,300m 90°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="9.44m/s² Sea Level Gravity" resourceZones="4">
+            <resource name="Eludium" qualityZone1="104" abundanceZone1="54" qualityZone2="137" abundanceZone2="59" qualityZone3="240" abundanceZone3="22" qualityZone4="211" abundanceZone4="11"/>
+            <resource name="Natural Gas" qualityZone1="117" abundanceZone1="22" qualityZone2="58" abundanceZone2="48" qualityZone3="198" abundanceZone3="50" qualityZone4="37" abundanceZone4="45"/>
+            <resource name="Ore" qualityZone1="48" abundanceZone1="93" qualityZone2="151" abundanceZone2="9" qualityZone3="105" abundanceZone3="99" qualityZone4="13" abundanceZone4="6"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="No Surface Liquid"/>
+          <atmosphere composition="Thin, 49% Density">
+            <resource name="Hydrogen" qualityZone1="9" abundanceZone1="100"/>
+          </atmosphere>
+        </planet>
+        <planet planetId="PLN00744" name="Orbital Garland Arc 4" bodyType="Ringworld Arc 4" orbit="Orbiting Orbital Garland at 120,300m 135°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="10.34m/s² Sea Level Gravity" resourceZones="3">
+            <resource name="Ore" qualityZone1="110" abundanceZone1="57" qualityZone2="74" abundanceZone2="68" qualityZone3="220" abundanceZone3="28"/>
+            <resource name="Viathol" qualityZone1="237" abundanceZone1="82" qualityZone2="238" abundanceZone2="44" qualityZone3="85" abundanceZone3="75"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="40% Surface Liquid">
+            <resource name="Flomentum" qualityZone1="165" abundanceZone1="84"/>
+            <resource name="Oil" qualityZone1="243" abundanceZone1="64"/>
+          </hydrosphere>
+          <atmosphere composition="Infernal, 15% Density">
+            <resource name="Ioplasma" qualityZone1="151" abundanceZone1="24"/>
+          </atmosphere>
+        </planet>
+        <planet planetId="PLN00745" name="Orbital Garland Arc 5" bodyType="Ringworld Arc 5" orbit="Orbiting Orbital Garland at 120,300m 180°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="9.18m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Lumenite" qualityZone1="182" abundanceZone1="8"/>
+            <resource name="Polytaride" qualityZone1="25" abundanceZone1="92"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="No Surface Liquid"/>
+          <atmosphere composition="Thin, 45% Density"/>
+        </planet>
+        <planet planetId="PLN00746" name="Orbital Garland Arc 6" bodyType="Ringworld Arc 6" orbit="Orbiting Orbital Garland at 120,300m 225°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="10.19m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Crystals" qualityZone1="209" abundanceZone1="86"/>
+            <resource name="Natural Gas" qualityZone1="56" abundanceZone1="52"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="26% Surface Lava">
+            <resource name="Flomentum" qualityZone1="1" abundanceZone1="5"/>
+            <resource name="Magmex" qualityZone1="96" abundanceZone1="94"/>
+          </hydrosphere>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+        <planet planetId="PLN00747" name="Orbital Garland Arc 7" bodyType="Ringworld Arc 7" orbit="Orbiting Orbital Garland at 120,300m 270°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="10.05m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Crystals" qualityZone1="180" abundanceZone1="34"/>
+            <resource name="Vulcanite" qualityZone1="244" abundanceZone1="59"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="No Surface Liquid"/>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+        <planet planetId="PLN00748" name="Orbital Garland Arc 8" bodyType="Ringworld Arc 8" orbit="Orbiting Orbital Garland at 120,300m 315°" zone="Habitable Zone">
+          <geosphere diameter="120300m Radius" gravity="9.65m/s² Sea Level Gravity" resourceZones="4">
+            <resource name="Bolite" qualityZone1="200" abundanceZone1="54" qualityZone2="58" abundanceZone2="98" qualityZone3="175" abundanceZone3="43" qualityZone4="56" abundanceZone4="15"/>
+            <resource name="Ice" qualityZone1="235" abundanceZone1="59" qualityZone2="237" abundanceZone2="3" qualityZone3="195" abundanceZone3="14" qualityZone4="52" abundanceZone4="23"/>
+            <resource name="Phlogiston" qualityZone1="106" abundanceZone1="30" qualityZone2="130" abundanceZone2="72" qualityZone3="6" abundanceZone3="11" qualityZone4="77" abundanceZone4="15"/>
+            <resource name="Stone" qualityZone1="164" abundanceZone1="55" qualityZone2="55" abundanceZone2="15" qualityZone3="124" abundanceZone3="35" qualityZone4="126" abundanceZone4="81"/>
+          </geosphere>
+          <hydrosphere surfaceLiquid="26% Surface Water">
+            <resource name="Oil" qualityZone1="91" abundanceZone1="86"/>
+            <resource name="Water in the Environment" qualityZone1="126" abundanceZone1="31"/>
+          </hydrosphere>
+          <atmosphere composition="No Atmosphere"/>
+        </planet>
+      </system>
+    </sector>
   </galaxy>
 </starmap>

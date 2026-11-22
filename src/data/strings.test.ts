@@ -35,6 +35,12 @@ describe('parseDiameter', () => {
     expect(parseDiameter('0.23au Diameter')).toEqual({ au: 0.23 })
     expect(parseDiameter('3au Diameter')).toEqual({ au: 3 })
   })
+  it('parses a ringworld arc radius (exporter %1 formatting)', () => {
+    expect(parseDiameter('83400m Radius')).toEqual({ radiusM: 83400 })
+    expect(parseDiameter('83,400m Radius')).toEqual({ radiusM: 83400 })
+    expect(parseDiameter('1e+06m Radius')).toEqual({ radiusM: 1_000_000 })
+    expect(parseDiameter('m Radius')).toBeUndefined()
+  })
   it('parses ring radius and width', () => {
     expect(parseDiameter('54700m Radius<br>15200m Width')).toEqual({ radiusM: 54700, widthM: 15200 })
   })

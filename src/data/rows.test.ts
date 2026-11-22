@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MINI_XML } from './__fixtures__/mini'
 import { parseStarMap } from './parse'
-import { toBodyRows, toResourceRows, toSystemRows } from './rows'
+import { foldBodyType, isRingworldBody, toBodyRows, toResourceRows, toSystemRows } from './rows'
 
 const map = parseStarMap(MINI_XML)
 
@@ -134,5 +134,72 @@ describe('toSystemRows', () => {
       wormholeCount: 2,
     })
     expect(rows[3]).toMatchObject({ eod: 'Unexplored', planetCount: 0, starTypes: [], inhabited: false })
+  })
+})
+
+const ARC_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<starmap empireId="7" empire="House Test" createDate="Sat Nov 21 17:25:58 2026 GMT">
+  <galaxy name="Test Galaxy">
+    <sector sectorId="SEC1" name="Alpha Sector" x="1" y="1" z="1">
+      <system systemId="RW1" name="Ringy" x="1.0" y="2.0" z="3.0" eod="Surveyed">
+        <star starId="RS" name="Ringy" type="G Yellow" orbit="Primary" size="V Main Sequence" hab="Habitable Zone at 1.5au" shell="Photosphere" diameter="0.2au Diameter">
+          <resource name="Type G Preons" quality="100" abundance="4"/>
+        </star>
+        <planet planetId="RA1" name="Ringy Arc 1" bodyType="Ringworld Arc 1" orbit="Orbiting Ringy at 83,400m 90°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="9.81m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Ore" qualityZone1="100" abundanceZone1="2"/>
+          </geosphere>
+          <atmosphere composition="Standard, 100% Density"/>
+        </planet>
+        <planet planetId="RA2" name="Ringy Arc 2" bodyType="Ringworld Arc 2" orbit="Orbiting Ringy at 83,400m 180°" zone="Habitable Zone">
+          <geosphere diameter="83400m Radius" gravity="9.81m/s² Sea Level Gravity" resourceZones="1"/>
+        </planet>
+        <planet planetId="RP" name="Ringy I" bodyType="Planet" orbit="Orbiting Ringy at 1au 10°" zone="Inner Zone">
+          <geosphere diameter="9,000m Diameter" gravity="5.00m/s² Sea Level Gravity" resourceZones="1"/>
+        </planet>
+      </system>
+      <system systemId="PL1" name="Plain" x="2.0" y="2.0" z="3.0" eod="Surveyed">
+        <planet planetId="PP" name="Plain I" bodyType="Planet" orbit="Orbiting Plain at 1au 10°" zone="Inner Zone">
+          <geosphere diameter="9,000m Diameter" gravity="5.00m/s² Sea Level Gravity" resourceZones="1">
+            <resource name="Ore" qualityZone1="50" abundanceZone1="2"/>
+          </geosphere>
+        </planet>
+      </system>
+    </sector>
+  </galaxy>
+</starmap>`
+
+describe('ringworld detection (R1)', () => {
+  const rw = parseStarMap(ARC_XML)
+  it('helpers', () => {
+    expect(isRingworldBody('Ringworld Arc 3')).toBe(true)
+    expect(isRingworldBody('Ring')).toBe(false)
+    expect(isRingworldBody('Planet')).toBe(false)
+    expect(foldBodyType('Ringworld Arc 12')).toBe('Ringworld Arc')
+    expect(foldBodyType('Moon')).toBe('Moon')
+  })
+  it('parses the arc strings', () => {
+    const arc = rw.systems[0]!.planets[0]!
+    expect(arc.geosphere).toMatchObject({ radiusM: 83400, gravity: 9.81, gravityKind: 'sea-level' })
+    expect(arc.orbit).toMatchObject({ orbitingName: 'Ringy', distance: 83400, unit: 'm', deg: 90 })
+  })
+  it('flags body rows', () => {
+    const rows = toBodyRows(rw)
+    expect(rows.map((r) => [r.id, r.isRingworld, r.hasRingworld])).toEqual([
+      ['RA1', true, true],
+      ['RA2', true, true],
+      ['RP', false, true],
+      ['PP', false, false],
+    ])
+  })
+  it('flags resource and system rows', () => {
+    const rows = toResourceRows(rw)
+    const star = rows.find((r) => r.bodyId === 'RS')!
+    expect([star.isRingworld, star.hasRingworld]).toEqual([false, true])
+    const ore = rows.find((r) => r.bodyId === 'RA1')!
+    expect([ore.isRingworld, ore.hasRingworld]).toEqual([true, true])
+    const plain = rows.find((r) => r.bodyId === 'PP')!
+    expect([plain.isRingworld, plain.hasRingworld]).toEqual([false, false])
+    expect(toSystemRows(rw).map((r) => [r.id, r.hasRingworld])).toEqual([['RW1', true], ['PL1', false]])
   })
 })

@@ -15,11 +15,16 @@ function row(o: Partial<RollupInput> & { id: string }): RollupInput {
     inhabited: false,
     inhabitingEmpires: [],
     systemHabitable: false,
+    hasRingworld: false,
     ...o,
   }
 }
 
 describe('rollupBySystem', () => {
+  it('carries hasRingworld from the best row', () => {
+    expect(rollupBySystem([row({ id: '1', hasRingworld: true })])[0]?.hasRingworld).toBe(true)
+    expect(rollupBySystem([row({ id: '1' })])[0]?.hasRingworld).toBe(false)
+  })
   it('carries systemHabitable from the best row', () => {
     const out = rollupBySystem([row({ id: '1', systemHabitable: true })])
     expect(out[0]?.systemHabitable).toBe(true)

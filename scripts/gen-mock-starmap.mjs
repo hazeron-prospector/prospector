@@ -201,6 +201,10 @@ function makePlanet(o) {
   if (kind === 'ring') {
     const radius = int(30, 120) * 1000
     diameter = `${commas(radius)}m Radius<br>${commas(int(5, 25) * 1000)}m Width`
+  } else if (kind === 'arc') {
+    // Ringworld section (auatom/daworldringsection.cpp): "<radius>m Radius", no thousands separator.
+    diameter = `${o.arcRadius}m Radius`
+    gravity = `${trim(8 + rnd() * 4, 2)}m/s² Sea Level Gravity`
   } else if (kind === 'giant') {
     diameter = `${commas(int(2, 8) * 1000)}m Diameter`
     gravity = `${trim(int(2000, 9000) + rnd(), 2)}m/s² Core Gravity`
@@ -482,6 +486,68 @@ function randomCraft() {
   return craft(empire, sp(['Spaceship', 'Spaceship', 'Starship', 'Station']), srnd() < 0.5, sp(['deep', 'system', 'orbit']), { noStance: srnd() < 0.25 })
 }
 
+// ---- ringworld systems (BLUEPRINT section 24) ----------------------------------------------
+// Generated on their own PRNG stream, rendered last into their own sector, so nothing else in the
+// fixture shifts. Each arc is a planet "Ringworld Arc N" orbiting the star at one shared radius.
+
+const RING_SECTOR = { sectorId: id('SEC'), name: 'Ringfall Sector', x: 43, y: 10, z: -3 }
+const RING_PLAN = [
+  { name: 'Halo Prime', eod: 'Surveyed', arcs: 6, radius: 83400, city: true },
+  { name: 'Annulus Reach', eod: 'Explored', arcs: 4, radius: 54700 },
+  { name: 'Orbital Garland', eod: 'Surveyed', arcs: 8, radius: 120300 },
+]
+const RING_SEED = 0x71a9f00d
+
+function withRingStream(fn) {
+  const saved = state
+  state = RING_SEED
+  try {
+    return fn()
+  } finally {
+    state = saved
+  }
+}
+
+const ringSystems = RING_PLAN.map((plan) => ({ plan, sysId: id('SYS') }))
+
+function renderRingSector(out) {
+  out.push(`    <sector${attrs({ sectorId: RING_SECTOR.sectorId, name: RING_SECTOR.name, x: RING_SECTOR.x, y: RING_SECTOR.y, z: RING_SECTOR.z })}>`)
+  for (const { plan, sysId } of ringSystems) {
+    const sa = {
+      systemId: sysId,
+      name: plan.name,
+      x: fixed1(10 * RING_SECTOR.x - 5 + rnd() * 9.9),
+      y: fixed1(10 * RING_SECTOR.y - 5 + rnd() * 9.9),
+      z: fixed1(10 * RING_SECTOR.z - 5 + rnd() * 9.9),
+      eod: plan.eod,
+    }
+    const lines = []
+    const star = makeStar(plan.name, '', 'Primary', 4)
+    if (plan.city) {
+      lines.push(`        <city${attrs({ cityId: id('CTY'), name: 'Halo Hold', empire: EMPIRES[1].name, empireId: EMPIRES[1].id, stance: 'Friend' })}/>`)
+    }
+    lines.push(...starXml(star, '        '))
+    for (let n = 1; n <= plan.arcs; n++) {
+      const deg = Math.round(((n - 1) * 360) / plan.arcs)
+      lines.push(
+        ...makePlanet({
+          name: `${plan.name} Arc ${n}`,
+          bodyType: `Ringworld Arc ${n}`,
+          orbit: `Orbiting ${star.name} at ${commas(plan.radius)}m ${deg}°`,
+          zone: 'Habitable',
+          kind: 'arc',
+          arcRadius: plan.radius,
+          habitable: n === 1,
+          zones: n === 1 ? 3 : undefined,
+          vegetation: n === 1,
+        }).lines,
+      )
+    }
+    out.push(`      <system${attrs(sa)}>`, ...lines, '      </system>')
+  }
+  out.push('    </sector>')
+}
+
 // ---- render -------------------------------------------------------------------------------
 
 const out = []
@@ -546,6 +612,7 @@ for (const sector of sectors) {
   }
   out.push('    </sector>')
 }
+withRingStream(() => renderRingSector(out))
 out.push('  </galaxy>', '</starmap>', '')
 
 mkdirSync(path.dirname(outPath), { recursive: true })

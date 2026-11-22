@@ -307,7 +307,8 @@ describe('mock starmap map data', () => {
     expect(d.bounds.radius).toBeLessThanOrEqual(Math.hypot(...ext.map(([lo, hi]) => (hi - lo) / 2)) + 1e-3)
     // the frame hugs the dense core: far outliers do not shrink the main cluster to a blob
     expect(d.frame.radius).toBeLessThan(d.bounds.radius / 4)
-    const outliers = map.systems.filter((s) => s.sectorId === map.sectors.at(-1)!.sectorId).length
+    const outlierSector = map.sectors.find((s) => s.x === 420)!
+    const outliers = map.systems.filter((s) => s.sectorId === outlierSector.sectorId).length
     const inside = [...Array(d.count).keys()].filter(
       (i) => Math.hypot(...[0, 1, 2].map((k) => d.positions[i * 3 + k]! - d.frame.center[k]!)) <= d.frame.radius * 1.001,
     ).length
