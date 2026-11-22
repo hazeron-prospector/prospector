@@ -28,6 +28,12 @@ export const EXPORT_ALIASES = { 'Water in the Environment': 'Water' }
  * CID_Water (83) to "Water". An entry here is checked against the numeric result, so a
  * drift in the source is caught instead of silently re-mapped.
  */
+/**
+ * Biosphere products seen in exports that IsNaturalResource() omits. Matched by
+ * b_Commodity name; the generator fails if one disappears from the source.
+ */
+export const EXTRA_RESOURCE_NAMES = ['Cheese', 'Eggs', 'Fertilizer', 'Milk']
+
 export const CID_EXPECTED_NAMES = { CID_CrudeOil: 'Oil', CID_Water: 'Water', CID_GoldOre: 'Gold Ore' }
 
 function stripComments(s) {
@@ -160,6 +166,11 @@ export function build(src) {
     const id = enumIds.get(cid)
     const row = id === undefined ? undefined : rows.get(id)
     if (row) touch(row) // pseudo CIDs without a row are not resources the app can show
+  }
+  for (const name of EXTRA_RESOURCE_NAMES) {
+    const row = [...rows.values()].find((r) => r.name === name)
+    if (!row) throw new Error(`extra resource "${name}" has no b_Commodity row`)
+    touch(row)
   }
   for (const [alias, target] of Object.entries(EXPORT_ALIASES)) {
     if (!table.has(target)) throw new Error(`alias target "${target}" for "${alias}" is not in the table`)
