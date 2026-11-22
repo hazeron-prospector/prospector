@@ -16,9 +16,3 @@ export function useLabelFormat() {
   const { settings } = useSettings()
   return useMemo(() => makeLabelFormat(settings.censor), [settings.censor])
 }
-
-/** Memoized name renderer for SVG titles (SystemPreview). */
-export function useRenderName(): (name: string) => string {
-  const { settings } = useSettings()
-  return useCallback((name: string) => censorText(settings.censor, 'system', name), [settings.censor])
-}

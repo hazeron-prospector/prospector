@@ -8,7 +8,6 @@ import { Censored, OrbitText } from './Censored'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
-import { useRenderName } from './state/useCensor'
 import { SystemPreview } from './SystemPreview'
 import { useBodyHighlights } from './useBodyHighlights'
 
@@ -88,7 +87,6 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
   const nav = useNav()
   const { closePeek } = nav
   const system = systemById.get(target.systemId)
-  const renderName = useRenderName()
   const quality = useBodyHighlights(target.systemId)
   const highlighted = useMemo(() => new Set(quality.keys()), [quality])
 
@@ -182,7 +180,6 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
             bodyQuality={quality}
             emphasizedBodyId={target.kind === 'body' ? target.bodyId : undefined}
             onBodyClick={(id) => nav.peekBody(system.systemId, id)}
-            renderName={renderName}
           />
         )}
         <dl className="grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-xs">

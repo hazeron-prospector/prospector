@@ -92,3 +92,25 @@ export function hoverResources(
   }
   return out
 }
+
+/**
+ * bodyId -> best deposit per resource name for that body (planet or star), highest quality first
+ * (ties by name), at most `topN`. Feed it the system's rows, or the filtered rows for matches.
+ */
+export function bestDepositsByBody(
+  rows: readonly Pick<ResourceRow, 'resource' | 'bestQuality' | 'bodyName' | 'sphere' | 'bodyId'>[],
+  topN = 3,
+): Map<string, SummaryResource[]> {
+  const per = new Map<string, Map<string, SummaryResource>>()
+  for (const r of rows) {
+    let m = per.get(r.bodyId)
+    if (!m) per.set(r.bodyId, (m = new Map()))
+    const cur = m.get(r.resource)
+    if (!cur || r.bestQuality > cur.bestQuality) {
+      m.set(r.resource, { resource: r.resource, bestQuality: r.bestQuality, bodyName: r.bodyName, sphere: r.sphere })
+    }
+  }
+  const out = new Map<string, SummaryResource[]>()
+  for (const [id, m] of per) out.set(id, [...m.values()].sort(byQuality).slice(0, topN))
+  return out
+}

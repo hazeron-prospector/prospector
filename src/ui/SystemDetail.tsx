@@ -6,7 +6,6 @@ import { Censored, OrbitText } from './Censored'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
-import { useRenderName } from './state/useCensor'
 import { SystemPreview } from './SystemPreview'
 import { useBodyHighlights } from './useBodyHighlights'
 import { cn } from '@/lib/utils'
@@ -177,7 +176,6 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
     }
     return [...m]
   }, [system])
-  const renderName = useRenderName()
   const quality = useBodyHighlights(system.systemId)
   const highlighted = useMemo(() => new Set(quality.keys()), [quality])
   const [flashId, setFlashId] = useState<string>()
@@ -240,7 +238,6 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
             highlightedBodyIds={highlighted}
             bodyQuality={quality}
             onBodyClick={goToBody}
-            renderName={renderName}
           />
         </section>
       )}

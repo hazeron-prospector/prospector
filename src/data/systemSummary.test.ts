@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bestDepositsBySystem, buildSystemSummaries, habitableLabel, hoverResources, isHabitableWorld } from './systemSummary'
+import { bestDepositsByBody, bestDepositsBySystem, buildSystemSummaries, habitableLabel, hoverResources, isHabitableWorld } from './systemSummary'
 import type { Planet, StarMap, System } from './types'
 
 const planet = (id: string, zone: string, type?: string): Planet => ({
@@ -81,6 +81,42 @@ describe('hoverResources', () => {
     const out = hoverResources(top, [r('Gold', 100)])
     expect(out.map((x) => [x.resource, x.match])).toEqual([
       ['Gold', true],
+      ['Ore', false],
+      ['Oil', false],
+    ])
+  })
+})
+
+describe('bestDepositsByBody (preview hover)', () => {
+  const row = (bodyId: string, resource: string, bestQuality: number) => ({
+    bodyId,
+    resource,
+    bestQuality,
+    bodyName: bodyId,
+    sphere: 'geosphere' as const,
+  })
+  const rows = [row('p1', 'Tin', 50), row('p1', 'Ore', 200), row('p1', 'Ore', 120), row('p1', 'Gold', 50), row('p1', 'Oil', 150), row('s1', 'Helium', 90)]
+
+  it('orders by best quality, ties by name, keeps the best per resource, caps at 3', () => {
+    const out = bestDepositsByBody(rows).get('p1')!
+    expect(out.map((x) => [x.resource, x.bestQuality])).toEqual([
+      ['Ore', 200],
+      ['Oil', 150],
+      ['Gold', 50],
+    ])
+  })
+  it('groups star resources by star id and omits bodies without rows', () => {
+    const m = bestDepositsByBody(rows)
+    expect(m.get('s1')?.map((x) => x.resource)).toEqual(['Helium'])
+    expect(m.get('p2')).toBeUndefined()
+    expect(hoverResources(m.get('p2') ?? [], undefined)).toEqual([])
+  })
+  it('puts filter matches first and marked', () => {
+    const m = bestDepositsByBody(rows)
+    const matches = bestDepositsByBody([row('p1', 'Tin', 50)])
+    const out = hoverResources(m.get('p1') ?? [], matches.get('p1'))
+    expect(out.map((x) => [x.resource, x.match])).toEqual([
+      ['Tin', true],
       ['Ore', false],
       ['Oil', false],
     ])
