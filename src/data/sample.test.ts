@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { resourceInfo } from './catalog'
+import { layoutOrrery, ORRERY_EXTENT } from './orrery'
 import { parseStarMap } from './parse'
 import { toBodyRows, toResourceRows, toSystemRows } from './rows'
 import type { StarMap } from './types'
@@ -22,6 +23,19 @@ describe.skipIf(!existsSync(samplePath))('full sample starmap', () => {
   }, 60_000)
 
   const planets = () => map.systems.flatMap((s) => s.planets)
+
+  it('lays out every system orrery with all bodies placed inside the view', () => {
+    for (const sys of map.systems) {
+      const o = layoutOrrery(sys)
+      expect(o.bodies).toHaveLength(sys.planets.length)
+      expect(o.stars).toHaveLength(sys.stars.length)
+      expect(o.bodies.every((b) => b.placed)).toBe(true)
+      for (const b of o.bodies) {
+        expect(Math.abs(b.x) + b.r).toBeLessThanOrEqual(ORRERY_EXTENT)
+        expect(Math.abs(b.y) + b.r).toBeLessThanOrEqual(ORRERY_EXTENT)
+      }
+    }
+  })
 
   it('has the expected structure counts', () => {
     expect(map.sectors).toHaveLength(70)

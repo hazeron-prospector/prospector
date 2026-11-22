@@ -7,6 +7,8 @@ import { topResources, type PeekTarget, type TopResource } from './nav'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
+import { SystemPreview } from './SystemPreview'
+import { useBodyHighlights } from './useBodyHighlights'
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -84,6 +86,8 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
   const nav = useNav()
   const { closePeek } = nav
   const system = systemById.get(target.systemId)
+  const quality = useBodyHighlights(target.systemId)
+  const highlighted = useMemo(() => new Set(quality.keys()), [quality])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -153,6 +157,16 @@ export function PeekPanel({ target, systemById, sectorNameOf, rowsBySystem }: Pr
         )}
       </div>
       <div className="min-h-0 flex-1 space-y-4 overflow-auto px-3 py-3 text-sm">
+        {(system.stars.length > 0 || system.planets.length > 0) && (
+          <SystemPreview
+            system={system}
+            size="compact"
+            highlightedBodyIds={highlighted}
+            bodyQuality={quality}
+            emphasizedBodyId={target.kind === 'body' ? target.bodyId : undefined}
+            onBodyClick={(id) => nav.peekBody(system.systemId, id)}
+          />
+        )}
         <dl className="grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-xs">
           {target.kind === 'system' ? (
             <>

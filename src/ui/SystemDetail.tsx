@@ -1,10 +1,13 @@
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, MapPin, X } from 'lucide-react'
 import type { Planet, Resource, Sphere, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
 import { useNav } from './state/NavContext'
+import { SystemPreview } from './SystemPreview'
+import { useBodyHighlights } from './useBodyHighlights'
+import { cn } from '@/lib/utils'
 
 interface Props {
   map: StarMap
@@ -15,6 +18,9 @@ interface Props {
   onClose: () => void
   onOpenSystem: (systemId: string) => void
 }
+
+const bodyAnchor = (id: string) => `body-${id}`
+const FLASH = 'ring-2 ring-primary'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -34,9 +40,9 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function StarBlock({ star }: { star: Star }) {
+function StarBlock({ star, flash }: { star: Star; flash: boolean }) {
   return (
-    <div className="mb-3 rounded-md border bg-card/40 p-2">
+    <div id={bodyAnchor(star.starId)} className={cn('mb-3 scroll-mt-14 rounded-md border bg-card/40 p-2 transition-shadow', flash && FLASH)}>
       <div className="mb-1">
         <span className="font-medium">{star.name}</span> <span className="text-muted-foreground">{star.type}</span>
       </div>
@@ -98,7 +104,7 @@ function ResourceTable({ planet }: { planet: Planet }) {
   )
 }
 
-function BodyBlock({ planet }: { planet: Planet }) {
+function BodyBlock({ planet, flash }: { planet: Planet; flash: boolean }) {
   const g = planet.geosphere
   const h = planet.hydrosphere
   const a = planet.atmosphere
@@ -110,7 +116,7 @@ function BodyBlock({ planet }: { planet: Planet }) {
     ['Biosphere', !b ? 'No known life' : [b.flora !== undefined && `Flora: ${b.flora ? 'yes' : 'no'}`, b.fauna !== undefined && `Fauna: ${b.fauna ? 'yes' : 'no'}`].filter(Boolean).join(' · ')],
   ]
   return (
-    <div className="mb-3 rounded-md border bg-card/40 p-2">
+    <div id={bodyAnchor(planet.planetId)} className={cn('mb-3 scroll-mt-14 rounded-md border bg-card/40 p-2 transition-shadow', flash && FLASH)}>
       <div className="mb-1">
         <span className="font-medium">{planet.name}</span>{' '}
         <span className="text-muted-foreground">
@@ -165,6 +171,17 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
     }
     return [...m]
   }, [system])
+  const quality = useBodyHighlights(system.systemId)
+  const highlighted = useMemo(() => new Set(quality.keys()), [quality])
+  const [flashId, setFlashId] = useState<string>()
+  const flashTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(flashTimer.current), [])
+  const goToBody = (id: string) => {
+    document.getElementById(bodyAnchor(id))?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    setFlashId(id)
+    window.clearTimeout(flashTimer.current)
+    flashTimer.current = window.setTimeout(() => setFlashId(undefined), 1600)
+  }
   const coords = system.x === undefined ? 'Deep Space' : `${system.x}, ${system.y}, ${system.z}`
 
   return (
@@ -201,10 +218,21 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
           <Field label="Inhabited by">{empires.length ? empires.join(', ') : system.cities.length ? 'unknown empire' : 'nobody'}</Field>
         </div>
       </header>
+      {(system.stars.length > 0 || system.planets.length > 0) && (
+        <section className="border-b px-4 py-3">
+          <SystemPreview
+            system={system}
+            size="large"
+            highlightedBodyIds={highlighted}
+            bodyQuality={quality}
+            onBodyClick={goToBody}
+          />
+        </section>
+      )}
       <Section title={`Stars (${system.stars.length})`}>
         {system.stars.length === 0 && <div className="text-muted-foreground">None</div>}
         {system.stars.map((s) => (
-          <StarBlock key={s.starId} star={s} />
+          <StarBlock key={s.starId} star={s} flash={flashId === s.starId} />
         ))}
       </Section>
       <Section title={`Bodies (${system.planets.length})`}>
@@ -218,7 +246,7 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
             <h3 className="mb-1 text-xs text-muted-foreground">Orbiting {orbiting}</h3>
             <div className="ml-2 border-l pl-3">
               {planets.map((p) => (
-                <BodyBlock key={p.planetId} planet={p} />
+                <BodyBlock key={p.planetId} planet={p} flash={flashId === p.planetId} />
               ))}
             </div>
           </div>
