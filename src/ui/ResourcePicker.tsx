@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils'
 import type { ResourceRow } from '@/data/rows'
 import { QualityCell } from './QualityCell'
 import { ResourceIcon } from './ResourceIcon'
-import { groupByCategory, resourceStats, toggleGroup } from './resourcePicker'
+import { useSettings } from './state/SettingsContext'
+import { groupByCategory, priorityGroup, resourceStats, toggleGroup } from './resourcePicker'
 
 /** cmdk item values are `category|name` (unique per group); search matches the name only. */
 const filter = (value: string, search: string) =>
@@ -28,7 +29,12 @@ export function ResourcePicker({
   onChange: (v: string[]) => void
 }) {
   const [open, setOpen] = useState(false)
-  const groups = useMemo(() => groupByCategory(resourceStats(rows)), [rows])
+  const { settings } = useSettings()
+  const groups = useMemo(() => {
+    const stats = resourceStats(rows)
+    const pri = priorityGroup(stats, settings.priorityResources)
+    return pri ? [pri, ...groupByCategory(stats)] : groupByCategory(stats)
+  }, [rows, settings.priorityResources])
   const toggle = (n: string) => onChange(value.includes(n) ? value.filter((v) => v !== n) : [...value, n])
   const summary = value.length === 0 ? 'any' : value.length === 1 ? value[0]! : `${value.length} selected`
   return (

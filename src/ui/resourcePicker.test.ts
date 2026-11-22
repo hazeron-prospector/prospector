@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupByCategory, resourceStats, toggleGroup } from './resourcePicker'
+import { groupByCategory, priorityGroup, resourceStats, toggleGroup } from './resourcePicker'
 
 const row = (resource: string, bestQuality: number, categories: string[]) => ({ resource, bestQuality, categories })
 
@@ -26,5 +26,16 @@ describe('toggleGroup', () => {
   it('adds missing then removes when all present', () => {
     expect(toggleGroup(['A'], ['A', 'B'])).toEqual(['A', 'B'])
     expect(toggleGroup(['A', 'B', 'C'], ['A', 'B'])).toEqual(['C'])
+  })
+})
+
+describe('priorityGroup', () => {
+  const stats = resourceStats([row('Iron', 5, ['Prospector']), row('Gold', 9, ['Prospector'])])
+  it('keeps list order and skips absent resources', () => {
+    expect(priorityGroup(stats, ['Gold', 'Nope', 'Iron'])?.resources.map((r) => r.name)).toEqual(['Gold', 'Iron'])
+  })
+  it('is undefined when nothing is present', () => {
+    expect(priorityGroup(stats, ['Nope'])).toBeUndefined()
+    expect(priorityGroup(stats, [])).toBeUndefined()
   })
 })

@@ -51,3 +51,12 @@ export function toggleGroup(selected: readonly string[], names: readonly string[
   if (all) return selected.filter((s) => !names.includes(s))
   return [...selected, ...names.filter((n) => !selected.includes(n))]
 }
+
+export const PRIORITY_GROUP = 'Priority'
+
+/** Priority resources present in the map, in priority-list order; undefined when none are present. */
+export function priorityGroup(stats: readonly ResourceStat[], priority: readonly string[]): ResourceGroup | undefined {
+  const by = new Map(stats.map((s) => [s.name, s]))
+  const resources = priority.flatMap((n) => by.get(n) ?? [])
+  return resources.length ? { category: PRIORITY_GROUP, resources } : undefined
+}
