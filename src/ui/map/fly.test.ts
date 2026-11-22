@@ -1,0 +1,37 @@
+import { describe, expect, it } from 'vitest'
+import { easeInOutCubic, flyDestination, flyPose, frameDistance, lerp3 } from './fly'
+
+describe('fly', () => {
+  it('eases 0..1 symmetrically and clamps', () => {
+    expect(easeInOutCubic(0)).toBe(0)
+    expect(easeInOutCubic(1)).toBe(1)
+    expect(easeInOutCubic(0.5)).toBeCloseTo(0.5)
+    expect(easeInOutCubic(-3)).toBe(0)
+    expect(easeInOutCubic(9)).toBe(1)
+  })
+  it('interpolates and ends exactly at the destination', () => {
+    expect(lerp3([0, 0, 0], [10, 20, 30], 0.5)).toEqual([5, 10, 15])
+    const from = { position: [0, 0, 100] as [number, number, number], target: [0, 0, 0] as [number, number, number] }
+    const to = { position: [5, 5, 5] as [number, number, number], target: [5, 5, 0] as [number, number, number] }
+    expect(flyPose(from, to, 0)).toEqual(from)
+    expect(flyPose(from, to, 600)).toEqual(to)
+    expect(flyPose(from, to, 9999)).toEqual(to)
+  })
+  it('flies to a close-up keeping the view direction', () => {
+    const cur = { position: [0, 0, 500] as [number, number, number], target: [0, 0, 0] as [number, number, number] }
+    const d = flyDestination(cur, [10, 20, 30], 100)
+    expect(d.target).toEqual([10, 20, 30])
+    expect(d.position[0]).toBeCloseTo(10)
+    expect(d.position[1]).toBeCloseTo(20)
+    expect(d.position[2]).toBeCloseTo(30 + 20) // close = max(15, 100*0.2)
+  })
+  it('does not zoom out when already closer', () => {
+    const cur = { position: [0, 0, 5] as [number, number, number], target: [0, 0, 0] as [number, number, number] }
+    expect(flyDestination(cur, [0, 0, 0], 1000).position[2]).toBeCloseTo(5)
+  })
+  it('frames a sphere', () => {
+    const d = frameDistance(10, 50, 1.5)
+    expect(d).toBeGreaterThan(10)
+    expect(frameDistance(10, 50, 0.5)).toBeGreaterThan(d) // narrow viewport needs more distance
+  })
+})
