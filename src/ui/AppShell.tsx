@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import type { ResourceRow } from '@/data/rows'
 import type { StarMap } from '@/data/types'
@@ -16,13 +16,14 @@ import { buildHighlight, isPaletteShortcut, type Peek } from './nav'
 import { buildSearchIndex } from '@/data/search'
 import { NavProvider, type Nav } from './state/NavContext'
 import { ResourceFilterProvider, useResourceFilter } from './state/ResourceFilterContext'
+import { LoadDialog } from './LoadDialog'
 import { SettingsDialog } from './SettingsDialog'
 import { useLabelFormat } from './state/useCensor'
 import type { MapLoader } from './useMapLoader'
 
 type Tab = 'resources' | 'planets' | 'systems' | 'map'
 
-/** Header, tabs and views. Remounted (key) when a new map is loaded so view state resets. */
+/** Header, tabs and views. Remounted (key = loader.generation) on Replace so view state resets; merges keep it mounted. */
 export function AppShell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const resourceRows = useMemo(() => toResourceRows(map), [map])
   return (
@@ -38,7 +39,7 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   // Detail history stack: last entry is the open system.
   const [stack, setStack] = useState<string[]>([])
   const [peek, setPeek] = useState<Peek | undefined>()
-  const fileInput = useRef<HTMLInputElement>(null)
+  const [loadOpen, setLoadOpen] = useState(false)
   const { allRows, patch, setQuickFilter, filter, filteredResourceRows } = useResourceFilter()
   const [fly, setFly] = useState<{ systemId: string; nonce: number }>()
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -154,26 +155,24 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
               Parsing {Math.round(loader.progress * 100)}%
             </span>
           )}
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".xml,text/xml,application/xml"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) loader.loadFile(f)
-              e.target.value = ''
-            }}
-          />
           <Button variant="outline" size="xs" onClick={() => setPaletteOpen(true)} title="Search (Ctrl+K or /)">
             <Search /> Search <kbd className="text-muted-foreground">Ctrl K</kbd>
           </Button>
-          <Button variant="outline" size="xs" disabled={loader.parsing} onClick={() => fileInput.current?.click()}>
+          <Button variant="outline" size="xs" disabled={loader.parsing} onClick={() => setLoadOpen(true)}>
             Load another file
           </Button>
           <SettingsDialog resourceNames={resourceNames} />
         </div>
       </header>
+      <LoadDialog open={loadOpen || !!loader.offered} onOpenChange={setLoadOpen} loader={loader} />
+      {loader.notice && (
+        <div role="status" className="flex items-center gap-2 border-b bg-primary/10 px-3 py-1 text-sm">
+          {loader.notice}
+          <Button variant="ghost" size="xs" className="ml-auto" onClick={loader.clearNotice}>
+            Dismiss
+          </Button>
+        </div>
+      )}
       {loader.error && (
         <div role="alert" className="flex items-center gap-2 border-b bg-destructive/15 px-3 py-1 text-sm text-destructive">
           {loader.error}
