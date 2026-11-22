@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { sortRows } from '@/data/filter'
+import { rollupBySystem, type SystemRollupRow } from '@/data/rollup'
 import type { ResourceRow } from '@/data/rows'
 import type { Sphere } from '@/data/types'
 import { CATEGORIES } from '@/data/catalog'
@@ -7,6 +8,7 @@ import { distinct } from './distinct'
 import { Highlight } from './Highlight'
 import { QuickFilter } from './QuickFilter'
 import { quickFilterResources } from './quickFilter'
+import { Button } from '@/ui/ui/button'
 import { FilterBar } from './FilterBar'
 import { FilterChips } from './FilterChips'
 import { countSystems, resultCountText, suggestLoosen } from './filterChips'
@@ -77,8 +79,38 @@ const makeColumns = (q: string): Column<ResourceRow>[] => [
   },
 ]
 
+const makeRollupColumns = (q: string): Column<SystemRollupRow>[] => [
+  { id: 'system', header: 'System', width: 160, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} /> },
+  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => r.sectorName },
+  { id: 'best', header: 'Best Q', width: 70, sortKey: 'bestQuality', firstDir: 'desc', cell: (r) => <QualityCell q={r.bestQuality} /> },
+  {
+    id: 'resource',
+    header: 'Best resource',
+    width: 160,
+    sortKey: 'bestResource',
+    cell: (r) => (
+      <span className="inline-flex items-center gap-1.5">
+        <ResourceIcon name={r.bestResource} />
+        {r.bestResource}
+      </span>
+    ),
+  },
+  { id: 'body', header: 'Best body', width: 140, sortKey: 'bestBodyName', cell: (r) => <Highlight text={r.bestBodyName} q={q} /> },
+  { id: 'type', header: 'Body type', width: 90, sortKey: 'bestBodyType', cell: (r) => r.bestBodyType },
+  { id: 'bodies', header: 'Bodies', width: 70, align: 'right', sortKey: 'bodyCount', firstDir: 'desc', cell: (r) => r.bodyCount },
+  { id: 'deposits', header: 'Deposits', width: 80, align: 'right', sortKey: 'depositCount', firstDir: 'desc', cell: (r) => r.depositCount },
+  {
+    id: 'inhabited',
+    header: 'Inhab.',
+    width: 150,
+    sortKey: 'inhabited',
+    firstDir: 'desc',
+    cell: (r) => <InhabitedCell inhabited={r.inhabited} empires={r.inhabitingEmpires} />,
+  },
+]
+
 export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: string) => void }) {
-  const { allRows: rows, filter, patch, setFilter, reset, filteredResourceRows, sort, setSort, quickFilter, setQuickFilter } =
+  const { allRows: rows, filter, patch, setFilter, reset, filteredResourceRows, sort, setSort, rollup, setRollup, rollupSort, setRollupSort, quickFilter, setQuickFilter } =
     useResourceFilter()
   const quick = quickFilter.resources
 
@@ -91,19 +123,42 @@ export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: strin
     [rows],
   )
   const quickRows = useMemo(() => quickFilterResources(filteredResourceRows, quick), [filteredResourceRows, quick])
-  const shown = useMemo(() => sortRows(quickRows, sort.key, sort.dir), [quickRows, sort])
+  // Rollup runs after every filter, including the quick filter.
+  const rolled = useMemo(() => (rollup ? rollupBySystem(quickRows) : undefined), [rollup, quickRows])
+  const shown = useMemo(() => (rolled ? undefined : sortRows(quickRows, sort.key, sort.dir)), [rolled, quickRows, sort])
+  const rolledShown = useMemo(() => (rolled ? sortRows(rolled, rollupSort.key, rollupSort.dir) : undefined), [rolled, rollupSort])
   const columns = useMemo(() => makeColumns(quick.trim()), [quick])
-  const systems = useMemo(() => countSystems(shown), [shown])
+  const rollupColumns = useMemo(() => makeRollupColumns(quick.trim()), [quick])
+  const rowCount = rolled ? rolled.length : quickRows.length
+  const systems = useMemo(() => (rolled ? rolled.length : countSystems(quickRows)), [rolled, quickRows])
   const chipState = useMemo(() => ({ filter, quick }), [filter, quick])
   const suggestion = useMemo(
-    () => (shown.length === 0 ? suggestLoosen(rows, chipState) : undefined),
-    [shown.length, rows, chipState],
+    () => (rowCount === 0 ? suggestLoosen(rows, chipState) : undefined),
+    [rowCount, rows, chipState],
+  )
+
+  const emptyNode = suggestion ? (
+    <>
+      No deposits match. Try removing <strong className="text-foreground">{suggestion.label}</strong> (
+      {suggestion.count.toLocaleString()} deposits).
+    </>
+  ) : (
+    'No deposits match. Use Reset all to clear the filters.'
   )
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <FilterBar shown={shown.length} total={rows.length} countText={resultCountText(shown.length, systems)}>
+      <FilterBar shown={rowCount} total={rows.length} countText={resultCountText(quickRows.length, systems, rollup)}>
         <QuickFilter value={quick} onChange={(v) => setQuickFilter('resources', v)} placeholder="Filter by system or body name" />
+        <Button
+          variant={rollup ? 'secondary' : 'outline'}
+          size="xs"
+          aria-pressed={rollup}
+          title="One row per system with its best deposit of the filtered resources"
+          onClick={() => setRollup(!rollup)}
+        >
+          Best per system
+        </Button>
         <ResourcePicker rows={rows} value={filter.resources} onChange={(resources) => patch({ resources })} />
         <MultiSelect label="Category" options={options.categories} value={filter.categories} onChange={(categories) => patch({ categories })} />
         <NumberInput label="Min Q" value={filter.minBestQuality} onChange={(minBestQuality) => patch({ minBestQuality })} />
@@ -120,24 +175,27 @@ export function ResourcesView({ onOpenSystem }: { onOpenSystem: (systemId: strin
         }}
         onReset={reset}
       />
-      <VirtualTable
-        rows={shown}
-        columns={columns}
-        rowKey={(r) => r.id}
-        sort={sort}
-        onSort={setSort}
-        onRowClick={(r) => onOpenSystem(r.systemId)}
-        empty={
-          suggestion ? (
-            <>
-              No deposits match. Try removing <strong className="text-foreground">{suggestion.label}</strong> (
-              {suggestion.count.toLocaleString()} deposits).
-            </>
-          ) : (
-            'No deposits match. Use Reset all to clear the filters.'
-          )
-        }
-      />
+      {rolledShown ? (
+        <VirtualTable
+          rows={rolledShown}
+          columns={rollupColumns}
+          rowKey={(r) => r.id}
+          sort={rollupSort}
+          onSort={setRollupSort}
+          onRowClick={(r) => onOpenSystem(r.systemId)}
+          empty={emptyNode}
+        />
+      ) : (
+        <VirtualTable
+          rows={shown ?? []}
+          columns={columns}
+          rowKey={(r) => r.id}
+          sort={sort}
+          onSort={setSort}
+          onRowClick={(r) => onOpenSystem(r.systemId)}
+          empty={emptyNode}
+        />
+      )}
     </div>
   )
 }
