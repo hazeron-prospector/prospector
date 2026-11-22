@@ -16,7 +16,7 @@ const STATUSES: Eod[] = ['Surveyed', 'Explored', 'Unexplored']
 const makeColumns = (q: string): Column<SystemRow>[] => [
   { id: 'name', header: 'Name', width: 170, sortKey: 'name', cell: (r) => <Highlight text={r.name} q={q} /> },
   { id: 'catalog', header: 'Catalog', width: 140, sortKey: 'catalog', cell: (r) => (r.catalog ? <Highlight text={r.catalog} q={q} /> : '') },
-  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => r.sectorName },
+  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => <Highlight text={r.sectorName} q={q} /> },
   {
     id: 'status',
     header: 'Status',
@@ -63,7 +63,7 @@ export function SystemsView({ rows }: { rows: readonly SystemRow[] }) {
           setQuickFilter('systems', '')
         }}
       >
-        <QuickFilter value={quick} onChange={(v) => setQuickFilter('systems', v)} placeholder="Filter by system or catalog name" />
+        <QuickFilter value={quick} onChange={(v) => setQuickFilter('systems', v)} placeholder="Filter by system, catalog or sector name" />
         <MultiSelect label="Status" options={STATUSES} value={filter.eod} onChange={(eod) => setFilter({ eod })} />
       </FilterBar>
       <VirtualTable

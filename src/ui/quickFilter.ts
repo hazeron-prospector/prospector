@@ -23,7 +23,7 @@ export function quickFilterBodies(rows: readonly BodyRow[], q: string): readonly
   return quickFilterBy(rows, q, (r) => [r.systemName, r.bodyName])
 }
 
-/** Systems table: system name or catalog name. */
+/** Systems table: system, catalog or sector name (the palette's sector action filters by sector). */
 export function quickFilterSystems(rows: readonly SystemRow[], q: string): readonly SystemRow[] {
-  return quickFilterBy(rows, q, (r) => [r.name, r.catalog])
+  return quickFilterBy(rows, q, (r) => [r.name, r.catalog, r.sectorName])
 }

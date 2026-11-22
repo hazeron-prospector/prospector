@@ -32,3 +32,13 @@ describe('quick filter', () => {
     expect(quickFilterSystems(rows, 'vega')).toEqual([rows[1]])
   })
 })
+
+describe('quickFilterSystems by sector', () => {
+  it('matches the sector name too', () => {
+    const rows = [
+      { name: 'A', sectorName: 'Orion Reach' },
+      { name: 'B', sectorName: 'Vega' },
+    ] as unknown as Parameters<typeof quickFilterSystems>[0]
+    expect(quickFilterSystems(rows, 'orion')).toEqual([rows[0]])
+  })
+})

@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Search } from 'lucide-react'
 import type { ResourceRow } from '@/data/rows'
 import type { StarMap } from '@/data/types'
 import { toBodyRows, toResourceRows, toSystemRows } from '@/data/rows'
@@ -9,7 +10,9 @@ import { ResourcesView } from './ResourcesView'
 import { SystemDetail } from './SystemDetail'
 import { SystemsView } from './SystemsView'
 import { PeekPanel } from './PeekPanel'
-import type { Peek } from './nav'
+import { CommandPalette } from './CommandPalette'
+import { isPaletteShortcut, type Peek } from './nav'
+import { buildSearchIndex } from '@/data/search'
 import { NavProvider, type Nav } from './state/NavContext'
 import { ResourceFilterProvider, useResourceFilter } from './state/ResourceFilterContext'
 import type { MapLoader } from './useMapLoader'
@@ -33,7 +36,18 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const [stack, setStack] = useState<string[]>([])
   const [peek, setPeek] = useState<Peek | undefined>()
   const fileInput = useRef<HTMLInputElement>(null)
-  const { allRows } = useResourceFilter()
+  const { allRows, patch, setQuickFilter } = useResourceFilter()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const searchIndex = useMemo(() => buildSearchIndex(map), [map])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!isPaletteShortcut(e)) return
+      e.preventDefault()
+      setPaletteOpen(true)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const bodyRows = useMemo(() => toBodyRows(map), [map])
   const systemRows = useMemo(() => toSystemRows(map), [map])
@@ -127,6 +141,9 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
               e.target.value = ''
             }}
           />
+          <Button variant="outline" size="xs" onClick={() => setPaletteOpen(true)} title="Search (Ctrl+K or /)">
+            <Search /> Search <kbd className="text-muted-foreground">Ctrl K</kbd>
+          </Button>
           <Button variant="outline" size="xs" disabled={loader.parsing} onClick={() => fileInput.current?.click()}>
             Load another file
           </Button>
@@ -168,6 +185,19 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
           />
         )}
       </main>
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        index={searchIndex}
+        onResource={(name) => {
+          patch({ resources: [name] })
+          selectTab('resources')
+        }}
+        onSector={(name) => {
+          setQuickFilter('systems', name)
+          selectTab('systems')
+        }}
+      />
       </NavProvider>
       <footer className="border-t px-3 py-0.5 text-xs text-muted-foreground">
         <a href="NOTICE.txt" target="_blank" rel="noreferrer" className="underline">
