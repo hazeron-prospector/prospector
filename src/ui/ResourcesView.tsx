@@ -44,6 +44,8 @@ function zoneCol(n: 1 | 2 | 3 | 4): Column<ResourceRow> {
 
 const makeColumns = (q: string): Column<ResourceRow>[] => [
   mapColumn((r) => r.systemId),
+  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} kind="system" /> },
+  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} kind="system" /> },
   { id: 'resource', header: 'Resource', width: 150, sortKey: 'resource', cell: (r) => (
       <span className="inline-flex items-center gap-1.5">
         <ResourceIcon name={r.resource} sphere={r.sphere} />
@@ -59,8 +61,6 @@ const makeColumns = (q: string): Column<ResourceRow>[] => [
     firstDir: 'desc',
     cell: (r) => <QualityCell q={r.bestQuality} />,
   },
-  { id: 'system', header: 'System', width: 150, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} kind="system" /> },
-  { id: 'body', header: 'Body', width: 140, sortKey: 'bodyName', cell: (r) => <Highlight text={r.bodyName} q={q} kind="system" /> },
   { id: 'type', header: 'Type', width: 85, sortKey: 'bodyType', cell: (r) => r.bodyType },
   {
     id: 'zone',
@@ -87,8 +87,7 @@ const makeColumns = (q: string): Column<ResourceRow>[] => [
 const makeRollupColumns = (q: string): Column<SystemRollupRow>[] => [
   mapColumn((r) => r.systemId),
   { id: 'system', header: 'System', width: 160, sortKey: 'systemName', cell: (r) => <Highlight text={r.systemName} q={q} kind="system" /> },
-  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => <Censored kind="sector">{r.sectorName}</Censored> },
-  { id: 'best', header: 'Best Q', width: 70, sortKey: 'bestQuality', firstDir: 'desc', cell: (r) => <QualityCell q={r.bestQuality} /> },
+  { id: 'body', header: 'Best body', width: 140, sortKey: 'bestBodyName', cell: (r) => <Highlight text={r.bestBodyName} q={q} kind="system" /> },
   {
     id: 'resource',
     header: 'Best resource',
@@ -101,8 +100,9 @@ const makeRollupColumns = (q: string): Column<SystemRollupRow>[] => [
       </span>
     ),
   },
-  { id: 'body', header: 'Best body', width: 140, sortKey: 'bestBodyName', cell: (r) => <Highlight text={r.bestBodyName} q={q} kind="system" /> },
+  { id: 'best', header: 'Best Q', width: 70, sortKey: 'bestQuality', firstDir: 'desc', cell: (r) => <QualityCell q={r.bestQuality} /> },
   { id: 'type', header: 'Body type', width: 90, sortKey: 'bestBodyType', cell: (r) => r.bestBodyType },
+  { id: 'sector', header: 'Sector', width: 110, sortKey: 'sectorName', cell: (r) => <Censored kind="sector">{r.sectorName}</Censored> },
   { id: 'bodies', header: 'Bodies', width: 70, align: 'right', sortKey: 'bodyCount', firstDir: 'desc', cell: (r) => r.bodyCount },
   { id: 'deposits', header: 'Deposits', width: 80, align: 'right', sortKey: 'depositCount', firstDir: 'desc', cell: (r) => r.depositCount },
   {
@@ -157,15 +157,6 @@ export function ResourcesView() {
     <div className="flex min-h-0 flex-1 flex-col">
       <FilterBar shown={rowCount} total={rows.length} countText={resultCountText(quickRows.length, systems, rollup)}>
         <QuickFilter value={quick} onChange={(v) => setQuickFilter('resources', v)} placeholder="Filter by system or body name" />
-        <Button
-          variant={rollup ? 'secondary' : 'outline'}
-          size="xs"
-          aria-pressed={rollup}
-          title="One row per system with its best deposit of the filtered resources"
-          onClick={() => setRollup(!rollup)}
-        >
-          Best per system
-        </Button>
         <ResourcePicker rows={rows} value={filter.resources} onChange={(resources) => patch({ resources })} />
         <MultiSelect label="Category" options={options.categories} value={filter.categories} onChange={(categories) => patch({ categories })} />
         <NumberInput label="Min Q" value={filter.minBestQuality} onChange={(minBestQuality) => patch({ minBestQuality })} />
@@ -173,6 +164,15 @@ export function ResourcesView() {
         <MultiSelect label="Orbital zone" options={options.zones} value={filter.orbitalZones} onChange={(orbitalZones) => patch({ orbitalZones })} />
         <MultiSelect label="Sphere" options={SPHERES} value={filter.spheres} onChange={(spheres) => patch({ spheres })} />
         <Segmented label="Inhabited" options={INHABITED_OPTIONS} value={filter.inhabited} onChange={(inhabited) => patch({ inhabited })} />
+        <Button
+          variant={rollup ? 'secondary' : 'outline'}
+          size="xs"
+          aria-pressed={rollup}
+          title="One row per system with its best deposit of the filtered resources"
+          onClick={() => setRollup(!rollup)}
+        >
+          Group by system
+        </Button>
       </FilterBar>
       <FilterChips
         state={chipState}
