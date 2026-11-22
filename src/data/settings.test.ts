@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRIORITY, SETTINGS_KEY, defaultSettings, loadSettings, saveSettings, validateSettings } from './settings'
+import { DEFAULT_PRIORITY, moveItem, SETTINGS_KEY, defaultSettings, loadSettings, saveSettings, validateSettings } from './settings'
 
 const memory = (init?: string) => {
   const m = new Map<string, string>(init === undefined ? [] : [[SETTINGS_KEY, init]])
@@ -43,5 +43,15 @@ describe('settings', () => {
     expect(loadSettings(throwing)).toEqual(defaultSettings())
     expect(saveSettings(defaultSettings(), throwing)).toBe(false)
     expect(saveSettings(defaultSettings(), undefined)).toBe(false)
+  })
+})
+
+describe('moveItem', () => {
+  it('moves and clamps without mutating', () => {
+    const a = ['a', 'b', 'c']
+    expect(moveItem(a, 2, -1)).toEqual(['a', 'c', 'b'])
+    expect(moveItem(a, 0, -1)).toEqual(a)
+    expect(moveItem(a, 2, 1)).toEqual(a)
+    expect(a).toEqual(['a', 'b', 'c'])
   })
 })

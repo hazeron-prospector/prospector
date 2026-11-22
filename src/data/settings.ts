@@ -72,3 +72,13 @@ export function saveSettings(s: Settings, storage: KeyValueStorage | undefined =
     return false
   }
 }
+
+/** Move the item at `index` by `delta` (clamped); returns a new array. */
+export function moveItem<T>(list: readonly T[], index: number, delta: number): T[] {
+  const to = Math.max(0, Math.min(list.length - 1, index + delta))
+  const out = [...list]
+  if (index < 0 || index >= list.length || to === index) return out
+  const [it] = out.splice(index, 1)
+  out.splice(to, 0, it!)
+  return out
+}

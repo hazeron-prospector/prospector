@@ -16,6 +16,7 @@ import { buildHighlight, isPaletteShortcut, type Peek } from './nav'
 import { buildSearchIndex } from '@/data/search'
 import { NavProvider, type Nav } from './state/NavContext'
 import { ResourceFilterProvider, useResourceFilter } from './state/ResourceFilterContext'
+import { SettingsDialog } from './SettingsDialog'
 import type { MapLoader } from './useMapLoader'
 
 type Tab = 'resources' | 'planets' | 'systems' | 'map'
@@ -40,6 +41,7 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
   const { allRows, patch, setQuickFilter, filter, filteredResourceRows } = useResourceFilter()
   const [fly, setFly] = useState<{ systemId: string; nonce: number }>()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const resourceNames = useMemo(() => [...new Set(allRows.map((r) => r.resource))].sort((a, b) => a.localeCompare(b)), [allRows])
   const searchIndex = useMemo(() => buildSearchIndex(map), [map])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -167,6 +169,7 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
           <Button variant="outline" size="xs" disabled={loader.parsing} onClick={() => fileInput.current?.click()}>
             Load another file
           </Button>
+          <SettingsDialog resourceNames={resourceNames} />
         </div>
       </header>
       {loader.error && (
