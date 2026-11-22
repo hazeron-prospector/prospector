@@ -34,7 +34,17 @@ export interface SceneOptions {
   layers: Layers
   selectedSystemId?: string
   onSelect: (systemId: string) => void
+  /**
+   * Pointer is over a system (`systemId` set, x/y in container pixels, called on every move) or
+   * left it (`systemId` undefined). The hover card itself is rendered by React in MapView.
+   */
+  onHover?: (systemId: string | undefined, x: number, y: number) => void
+  labelFormat?: LabelFormat
 }
+
+/** How a system or sector name is shown in the canvas label overlay. See MapView `labelFormat`. */
+export type LabelFormat = (name: string, kind: 'system' | 'sector') => { text: string; className?: string }
+const PLAIN_LABEL: LabelFormat = (name) => ({ text: name })
 
 const BG = 0x0d0e11
 const PICK_RADIUS_PX = 9
@@ -116,8 +126,6 @@ function label(className: string): HTMLDivElement {
 }
 
 const SECTOR_LABEL = 'text-[10px] uppercase tracking-wider text-sky-300/45'
-const HOVER_LABEL =
-  'rounded-sm border border-border bg-popover/95 px-1.5 py-0.5 text-xs text-popover-foreground shadow-md'
 const SELECT_LABEL =
   'rounded-sm border border-ring/60 bg-popover/95 px-1.5 py-0.5 text-xs font-medium text-accent-foreground shadow-md'
 
@@ -142,8 +150,7 @@ export class MapScene {
   private readonly markerGeo: THREE.BufferGeometry
   private readonly markerMat: THREE.ShaderMaterial
   private readonly markers: THREE.Points
-  private readonly sectorLabels: { el: HTMLDivElement; pos: Vec3 }[] = []
-  private readonly hoverLabel = label(HOVER_LABEL)
+  private readonly sectorLabels: { el: HTMLDivElement; pos: Vec3; name: string }[] = []
   private readonly selectLabel = label(SELECT_LABEL)
 
   private highlight?: ReadonlyMap<string, number>
@@ -164,12 +171,16 @@ export class MapScene {
   private downAt?: { x: number; y: number }
   private disposed = false
   private readonly onSelect: (systemId: string) => void
+  private readonly onHover?: (systemId: string | undefined, x: number, y: number) => void
+  private labelFormat: LabelFormat
   private readonly viewProj = new THREE.Matrix4()
 
   constructor(container: HTMLElement, opts: SceneOptions) {
     this.container = container
     this.map = opts.map
     this.onSelect = opts.onSelect
+    if (opts.onHover) this.onHover = opts.onHover
+    this.labelFormat = opts.labelFormat ?? PLAIN_LABEL
     this.layers = opts.layers
     this.highlight = opts.highlight
     // Throws when WebGL is unavailable; MapView shows a message.
@@ -236,11 +247,11 @@ export class MapScene {
 
     for (const s of d.sectors) {
       const el = label(SECTOR_LABEL)
-      el.textContent = s.name
       this.labelLayer.appendChild(el)
-      this.sectorLabels.push({ el, pos: s.labelPosition })
+      this.sectorLabels.push({ el, pos: s.labelPosition, name: s.name })
     }
-    this.labelLayer.append(this.hoverLabel, this.selectLabel)
+    this.applySectorLabels()
+    this.labelLayer.append(this.selectLabel)
 
     // Markers: point 0 = selected (cyan), point 1 = hovered (white). Size 0 hides.
     this.markerGeo = pointsGeometry(
@@ -292,6 +303,28 @@ export class MapScene {
     for (const s of this.sectorLabels) s.el.style.display = layers.sectors ? '' : 'none'
     if (statusChanged) this.refreshStyle()
     this.invalidate()
+  }
+
+  /** Change how names are rendered in labels (e.g. censoring). Re-applies to all labels. */
+  setLabelFormat(format: LabelFormat | undefined): void {
+    this.labelFormat = format ?? PLAIN_LABEL
+    this.applySectorLabels()
+    this.updateMarkers()
+    this.invalidate()
+  }
+
+  private setLabelText(el: HTMLElement, name: string, kind: 'system' | 'sector'): void {
+    const f = this.labelFormat(name, kind)
+    el.textContent = f.text
+    // Keep the base classes; toggle only the formatter's classes.
+    const prev = el.dataset.fmtApplied
+    if (prev) el.classList.remove(...prev.split(' '))
+    if (f.className) el.classList.add(...f.className.split(' '))
+    el.dataset.fmtApplied = f.className ?? ''
+  }
+
+  private applySectorLabels(): void {
+    for (const s of this.sectorLabels) this.setLabelText(s.el, s.name, 'sector')
   }
 
   setSelected(systemId: string | undefined): void {
@@ -451,6 +484,7 @@ export class MapScene {
     if (e.buttons !== 0) return // dragging the camera
     const { x, y } = this.pointerPos(e)
     this.setHovered(this.pickAt(x, y))
+    if (this.hovered >= 0) this.onHover?.(this.data.systemIds[this.hovered]!, x, y)
   }
 
   private readonly onPointerLeave = (): void => this.setHovered(-1)
@@ -473,6 +507,7 @@ export class MapScene {
   private setHovered(i: number): void {
     if (i === this.hovered) return
     this.hovered = i
+    if (i < 0) this.onHover?.(undefined, 0, 0)
     this.renderer.domElement.style.cursor = i >= 0 ? 'pointer' : ''
     this.updateMarkers()
     this.invalidate()
@@ -497,8 +532,7 @@ export class MapScene {
     pos.needsUpdate = true
     size.needsUpdate = true
     const name = (i: number): string => this.nameOf.get(this.data.systemIds[i]!) ?? ''
-    this.selectLabel.textContent = this.selected >= 0 ? name(this.selected) : ''
-    this.hoverLabel.textContent = this.hovered >= 0 ? name(this.hovered) : ''
+    this.setLabelText(this.selectLabel, this.selected >= 0 ? name(this.selected) : '', 'system')
   }
 
   // ---- render loop ------------------------------------------------------------------------
@@ -555,7 +589,6 @@ export class MapScene {
       place(el, [s[idx * 3]!, s[idx * 3 + 1]!, s[idx * 3 + 2]!], dy)
     }
     showAt(this.selectLabel, this.selected, 16)
-    showAt(this.hoverLabel, this.hovered === this.selected ? -1 : this.hovered, 14)
     if (this.layers.sectors) {
       const r = this.data.bounds.radius
       const cam = this.camera.position

@@ -11,7 +11,10 @@ import { useEffect, useRef, useState } from 'react'
 import type { StarMap } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { Legend } from './Legend'
-import { MapScene, type Layers } from './scene'
+import { HoverCard, type HoverInfo } from './HoverCard'
+import { MapScene, type LabelFormat, type Layers } from './scene'
+
+export type { HoverInfo, LabelFormat }
 
 export interface MapViewProps {
   /** The loaded star map. A new object rebuilds the scene. */
@@ -29,20 +32,32 @@ export interface MapViewProps {
   onSelectSystem: (systemId: string) => void
   /** Animates the camera to `systemId` whenever `nonce` changes (also once on mount). */
   flyToRequest?: { systemId: string; nonce: number }
+  /** Hover card content for a system; undefined hides the card. Memoize it (identity = data). */
+  getHoverInfo?: (systemId: string) => HoverInfo | undefined
+  /**
+   * THE name seam (used by the censor feature): every system and sector name drawn by the map
+   * (hover card, selection label, sector labels) goes through this. Return the text to show and
+   * an optional class (e.g. a blur) to put on the element. Default: the real name, no class.
+   * Memoize it (useCallback/useMemo): a new function re-applies all labels.
+   */
+  labelFormat?: LabelFormat
 }
+
+const PLAIN: LabelFormat = (name) => ({ text: name })
 
 const DEFAULT_LAYERS: Layers = { wormholes: true, sectors: true, status: true }
 
-export default function MapView({ map, highlight, selectedSystemId, onSelectSystem, flyToRequest }: MapViewProps) {
+export default function MapView({ map, highlight, selectedSystemId, onSelectSystem, flyToRequest, getHoverInfo, labelFormat = PLAIN }: MapViewProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<MapScene | null>(null)
   const [layers, setLayers] = useState<Layers>(DEFAULT_LAYERS)
   const [error, setError] = useState<string | null>(null)
+  const [hover, setHover] = useState<{ id: string; x: number; y: number }>()
 
   // Latest props for (re)creating the scene without re-running on every change.
-  const latest = useRef({ highlight, layers, selectedSystemId, onSelectSystem, flyToRequest })
+  const latest = useRef({ highlight, layers, selectedSystemId, onSelectSystem, flyToRequest, labelFormat })
   useEffect(() => {
-    latest.current = { highlight, layers, selectedSystemId, onSelectSystem, flyToRequest }
+    latest.current = { highlight, layers, selectedSystemId, onSelectSystem, flyToRequest, labelFormat }
   })
 
   useEffect(() => {
@@ -57,6 +72,8 @@ export default function MapView({ map, highlight, selectedSystemId, onSelectSyst
         layers: l.layers,
         selectedSystemId: l.selectedSystemId,
         onSelect: (id) => latest.current.onSelectSystem(id),
+        onHover: (id, x, y) => setHover(id === undefined ? undefined : { id, x: Math.round(x), y: Math.round(y) }),
+        labelFormat: l.labelFormat,
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -73,6 +90,7 @@ export default function MapView({ map, highlight, selectedSystemId, onSelectSyst
 
   useEffect(() => sceneRef.current?.setHighlight(highlight), [highlight])
   useEffect(() => sceneRef.current?.setLayers(layers), [layers])
+  useEffect(() => sceneRef.current?.setLabelFormat(labelFormat), [labelFormat])
   const centeredFor = useRef(selectedSystemId)
   useEffect(() => {
     sceneRef.current?.setSelected(selectedSystemId)
@@ -89,6 +107,8 @@ export default function MapView({ map, highlight, selectedSystemId, onSelectSyst
     if (fly) sceneRef.current?.flyTo(fly.systemId)
   }, [nonce])
 
+  const hoverInfo = hover ? getHoverInfo?.(hover.id) : undefined
+
   if (error !== null) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
@@ -103,6 +123,9 @@ export default function MapView({ map, highlight, selectedSystemId, onSelectSyst
   return (
     <div className="relative h-full min-h-64 w-full overflow-hidden bg-[#0d0e11]">
       <div ref={hostRef} className="absolute inset-0" />
+      {hoverInfo && hover && (
+        <HoverCard info={hoverInfo} x={hover.x} y={hover.y} labelFormat={labelFormat} hasFilter={highlight !== undefined} />
+      )}
       <Legend
         layers={layers}
         onLayersChange={setLayers}

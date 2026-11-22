@@ -191,6 +191,8 @@ function Shell({ map, loader }: { map: StarMap; loader: MapLoader }) {
             selectedSystemId={peek?.target.systemId}
             onSelectSystem={(id) => nav.peekSystem(id, id)}
             flyToRequest={fly}
+            allRows={allRows}
+            matchRows={highlight ? filteredResourceRows : undefined}
           />,
         )}
         {current && (

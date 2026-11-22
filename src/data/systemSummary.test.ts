@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bestDepositsBySystem, buildSystemSummaries, habitableLabel, isHabitableWorld } from './systemSummary'
+import { bestDepositsBySystem, buildSystemSummaries, habitableLabel, hoverResources, isHabitableWorld } from './systemSummary'
 import type { Planet, StarMap, System } from './types'
 
 const planet = (id: string, zone: string, type?: string): Planet => ({
@@ -64,5 +64,25 @@ describe('habitableLabel', () => {
     expect(habitableLabel(0)).toBe('No habitable worlds')
     expect(habitableLabel(1)).toBe('1 habitable world')
     expect(habitableLabel(2)).toBe('2 habitable worlds')
+  })
+})
+
+describe('hoverResources', () => {
+  const r = (resource: string, bestQuality: number) => ({ resource, bestQuality, bodyName: 'B', sphere: 'geosphere' as const })
+  const top = [r('Ore', 200), r('Oil', 150), r('Gold', 100), r('Tin', 50)]
+  it('lists the top three without a filter', () => {
+    expect(hoverResources(top, undefined).map((x) => [x.resource, x.match])).toEqual([
+      ['Ore', false],
+      ['Oil', false],
+      ['Gold', false],
+    ])
+  })
+  it('puts matching deposits first, marked, without duplicates', () => {
+    const out = hoverResources(top, [r('Gold', 100)])
+    expect(out.map((x) => [x.resource, x.match])).toEqual([
+      ['Gold', true],
+      ['Ore', false],
+      ['Oil', false],
+    ])
   })
 })

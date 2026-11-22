@@ -69,3 +69,26 @@ export function habitableLabel(count: number): string {
   if (count <= 0) return 'No habitable worlds'
   return `${count} habitable world${count === 1 ? '' : 's'}`
 }
+
+export interface HoverResource extends SummaryResource {
+  /** True for a deposit that matches the active resource filter. */
+  match: boolean
+}
+
+/**
+ * Resources for the map hover card: up to `limit`, best matching deposits of an active filter
+ * first (marked), then the system's overall best resources not already listed.
+ */
+export function hoverResources(
+  top: readonly SummaryResource[],
+  matches: readonly SummaryResource[] | undefined,
+  limit = 3,
+): HoverResource[] {
+  const out: HoverResource[] = (matches ?? []).slice(0, limit).map((r) => ({ ...r, match: true }))
+  const seen = new Set(out.map((r) => r.resource))
+  for (const r of top) {
+    if (out.length >= limit) break
+    if (!seen.has(r.resource)) out.push({ ...r, match: false })
+  }
+  return out
+}
