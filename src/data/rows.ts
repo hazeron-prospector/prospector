@@ -9,6 +9,23 @@ export function isRingworldBody(bodyType: string): boolean {
 }
 
 /** Folds "Ringworld Arc 3" to "Ringworld Arc" (body type filter options); other types unchanged. */
+/** Arc number of a "Ringworld Arc N" body type; Infinity when there is none. */
+export function ringworldArcNumber(bodyType: string): number {
+  return Number(/(\d+)\s*$/.exec(bodyType)?.[1] ?? Infinity)
+}
+
+/**
+ * Copy of `bodies` with ringworld arcs in arc-number order (R7). Arcs fill the slots arcs held;
+ * every other body keeps its position.
+ */
+export function orderRingworldArcs<T extends { bodyType: string }>(bodies: readonly T[]): T[] {
+  const arcs = bodies
+    .filter((b) => isRingworldBody(b.bodyType))
+    .sort((a, b) => ringworldArcNumber(a.bodyType) - ringworldArcNumber(b.bodyType))
+  let i = 0
+  return bodies.map((b) => (isRingworldBody(b.bodyType) ? arcs[i++]! : b))
+}
+
 export function foldBodyType(bodyType: string): string {
   return isRingworldBody(bodyType) ? 'Ringworld Arc' : bodyType
 }

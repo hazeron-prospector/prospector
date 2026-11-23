@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MINI_XML } from './__fixtures__/mini'
 import { parseStarMap } from './parse'
-import { foldBodyType, isRingworldBody, toBodyRows, toResourceRows, toSystemRows } from './rows'
+import { foldBodyType, isRingworldBody, ringworldArcNumber, orderRingworldArcs, toBodyRows, toResourceRows, toSystemRows } from './rows'
 
 const map = parseStarMap(MINI_XML)
 
@@ -201,5 +201,25 @@ describe('ringworld detection (R1)', () => {
     const plain = rows.find((r) => r.bodyId === 'PP')!
     expect([plain.isRingworld, plain.hasRingworld]).toEqual([false, false])
     expect(toSystemRows(rw).map((r) => [r.id, r.hasRingworld])).toEqual([['RW1', true], ['PL1', false]])
+  })
+})
+
+describe('ringworld arc order (R7)', () => {
+  const b = (name: string, bodyType: string) => ({ name, bodyType })
+  it('reads the arc number', () => {
+    expect(ringworldArcNumber('Ringworld Arc 11')).toBe(11)
+    expect(ringworldArcNumber('Ringworld Arc')).toBe(Infinity)
+  })
+  it('orders arcs by number in their own slots, leaving other bodies in place', () => {
+    const list = [
+      b('P', 'Planet'),
+      b('A3', 'Ringworld Arc 3'),
+      b('A10', 'Ringworld Arc 10'),
+      b('M', 'Moon'),
+      b('A1', 'Ringworld Arc 1'),
+      b('A2', 'Ringworld Arc 2'),
+    ]
+    expect(orderRingworldArcs(list).map((x) => x.name)).toEqual(['P', 'A1', 'A2', 'M', 'A3', 'A10'])
+    expect(list[1]!.name).toBe('A3') // input untouched
   })
 })

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight, MapPin, X } from 'lucide-react'
-import { systemHasRingworld } from '@/data/rows'
+import { orderRingworldArcs, systemHasRingworld } from '@/data/rows'
 import type { Planet, Star, StarMap, System, Wormhole } from '@/data/types'
 import { Button } from '@/ui/ui/button'
 import { Censored, OrbitText } from './Censored'
@@ -254,7 +254,7 @@ export function SystemDetail({ map, system, systemById, canGoBack, onBack, onClo
       const k = p.orbit.orbitingName ?? 'Primary'
       m.set(k, [...(m.get(k) ?? []), p])
     }
-    return [...m]
+    return [...m].map(([k, ps]) => [k, orderRingworldArcs(ps)] as const)
   }, [system])
   const quality = useBodyHighlights(system.systemId)
   const highlighted = useMemo(() => new Set(quality.keys()), [quality])
