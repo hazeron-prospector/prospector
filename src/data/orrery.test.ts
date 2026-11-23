@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { arcPoint, compressAu, layoutOrrery, nearestArc, localOrbitRadius, spacedRadii, ORRERY_EXTENT, OUTER_RING } from './orrery'
+import { arcPath, arcPoint, compressAu, layoutOrrery, localOrbitRadius, spacedRadii, ORRERY_EXTENT, OUTER_RING } from './orrery'
 import { parseOrbit } from './strings'
 import type { Planet, Star, System } from './types'
 
@@ -149,14 +149,69 @@ describe('ringworld rings (R5)', () => {
   it('carries highlight to the arc', () => {
     expect(layoutOrrery(s, new Set(['R Arc 2'])).rings[0]!.arcs.map((a) => a.highlighted)).toEqual([false, true, false])
   })
-  it('picks the nearest arc by angle, wrapping around 0', () => {
-    const ring = o.rings[0]!
-    const at = (deg: number) => arcPoint(ring, deg)
-    expect(nearestArc(ring, at(190).x, at(190).y).id).toBe('R Arc 2')
-    expect(nearestArc(ring, at(110).x, at(110).y).id).toBe('R Arc 1')
-    // 350 deg is 50 away from arc 3 (300) and 110 away from arc 1 (100)
-    expect(nearestArc(ring, at(350).x, at(350).y).id).toBe('R Arc 3')
-    expect(nearestArc(ring, at(20).x, at(20).y).id).toBe('R Arc 1') // 80 from arc 1, 80 from arc 3 wrapped: first wins ties
+  it('gives each arc its own segment centered on its angle, split at neighbour midpoints with a gap', () => {
+    const [a1, a2, a3] = o.rings[0]!.arcs
+    // arcs at 100, 200, 300: three arcs, cap 120 deg each; neighbour midpoints at 150, 250, 340 (wrap)
+    expect(a1!.from).toBeGreaterThan(40)
+    expect(a1!.from).toBeLessThan(50)
+    expect(a1!.to).toBeGreaterThan(145)
+    expect(a1!.to).toBeLessThan(150)
+    expect(a2!.from).toBeGreaterThan(150)
+    expect(a2!.to).toBeLessThan(250)
+    expect(a3!.to).toBeLessThan(360)
+    expect(a3!.to).toBeGreaterThan(340)
+    for (const a of [a1!, a2!, a3!]) {
+      expect(a.from).toBeLessThan(a.deg)
+      expect(a.to).toBeGreaterThan(a.deg)
+    }
+  })
+  it('splits an evenly spaced ring into equal, non-overlapping segments', () => {
+    const n = 11
+    const even = Array.from({ length: n }, (_, i) =>
+      planet(`E Arc ${i + 1}`, `Orbiting E at 0.5au ${((n - i) * 360) / n}`, `Ringworld Arc ${i + 1}`),
+    )
+    const ring = layoutOrrery(sys([star('E')], even)).rings[0]!
+    expect(ring.arcs.map((a) => a.n)).toEqual(Array.from({ length: n }, (_, i) => i + 1))
+    const spans = ring.arcs.map((a) => a.to - a.from)
+    for (const sp of spans) {
+      expect(sp).toBeGreaterThan(25)
+      expect(sp).toBeLessThan(360 / n)
+      expect(sp).toBeCloseTo(spans[0]!, 6)
+    }
+    const sorted = [...ring.arcs].sort((a, b) => a.deg - b.deg)
+    sorted.forEach((a, i) => {
+      const next = sorted[(i + 1) % n]!
+      const gap = (next.from - a.to + 720) % 360
+      expect(gap).toBeGreaterThan(0)
+      expect(gap).toBeLessThan(10)
+    })
+  })
+  it('caps a lone arc by its arc number', () => {
+    const ring = layoutOrrery(sys([star('L')], [planet('L Arc 4', 'Orbiting L at 1au 90', 'Ringworld Arc 4')])).rings[0]!
+    const a = ring.arcs[0]!
+    expect(a.to - a.from).toBeLessThan(90)
+    expect(a.to - a.from).toBeGreaterThan(80)
+    expect((a.from + a.to) / 2).toBeCloseTo(90, 6)
+  })
+  it('builds an SVG arc path between the segment ends', () => {
+    const ring = { id: 'x', cx: 0, cy: 0, r: 10, arcs: [] }
+    expect(arcPath(ring, 0, 90)).toBe('M 10 0 A 10 10 0 0 0 0 -10')
+    expect(arcPath(ring, 0, 270)).toMatch(/A 10 10 0 1 0/)
+    const p = arcPoint(ring, 90)
+    expect(p.x).toBeCloseTo(0, 6)
+    expect(p.y).toBeCloseTo(-10, 6)
+  })
+  it('centers arcs orbiting a companion star on that star, as one ring', () => {
+    const n = 6
+    const arcs6 = Array.from({ length: n }, (_, i) =>
+      planet(`B Arc ${i + 1}`, `Orbiting B at 0.5au ${i * 60}`, `Ringworld Arc ${i + 1}`),
+    )
+    const c = layoutOrrery(sys([star('A'), star('B', 'Orbiting A at 4au 65', 'b-id')], [planet('A I', 'Orbiting A at 1au 10'), ...arcs6]))
+    expect(c.rings).toHaveLength(1)
+    const b = c.stars.find((x) => x.id === 'b-id')!
+    expect([c.rings[0]!.cx, c.rings[0]!.cy]).toEqual([b.x, b.y])
+    expect(c.rings[0]!.arcs).toHaveLength(n)
+    expect(c.bodies.find((x) => x.id === 'A I')!.parentId).toBe('A')
   })
   it('stays inside the view for the mock-style crowded case', () => {
     for (const b of o.bodies) expect(Math.abs(b.x) + b.r).toBeLessThanOrEqual(ORRERY_EXTENT)

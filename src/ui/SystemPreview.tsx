@@ -1,5 +1,5 @@
 import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { arcPoint, layoutOrrery, nearestArc, ORRERY_VIEWBOX, type OrreryRing } from "@/data/orrery";
+import { arcPath, arcPoint, layoutOrrery, ORRERY_VIEWBOX } from "@/data/orrery";
 import { starColor } from "@/data/mapdata";
 import { qualityHsl } from "@/data/color";
 import { zoneColor, zonesPresent } from "@/data/zoneColor";
@@ -98,22 +98,6 @@ export function SystemPreview({
   const hoverRes = hover
     ? hoverResources(totals.get(hover.id) ?? [], matches?.get(hover.id))
     : [];
-  const svgRef = useRef<SVGSVGElement>(null);
-  /** Nearest arc of a ring to a pointer event (R5), in orrery units. */
-  const arcAt = (ring: OrreryRing, e: { clientX: number; clientY: number }) => {
-    const box = svgRef.current?.getBoundingClientRect();
-    if (!box || box.width === 0) return ring.arcs[0]!;
-    const x = ((e.clientX - box.left) / box.width) * 200 - 100;
-    const y = ((e.clientY - box.top) / box.height) * 200 - 100;
-    return nearestArc(ring, x, y);
-  };
-  const ringHover = (ring: OrreryRing, e: { clientX: number; clientY: number }) => {
-    const arc = arcAt(ring, e);
-    const p = arcPoint(ring, arc.deg);
-    setHover((cur) =>
-      cur?.id === arc.id ? cur : { id: arc.id, name: arc.name, type: arc.bodyType, x: p.x, y: p.y },
-    );
-  };
   const click = (id: string) =>
     onBodyClick ? () => onBodyClick(id) : undefined;
   const interactive = onBodyClick ? "cursor-pointer" : undefined;
@@ -128,7 +112,6 @@ export function SystemPreview({
       }
     >
       <svg
-        ref={svgRef}
         viewBox={ORRERY_VIEWBOX}
         role="img"
         aria-label="Orbit preview"
@@ -208,58 +191,52 @@ export function SystemPreview({
           </g>
         ))}
         {orrery.rings.map((ring) => (
-          <g
-            key={ring.id}
-            className={interactive}
-            onClick={
-              onBodyClick ? (e) => onBodyClick(arcAt(ring, e).id) : undefined
-            }
-            onPointerMove={(e) => ringHover(ring, e)}
-            onPointerLeave={() => setHover(null)}
-          >
-            <circle
-              cx={ring.cx}
-              cy={ring.cy}
-              r={ring.r}
-              fill="none"
-              stroke="transparent"
-              strokeWidth="8"
-            />
-            <circle
-              cx={ring.cx}
-              cy={ring.cy}
-              r={ring.r}
-              fill="none"
-              stroke="#f5c451"
-              strokeOpacity="0.8"
-              strokeWidth="3"
-            />
-            <circle
-              cx={ring.cx}
-              cy={ring.cy}
-              r={ring.r}
-              fill="none"
-              stroke="#fff"
-              strokeOpacity="0.45"
-              strokeWidth="0.6"
-            />
-            {ring.arcs
-              .filter((a) => a.highlighted || a.id === emphasizedBodyId)
-              .map((a) => {
-                const p = arcPoint(ring, a.deg);
-                const emphasized = a.id === emphasizedBodyId;
-                return (
-                  <circle
-                    key={a.id}
-                    cx={p.x}
-                    cy={p.y}
-                    r={emphasized ? 3.4 : 3}
+          <g key={ring.id}>
+            {ring.arcs.map((a) => {
+              const d = arcPath(ring, a.from, a.to);
+              const emphasized = a.id === emphasizedBodyId;
+              const hovered = hover?.id === a.id;
+              const mid = arcPoint(ring, a.deg);
+              const label = arcPoint(ring, a.deg, ring.r - 5.5);
+              return (
+                <g
+                  key={a.id}
+                  className={interactive}
+                  onClick={click(a.id)}
+                  {...hoverProps({ id: a.id, name: a.name, type: a.bodyType, x: mid.x, y: mid.y })}
+                >
+                  <path d={d} fill="none" stroke="transparent" strokeWidth="8" />
+                  {(a.highlighted || emphasized) && (
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={emphasized ? "#fff" : ringColor(a.id)}
+                      strokeWidth="5.4"
+                    />
+                  )}
+                  <path
+                    d={d}
                     fill="none"
-                    stroke={emphasized ? "#fff" : ringColor(a.id)}
-                    strokeWidth="1.2"
+                    stroke="#f5c451"
+                    strokeOpacity={hovered ? 1 : 0.8}
+                    strokeWidth="3"
                   />
-                );
-              })}
+                  <path d={d} fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="0.6" />
+                  {size === "large" && Number.isFinite(a.n) && (
+                    <text
+                      x={label.x}
+                      y={label.y}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize="3.6"
+                      className="pointer-events-none select-none fill-muted-foreground"
+                    >
+                      {a.n}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
           </g>
         ))}
         {orrery.bodies.filter((b) => !b.ringworld).map((b) => (

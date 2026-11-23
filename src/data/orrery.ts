@@ -3,7 +3,7 @@
  * Abstract viewBox of 200 x 200 centered on the primary star: x right, y down. An orbit angle
  * of 0 deg points right and angles run counter-clockwise on screen.
  */
-import { isRingworldBody } from './rows'
+import { isRingworldBody, ringworldArcNumber } from './rows'
 import { isHabitableWorld } from './systemSummary'
 import type { Orbit, Planet, Star, System } from './types'
 
@@ -68,14 +68,19 @@ export interface OrreryArc {
   id: string
   name: string
   bodyType: string
+  /** Arc number from the body type; Infinity when missing. */
+  n: number
   /** Angle on the ring: 0 deg points right, counter-clockwise on screen. */
   deg: number
+  /** Segment drawn for this arc (R6), counter-clockwise from `from` to `to`; `from < deg < to`. */
+  from: number
+  to: number
   highlighted: boolean
 }
 
-/** A system's ringworld arcs sharing one orbit, drawn as one thick ring (R5). */
+/** A system's ringworld arcs sharing one orbit, drawn as one segment per arc (R5, R6). */
 export interface OrreryRing {
-  /** Id of the first arc ("Ringworld Arc 1" first); clicking the ring opens the nearest arc. */
+  /** Id of the first arc ("Ringworld Arc 1" first). */
   id: string
   cx: number
   cy: number
@@ -91,11 +96,38 @@ export interface Orrery {
   rings: OrreryRing[]
 }
 
-const arcNumber = (bodyType: string) => Number(/(\d+)\s*$/.exec(bodyType)?.[1] ?? Infinity)
+const norm = (deg: number) => ((deg % 360) + 360) % 360
+
+/**
+ * Segment bounds per arc (R6): centered on the arc's angle, reaching halfway to each neighbour,
+ * capped at 360 / count (count = max of arcs present and the highest arc number), minus a gap.
+ */
+function segmentArcs(arcs: (Omit<OrreryArc, 'from' | 'to'>)[]): OrreryArc[] {
+  const highest = Math.max(0, ...arcs.map((a) => a.n).filter(Number.isFinite))
+  const half = 180 / Math.max(arcs.length, highest, 1)
+  const byDeg = [...arcs].sort((a, b) => a.deg - b.deg)
+  const bounds = new Map<string, { lo: number; hi: number }>()
+  byDeg.forEach((a, i) => {
+    if (byDeg.length === 1) {
+      bounds.set(a.id, { lo: half, hi: half })
+      return
+    }
+    const prev = byDeg[(i - 1 + byDeg.length) % byDeg.length]!
+    const next = byDeg[(i + 1) % byDeg.length]!
+    const toPrev = norm(a.deg - prev.deg) || 360
+    const toNext = norm(next.deg - a.deg) || 360
+    bounds.set(a.id, { lo: Math.min(half, toPrev / 2), hi: Math.min(half, toNext / 2) })
+  })
+  return arcs.map((a) => {
+    const { lo, hi } = bounds.get(a.id)!
+    const gap = Math.min(2, (lo + hi) * 0.06)
+    return { ...a, from: a.deg - lo + gap / 2, to: a.deg + hi - gap / 2 }
+  })
+}
 
 /** Group placed ringworld arcs by host and orbit radius. Runs on final (fitted) positions. */
 function buildRings(stars: readonly OrreryStar[], bodies: readonly OrreryBody[]): OrreryRing[] {
-  const groups = new Map<string, { cx: number; cy: number; r: number; arcs: (OrreryArc & { n: number })[] }>()
+  const groups = new Map<string, { cx: number; cy: number; r: number; arcs: Omit<OrreryArc, 'from' | 'to'>[] }>()
   for (const b of bodies) {
     if (!b.ringworld) continue
     const host = b.parentId === undefined ? undefined : stars.find((s) => s.id === b.parentId)
@@ -103,27 +135,29 @@ function buildRings(stars: readonly OrreryStar[], bodies: readonly OrreryBody[])
     const cy = host?.y ?? 0
     const r = Math.hypot(b.x - cx, b.y - cy)
     const key = `${host?.id ?? ''}|${r.toFixed(2)}`
-    const deg = ((Math.atan2(-(b.y - cy), b.x - cx) * 180) / Math.PI + 360) % 360
+    const deg = norm((Math.atan2(-(b.y - cy), b.x - cx) * 180) / Math.PI)
     const g = groups.get(key) ?? { cx, cy, r, arcs: [] }
-    g.arcs.push({ id: b.id, name: b.name, bodyType: b.bodyType, deg, highlighted: b.highlighted, n: arcNumber(b.bodyType) })
+    g.arcs.push({ id: b.id, name: b.name, bodyType: b.bodyType, n: ringworldArcNumber(b.bodyType), deg, highlighted: b.highlighted })
     groups.set(key, g)
   }
   return [...groups.values()].map((g) => {
-    const arcs = g.arcs.sort((a, b) => a.n - b.n).map(({ n: _n, ...a }) => a)
+    const arcs = segmentArcs(g.arcs.sort((a, b) => a.n - b.n))
     return { id: arcs[0]!.id, cx: g.cx, cy: g.cy, r: g.r, arcs }
   })
 }
 
-/** The arc of `ring` closest in angle to the point (x, y) in orrery units. */
-export function nearestArc(ring: OrreryRing, x: number, y: number): OrreryArc {
-  const a = ((Math.atan2(-(y - ring.cy), x - ring.cx) * 180) / Math.PI + 360) % 360
-  const diff = (d: number) => Math.abs(((d - a + 540) % 360) - 180)
-  return ring.arcs.reduce((best, arc) => (diff(arc.deg) < diff(best.deg) ? arc : best))
+/** Position on `ring` at an arc's angle. */
+export function arcPoint(ring: Pick<OrreryRing, 'cx' | 'cy' | 'r'>, deg: number, r = ring.r): { x: number; y: number } {
+  return polar(ring.cx, ring.cy, r, deg)
 }
 
-/** Position on `ring` at an arc's angle. */
-export function arcPoint(ring: OrreryRing, deg: number): { x: number; y: number } {
-  return polar(ring.cx, ring.cy, ring.r, deg)
+/** SVG path along `ring` counter-clockwise (on screen) from `from` to `to` degrees. */
+export function arcPath(ring: Pick<OrreryRing, 'cx' | 'cy' | 'r'>, from: number, to: number): string {
+  const span = Math.min(to - from, 359.9)
+  const a = arcPoint(ring, from)
+  const b = arcPoint(ring, from + span)
+  const f = (v: number) => String(Math.round(v * 1000) / 1000)
+  return `M ${f(a.x)} ${f(a.y)} A ${f(ring.r)} ${f(ring.r)} 0 ${span > 180 ? 1 : 0} 0 ${f(b.x)} ${f(b.y)}`
 }
 
 /**
@@ -322,7 +356,7 @@ export function layoutOrrery(system: System, highlighted?: ReadonlySet<string>):
       } else {
         visitedPlanets.add(k.id)
         const p = planetById.get(k.id)!
-        placePlanet(p, x, y, starById.get(hostName)?.starId, true)
+        placePlanet(p, x, y, starByName.get(hostName)?.starId, true)
         placeMoons(p, visitedPlanets)
       }
     }
